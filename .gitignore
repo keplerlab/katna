@@ -1,0 +1,42 @@
+# Jupyter Notebook
+**/.ipynb_checkpoints
+
+# Sphinx documentation
+bin/
+_build
+build
+docs/build
+
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+**/.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+*/.pytest_cache/
+**/__pycache__
+__pycache__/
+.pytest_cache
+
+# Temp files 
+*.jpeg
+*.mp4
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# OS X
+.DS_Store
+.Spotlight-V100
+.Trashes
+._*
+
+#Environments
+.vscode/
