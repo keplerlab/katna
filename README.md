@@ -23,7 +23,7 @@ More selection features are in developement pipeline
 
 #### Using pypi
 1) Install Python 3 
-2) pip install --extra-index-url https://testpypi.python.org/pypi katna
+2) pip install katna
 
 #### Install from source
 

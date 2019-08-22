@@ -5,7 +5,7 @@ Using pypi
 1) Install Python 3
 2) Install katna from pypi using this command ::
 
-    pip install --extra-index-url https://testpypi.python.org/pypi katna
+    pip install katna
 
 
 
