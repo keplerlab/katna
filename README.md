@@ -5,7 +5,9 @@
 * Homepage and Reference: <https://keplervaani.com/katna/>
 
 ### Description
-Katna is a tool that automates video key/best frames extraction. Key-frames are defined as the representative frames of a video stream, the frames that provide the most accurate and compact summary of the video content.
+Katna automates the boring, error prone task of videos key/best frames extraction.
+Key-frames are defined as the representative frames of a video stream, the frames that provide the most accurate and compact summary of the video content.
+
 
 Video module takes following frame extraction and selection method into consideration:
 
@@ -33,16 +35,16 @@ More selection features are in developement pipeline
     ```
     $cd path_to_the_folder_repo_cloned
     ```
-
-6) If running katna for the first time, run the following commands in the below
-   mentioned order:
+6) Create a new anaconda environment if you are using anaconda python distribution
     ```
     conda create --name katna python=3
-    source activate katna 
-    python setup.py install 
+    source activate katna
     ```
-   Above is one-time command which has to be executed only when you want to install library 
-   for the first time. 
+
+7) Run the setup:
+    ``` 
+    python setup.py install 
+    ```    
  
  
 ### How to use Library
