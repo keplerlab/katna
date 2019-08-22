@@ -13,8 +13,6 @@
 import os
 import sys
 
-# /Users/gausharm19/Desktop/katna/Katna/__init__.py
-# /Users/gausharm19/Desktop/katna/docs/source/conf.py
 sys.path.insert(0, os.path.abspath(os.path.join('..','..')))
 
 # -- Project information -----------------------------------------------------
