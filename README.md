@@ -50,4 +50,7 @@ More selection features are in developement pipeline
 ### How to use Library
 
 1) Refer to quickstart section in Katna Reference 
-   from https://keplervaani.com/katna/tutorials.html 
+   from https://keplervaani.com/katna/tutorials.html
+
+### Attributions
+1) We have used the SAD (Sum of absolute difference) code from https://github.com/amanwalia92/KeyFramesExtraction  
