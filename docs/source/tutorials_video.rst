@@ -1,4 +1,4 @@
-.. _tutorials:
+.. _tutorials_video:
 
 How to Use
 ==========
@@ -89,3 +89,4 @@ Code below is a complete example.
    for counter,img in enumerate(imgs):
         vd.save_frame_to_disk(img, file_path=output_folder_video_image, \
             file_name="test_"+str(counter), file_ext=".jpeg")
+

@@ -15,6 +15,7 @@ def cleanup(x):
 def to_list(buffer):
     return list(filter(None, map(cleanup, buffer.splitlines())))
 
+
 # normal dependencies ###
 #
 # these get resolved and installed via either of these two:
@@ -29,17 +30,21 @@ dep_groups = {
         scipy
         scikit-learn
         scikit-image
-        opencv-python>=3.4
+        opencv-contrib-python>=3.4.7
         numpy>=1.15
+        imutils
+        requests
 """
     )
 }
 
 requirements = [y for x in dep_groups.values() for y in x]
-setup_requirements = to_list("""
+setup_requirements = to_list(
+    """
     pytest-runner
     setuptools>=36.2
-""")
+"""
+)
 
 
 # test dependencies ###
@@ -52,7 +57,7 @@ test_requirements = to_list(
 
 setuptools.setup(
     name="katna",
-    version="0.2.0.1",
+    version="0.3.0.0",
     author="keplerlab",
     author_email="keplerwaasi@gmail.com",
     description="Katna is a tool that automates video key/best frames extraction.",
@@ -63,8 +68,7 @@ setuptools.setup(
     install_requires=requirements,
     setup_requires=setup_requirements,
     tests_require=test_requirements,
-    python_requires='>=3.6',
-
+    python_requires=">=3.6",
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

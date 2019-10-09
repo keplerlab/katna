@@ -17,7 +17,7 @@ from skimage.morphology import disk
 from skimage import img_as_float
 
 
-class Image_Selector(object):
+class ImageSelector(object):
     """Class for selection of best top N images from input list of images, Currently following selection method are implemented:
     brightness filtering, contrast/entropy filtering, clustering of frames and variance of laplacian for non blurred images 
     selection
@@ -38,7 +38,7 @@ class Image_Selector(object):
 
     def __get_brighness_score__(self, image):
         """Internal function to compute the brightness of input image , returns brightness score between 0 to 100.0 , 
- 
+
         :param object: base class inheritance
         :type object: class:`Object`
         :param image: input image
@@ -59,9 +59,9 @@ class Image_Selector(object):
         :param object: base class inheritance
         :type object: class:`Object`
         :param image: input image
-        :type image: Opencv Numpy Image   
-        :return: result of Entropy measurment 
-        :rtype: float value between 0.0 to 10.0    
+        :type image: Opencv Numpy Image
+        :return: result of Entropy measurment
+        :rtype: float value between 0.0 to 10.0
         """
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         entr_img = entropy(gray, disk(5))
@@ -73,7 +73,7 @@ class Image_Selector(object):
 
     def __variance_of_laplacian__(self, image):
         """Internal function to compute the laplacian of the image and then return the focus
-        measure, which is simply the variance of the laplacian , 
+        measure, which is simply the variance of the laplacian,
  
         :param object: base class inheritance
         :type object: class:`Object`
@@ -85,7 +85,9 @@ class Image_Selector(object):
 
         return cv2.Laplacian(image, cv2.CV_64F).var()
 
-    def __filter_optimum_brightness_and_contrast_images__(self, input_img_files):
+    def __filter_optimum_brightness_and_contrast_images__(
+        self, input_img_files
+    ):
         """ Internal function for selection of given input images with following parameters :optimum brightness and contrast range ,
         returns array of image files which are in optimum brigtness and contrast/entropy range.
  
@@ -139,7 +141,9 @@ class Image_Selector(object):
             hist = hist.reshape((256))
             all_hists.append(hist)
 
-        kmeans = KMeans(n_clusters=self.nb_clusters, random_state=0).fit(all_hists)
+        kmeans = KMeans(n_clusters=self.nb_clusters, random_state=0).fit(
+            all_hists
+        )
         labels = kmeans.labels_
 
         files_clusters_index_array = []
@@ -176,7 +180,9 @@ class Image_Selector(object):
                 img = cv2.cvtColor(img_file, cv2.COLOR_BGR2GRAY)
                 variance_laplacian = self.__variance_of_laplacian__(img)
                 variance_laplacians.append(variance_laplacian)
-            selected_frame_of_current_cluster = curr_row[np.argmax(variance_laplacians)]
+            selected_frame_of_current_cluster = curr_row[
+                np.argmax(variance_laplacians)
+            ]
             filtered_items.append(selected_frame_of_current_cluster)
 
         return filtered_items
@@ -204,7 +210,9 @@ class Image_Selector(object):
         )
 
         if len(input_key_frames) >= self.nb_clusters:
-            files_clusters_index_array = self.__prepare_cluster_sets__(input_key_frames)
+            files_clusters_index_array = self.__prepare_cluster_sets__(
+                input_key_frames
+            )
             selected_images_index = self.__get_best_images_index_from_each_cluster__(
                 input_key_frames, files_clusters_index_array
             )

@@ -14,6 +14,7 @@ test_path = os.path.join(os.path.split(LIBDIR)[0], "tests")
 sys.path.append(modules_path)
 sys.path.append(test_path)
 
+
 @pytest.fixture
 def video_object():
     """fixture for video object
@@ -33,9 +34,9 @@ def image_similarity_object():
     Returns:
         Image_Similarity -- an instantiated Image_Similarity object
     """
-    from image_similarity import Image_Similarity
+    from image_similarity import ImageSimilarity
 
-    return Image_Similarity()
+    return ImageSimilarity()
 
 
 def test_validate_video_exception():
@@ -49,11 +50,15 @@ def test_validate_video_exception():
     from decorators import FileDecorators
 
     @FileDecorators.validate_file_path
-    def dummy(file_path):  # Dummy function because we only want to test the decorator
+    def dummy(
+        file_path
+    ):  # Dummy function because we only want to test the decorator
         return True
 
     with pytest.raises(FileNotFoundError):
-        assert FileDecorators.validate_file_path(dummy(file_path=video_file_path))
+        assert FileDecorators.validate_file_path(
+            dummy(file_path=video_file_path)
+        )
 
 
 def test_extracted_frame_numbers(video_object):
@@ -87,7 +92,9 @@ def test_extracted_frame_quality(video_object, image_similarity_object):
         expected_number_of_images, video_file_path
     )
 
-    print("Testing if extracted images are same as stored images inside data folder")
+    print(
+        "Testing if extracted images are same as stored images inside data folder"
+    )
     for count in range(12):
         test_img_path = os.path.join(
             "tests", "data", "extracted_img_" + str(count) + ".jpeg"
@@ -97,7 +104,9 @@ def test_extracted_frame_quality(video_object, image_similarity_object):
         image_found = False
         for img in imgs:
             cv2.imwrite("temp.jpeg", img)
-            similairty = image_similarity_object.pixel_sim(test_img_path, "temp.jpeg")
+            similairty = image_similarity_object.pixel_sim(
+                test_img_path, "temp.jpeg"
+            )
             if abs(similairty - 0.0) < 0.01:
                 image_found = True
 

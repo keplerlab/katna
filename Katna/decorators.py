@@ -1,7 +1,7 @@
 """
 .. module:: Katna.decorators
     :platform: OS X
-    :synopsis: This module has decorators for video and image modules 
+    :synopsis: This module has decorators for video and image modules
 """
 import os.path
 import os
@@ -13,13 +13,13 @@ import inspect
 
 class VideoDecorators(object):
     """File validation decorator
-    
+
     Arguments:
         object {[type]} -- [description]
-    
+
     Raises:
         FileNotFoundError: [Video File is missing]
-    
+
     Returns:
         [boolean] -- [if the file exists and is valid]
     """
@@ -32,13 +32,13 @@ class VideoDecorators(object):
         @functools.wraps(decorated)
         def wrapper(*args, **kwargs):
             """ wrapper for decorated function
-            
+
             Arguments:
                 cls {VideoDecorators} -- [Video decorators class]
-            
+
             Raises:
                 FileNotFoundError: [If the file is missing]
-            
+
             Returns:
                 [function] -- [Decorated function]
             """
@@ -52,7 +52,9 @@ class VideoDecorators(object):
                 f_path = func_args.get(key)
 
             if bool(f_path is None or os.path.isfile(f_path) is False):
-                raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), f_path)
+                raise FileNotFoundError(
+                    errno.ENOENT, os.strerror(errno.ENOENT), f_path
+                )
             else:
                 return decorated(*args, **kwargs)
 
@@ -61,8 +63,8 @@ class VideoDecorators(object):
 
 class FileDecorators(object):
     """File validation decorator
-    
-    :raises FileNotFoundError: File or path is incorrect    
+
+    :raises FileNotFoundError: File or path is incorrect
     """
 
     @classmethod
@@ -71,13 +73,14 @@ class FileDecorators(object):
 
         :param decorated: decorated function
         :type decorated: function, required
-        :return: function if the path is valid 
+        :return: function if the path is valid
         :rtype: function object
         """
 
         @functools.wraps(decorated)
         def wrapper(*args, **kwargs):
-            """ wrapper for decorated function. args and kwargs are standard function parameters.            
+            """ wrapper for decorated function. args and kwargs are standard
+            function parameters.
             """
             func_args = inspect.getcallargs(decorated, *args, **kwargs)
 
@@ -89,7 +92,9 @@ class FileDecorators(object):
                 f_path = func_args.get(key)
 
             if bool(f_path is None or os.path.exists(f_path) is False):
-                raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), f_path)
+                raise FileNotFoundError(
+                    errno.ENOENT, os.strerror(errno.ENOENT), f_path
+                )
             else:
                 return decorated(*args, **kwargs)
 
@@ -98,9 +103,9 @@ class FileDecorators(object):
 
 def exception(logger):
     """
-    A decorator that wraps the passed in function and logs 
+    A decorator that wraps the passed in function and logs
     exceptions should one occur
-    
+
     param logger: The logging object
     type logger: logger
     """

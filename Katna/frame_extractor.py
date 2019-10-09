@@ -11,6 +11,8 @@ from scipy.signal import argrelextrema
 
 import tempfile
 
+
+
 # Class to hold information about each frame
 class Frame:
     """Class for storing frame ref
@@ -21,7 +23,7 @@ class Frame:
         self.sum_abs_diff = sum_abs_diff
 
 
-class Frame_Extractor(object):
+class FrameExtractor(object):
     """Class for extraction of key frames from video : based on sum of absolute differences in LUV colorspace from given video 
     """
 
@@ -29,13 +31,13 @@ class Frame_Extractor(object):
 
         # Setting local maxima criteria
         self.USE_LOCAL_MAXIMA = True
-
         # Lenght of sliding window taking difference
         self.len_window = 20
+        # Chunk size of Images to be processed at a time in memory 
         self.max_frames_in_chunk = 2500
 
     def __extract_all_frames_from_video__(self, videopath):
-        """Generator function for extracting frames from a input video which are sufficenlty different from each other, 
+        """Generator function for extracting frames from a input video which are sufficiently different from each other, 
         and return result back as list of opencv images in memory
 
         :param videopath: inputvideo path
@@ -92,7 +94,9 @@ class Frame_Extractor(object):
         extracted_key_frames = []
         diff_array = np.array(frame_diffs)
         sm_diff_array = self.__smooth__(diff_array, self.len_window)
-        frame_indexes = np.asarray(argrelextrema(sm_diff_array, np.greater))[0]
+        frame_indexes = np.asarray(argrelextrema(sm_diff_array, np.greater))[
+            0
+        ]
         for i in frame_indexes:
             extracted_key_frames.append(frames[i - 1].frame)
         return extracted_key_frames
@@ -126,18 +130,29 @@ class Frame_Extractor(object):
             raise (ValueError, "smooth only accepts 1 dimension arrays.")
 
         if x.size < window_len:
-            raise (ValueError, "Input vector needs to be bigger than window size.")
+            raise (
+                ValueError,
+                "Input vector needs to be bigger than window size.",
+            )
 
         if window_len < 3:
             return x
 
-        if not window in ["flat", "hanning", "hamming", "bartlett", "blackman"]:
+        if not window in [
+            "flat",
+            "hanning",
+            "hamming",
+            "bartlett",
+            "blackman",
+        ]:
             raise (
                 ValueError,
                 "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'",
             )
 
-        s = np.r_[2 * x[0] - x[window_len:1:-1], x, 2 * x[-1] - x[-1:-window_len:-1]]
+        s = np.r_[
+            2 * x[0] - x[window_len:1:-1], x, 2 * x[-1] - x[-1:-window_len:-1]
+        ]
         # print(len(s))
 
         if window == "flat":  # moving average
@@ -161,13 +176,15 @@ class Frame_Extractor(object):
         extracted_candidate_key_frames = []
 
         # Get all frames from video in chunks using python Generators
-        frame_extractor_from_video_generator = self.__extract_all_frames_from_video__(
+        frame_extractor_from_video_generator = \
+        self.__extract_all_frames_from_video__(
             videopath
         )
         for frames, frame_diffs in frame_extractor_from_video_generator:
             extracted_candidate_key_frames_chunk = []
             if self.USE_LOCAL_MAXIMA:
-                extracted_candidate_key_frames_chunk = self.__get_frames_in_local_maxima__(
+                extracted_candidate_key_frames_chunk = \
+                    self.__get_frames_in_local_maxima__(
                     frames, frame_diffs
                 )
                 extracted_candidate_key_frames.extend(

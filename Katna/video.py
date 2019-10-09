@@ -12,8 +12,8 @@ import errno
 from Katna.decorators import VideoDecorators
 from Katna.decorators import FileDecorators
 
-from Katna.frame_extractor import Frame_Extractor
-from Katna.image_selector import Image_Selector
+from Katna.frame_extractor import FrameExtractor
+from Katna.image_selector import ImageSelector
 
 
 class Video(object):
@@ -38,10 +38,12 @@ class Video(object):
         :rtype: list
         """
 
-        frameExtractor = Frame_Extractor()
-        extracted_candidate_frames = frameExtractor.extract_candidate_frames(file_path)
-        image_Selecter = Image_Selector()
-        top_frames = image_Selecter.select_best_frames(
+        frame_extractor = FrameExtractor()
+        extracted_candidate_frames = frame_extractor.extract_candidate_frames(
+            file_path
+        )
+        image_selecter = ImageSelector()
+        top_frames = image_selecter.select_best_frames(
             extracted_candidate_frames, no_of_frames
         )
 
