@@ -1,11 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import re
+import os
 import setuptools
 from distutils.core import Command
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
+
+# This will store the models
+network_folder_path = os.path.join(os.path.expanduser("~"), ".katna")
+if not os.path.exists(network_folder_path):
+    os.mkdir(network_folder_path)
 
 # helper functions to make it easier to list dependencies not as a python list, but vertically w/ optional built-in comments to why a certain version of the dependency is listed
 def cleanup(x):
