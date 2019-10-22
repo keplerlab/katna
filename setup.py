@@ -34,6 +34,7 @@ dep_groups = {
         numpy>=1.15
         imutils
         requests
+        moviepy==1.0.1
 """
     )
 }
@@ -57,7 +58,7 @@ test_requirements = to_list(
 
 setuptools.setup(
     name="katna",
-    version="0.3.0.0",
+    version="0.4.0.0",
     author="keplerlab",
     author_email="keplerwaasi@gmail.com",
     description="Katna is a tool that automates video key/best frames extraction.",

@@ -25,7 +25,7 @@ def process_images(path, temp_dir, feature, which):
             i += 1
     return i
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def image_similarity_object():
     """fixture for image similarity object
     
@@ -36,7 +36,7 @@ def image_similarity_object():
 
     return ImageSimilarity()
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def image_object():
     """fixture for image object
     
@@ -47,7 +47,7 @@ def image_object():
 
     return Image()
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def text_detector_object():
     """fixture for text detection object
     

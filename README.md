@@ -1,5 +1,5 @@
 
-## **Katna**: Tool for automating common video keyframe extraction and Image Autocrop tasks
+## **Katna**: Tool for automating common vide keyframe extraction and Image Autocrop tasks
 
 ### Resources 
 * Homepage and Reference: <https://keplervaani.com/katna/>
@@ -69,14 +69,35 @@ More selection features are in developement pipeline
     ``` 
     python setup.py install 
     ```    
-#### Error handling and tips 
-1) If you see "AttributeError: module 'cv2.cv2' has no attribute 'saliency'" error. Uninstall opencv-contrib
-by running command "python -m pip uninstall opencv-contrib-python" and then again install it by running command "python -m pip install opencv-contrib-python"
 
-2) If you see "FileNotFoundError: frozen_east_text_detection.pb file not found". Open python shell and follow below commands.
-    a) from Katna.image_filters.text_detector import TextDetector
-    b) td = TextDetector()
-    c) td.download()
+#### Error handling and updates 
+1) Since Katna version 0.4.0 Katna video module is optimized to use multiprocessing using python multiprocessing module. Due to restrictions of multiprocessing in windows, For safe importing of main module in windows system, make sure “entry point” of the program is wrapped in  __name__ == '__main__': as follows:
+    ```
+    from Katna.video import Video
+    if __name__ == "__main__":
+        vd = Video()
+        # your code
+    ```
+    please refer to https://docs.python.org/2/library/multiprocessing.html#windows for more details.  
+
+2) If input image is of very large size ( larger than 2000x2000 ) it might take a
+long time to perform Automatic smart cropping.If you encounter this issue, consider changing down_sample_factor
+from default 8 to larger values ( like 16 or 32 ). This will decrease processing time 
+significantly. 
+
+3) If you see "AttributeError: module 'cv2.cv2' has no attribute 'saliency'" error. Uninstall opencv-contrib
+by running command "python -m pip uninstall opencv-contrib-python" and then again install it by running command 
+    ```
+    python -m pip install opencv-contrib-python
+    ```
+
+4) If you see "FileNotFoundError: frozen_east_text_detection.pb file not found". Open python shell and follow below commands.
+    ```
+    from Katna.image_filters.text_detector import TextDetector
+    td = TextDetector()
+    td.download()
+    ```
+
  
 ### How to use Library
 
@@ -85,4 +106,4 @@ by running command "python -m pip uninstall opencv-contrib-python" and then agai
 
 ### Attributions
 1) We have used the SAD (Sum of absolute difference) code from https://github.com/amanwalia92/KeyFramesExtraction  
-2) Smart crop feature in Katna Image module is inspired and enhanced from Smartcrop.js by Jonas Wagner https://github.com/jwagner/smartcrop.js/ 
+2) We have used project Smartcrop https://github.com/jwagner/smartcrop.js/ for Smart crop feature in Katna Image module

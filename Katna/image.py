@@ -13,6 +13,9 @@ from Katna.crop_extractor import CropExtractor
 from Katna.crop_selector import CropSelector
 import Katna.config as config
 
+from Katna.decorators import DebugDecorators
+
+
 class UserFiltersEnum:
     """ Enum class for filters
     """
@@ -32,10 +35,9 @@ class Image(object):
         filterList = FilterList()
         self.user_filters_enum = UserFiltersEnum()
         self.crop_extractor = CropExtractor()
-        self.crop_selecter = CropSelector()
+        self.crop_selector = CropSelector()
         self.features = featureList.get_features()
         self.definedFilters = filterList.get_filters()
-        self.Debug = False
 
     def _get_crop_specs(self, image_height, image_width, ratio_height, ratio_width, isHeightSmall=True):
         """Function to create the crop specs for a given aspect ratio
@@ -71,8 +73,9 @@ class Image(object):
             # print("Next: ", crop_height, crop_width, multiply_by, image_height//8, image_width//8)
         return crop_list_tuple
 
+    @DebugDecorators.add_optional_debug_images_for_image_module
     def crop_image_from_cvimage(
-        self, input_image, crop_width, crop_height, num_of_crops, filters=[], down_sample_factor=8
+        self, input_image, crop_width, crop_height, num_of_crops, filters=[], down_sample_factor=config.Image.down_sample_factor
     ):
         """smartly crops the imaged based on the specification - width and height
 
@@ -103,16 +106,10 @@ class Image(object):
 
             return []
 
-        if config.DEBUG is True:
-            extracted_candidate_crops, debug_images = self.crop_extractor.extract_candidate_crops(
-                input_image, crop_width, crop_height, self.features
-            )
-        else:
-            extracted_candidate_crops = self.crop_extractor.extract_candidate_crops(
-                input_image, crop_width, crop_height, self.features
-            )
+        extracted_candidate_crops = self.crop_extractor.extract_candidate_crops(
+            input_image, crop_width, crop_height, self.features
+        )
 
-    
         # print(extracted_candidate_crops)
         # text: TextDetector
         # dummy: DummyDetector
@@ -124,35 +121,20 @@ class Image(object):
                 print(str(e))
         # self.filters = [eval("user_filters_enum."+x) for x in filters]
 
-
-        if config.DEBUG is True:
-            crops_list, debug_2_images = self.crop_selecter.select_candidate_crops(
-            input_image,
-            num_of_crops,
-            extracted_candidate_crops,
-            self.definedFilters,
-            self.filters
-            )
-        else:
-            crops_list = self.crop_selecter.select_candidate_crops(
-            input_image,
-            num_of_crops,
-            extracted_candidate_crops,
-            self.definedFilters,
-            self.filters
-            )
-
+        crops_list = self.crop_selector.select_candidate_crops(
+        input_image,
+        num_of_crops,
+        extracted_candidate_crops,
+        self.definedFilters,
+        self.filters
+        )
         
-        if config.DEBUG is True:
-            debug_images.append(debug_2_images)
-            return crops_list,debug_images
-        else:
-            return crops_list
+        return crops_list
             
 
     @FileDecorators.validate_file_path
     def crop_image(
-        self, file_path, crop_width, crop_height, num_of_crops, filters=[], down_sample_factor=8
+        self, file_path, crop_width, crop_height, num_of_crops, filters=[], down_sample_factor=config.Image.down_sample_factor
     ):
         """smartly crops the imaged based on the specification - width and height
 
@@ -173,12 +155,9 @@ class Image(object):
         """
 
         imgFile = cv2.imread(file_path)
-        if config.DEBUG is True:
-            return_value = self.crop_image_from_cvimage(input_image=imgFile, crop_width=crop_width, crop_height=crop_height, num_of_crops=num_of_crops, filters=filters, down_sample_factor=down_sample_factor)
-            return return_value
-        else:
-            crop_list = self.crop_image_from_cvimage(input_image=imgFile, crop_width=crop_width, crop_height=crop_height, num_of_crops=num_of_crops, filters=filters, down_sample_factor=down_sample_factor)
-            return crop_list
+
+        crop_list = self.crop_image_from_cvimage(input_image=imgFile, crop_width=crop_width, crop_height=crop_height, num_of_crops=num_of_crops, filters=filters, down_sample_factor=down_sample_factor)
+        return crop_list
 
     @FileDecorators.validate_file_path
     def crop_image_with_aspect(
@@ -211,21 +190,13 @@ class Image(object):
         elif wr < hr:
             crop_list_tuple += self._get_crop_specs(image_height, image_width, ratio_height, ratio_width, isHeightSmall=False)
     
-        if config.DEBUG is True:
-            for crop_height, crop_width in crop_list_tuple:
-                crop_list_results, debug_images = self.crop_image_from_cvimage(input_image=imgFile, crop_width=crop_width, crop_height=crop_height, num_of_crops=num_of_crops, filters=filters, down_sample_factor=down_sample_factor)
-                crop_list += crop_list_results
-                sorted_list = sorted(crop_list, key=lambda x: float(x.score), reverse=True)
+        for crop_height, crop_width in crop_list_tuple:
+            crop_list += self.crop_image_from_cvimage(input_image=imgFile, crop_width=crop_width, crop_height=crop_height, num_of_crops=num_of_crops, filters=filters, down_sample_factor=down_sample_factor)
 
-            return sorted_list[:num_of_crops], debug_images
-        else: 
-            for crop_height, crop_width in crop_list_tuple:
-                crop_list += self.crop_image_from_cvimage(input_image=imgFile, crop_width=crop_width, crop_height=crop_height, num_of_crops=num_of_crops, filters=filters, down_sample_factor=down_sample_factor)
-
-            sorted_list = sorted(
-                crop_list, key=lambda x: float(x.score), reverse=True
-            )
-            return sorted_list[:num_of_crops]
+        sorted_list = sorted(
+            crop_list, key=lambda x: float(x.score), reverse=True
+        )
+        return sorted_list[:num_of_crops]
 
     @FileDecorators.validate_file_path
     def save_crop_to_disk(self, crop_rect, frame, file_path, file_name, file_ext):

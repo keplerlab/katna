@@ -25,7 +25,7 @@ def main():
     crop_aspect_ratio = "4:3"
 
     # Filters
-    filters = []
+    filters = ["text"]
     # Image file path
     image_file_path = os.path.join(".", "tests", "data", "bird_img_for_crop.jpg")
     print(f"image_file_path = {image_file_path}")
@@ -68,7 +68,7 @@ def main():
                         crop_width, crop_height ,image_file_path
             )
         )
-    # print(crop_list)
+
 
 
 main()

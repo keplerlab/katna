@@ -14,6 +14,14 @@ from Katna.decorators import FileDecorators
 
 from Katna.frame_extractor import FrameExtractor
 from Katna.image_selector import ImageSelector
+import Katna.config as config
+
+from multiprocessing import Pool, Process, cpu_count
+
+from moviepy.editor import VideoFileClip
+
+from moviepy.tools import subprocess_call
+from moviepy.config import get_setting
 
 
 class Video(object):
@@ -24,7 +32,20 @@ class Video(object):
     """
 
     def __init__(self):
-        pass
+        self.min_video_duration = config.Video.min_video_duration
+        # Creating the multiprocessing pool
+        self.n_processes = cpu_count()//2 - 1
+        self.pool_extractor = Pool(processes=self.n_processes)
+        self.pool_selector = Pool(processes=self.n_processes)
+
+        self.temp_folder = os.path.abspath(os.path.join("clipped"))
+        if not os.path.isdir(self.temp_folder):
+            os.mkdir(self.temp_folder)
+
+    def _remove_clips(self, video_clips):
+        for clip in video_clips:
+            os.remove(clip)
+            # print(clip, " removed!")
 
     @FileDecorators.validate_file_path
     def extract_frames_as_images(self, no_of_frames, file_path):
@@ -38,11 +59,18 @@ class Video(object):
         :rtype: list
         """
 
+        # Split the videos into chunks. Each split(video) will be stored in a temp location
+        videos = self._split(file_path)
+
         frame_extractor = FrameExtractor()
-        extracted_candidate_frames = frame_extractor.extract_candidate_frames(
-            file_path
-        )
-        image_selecter = ImageSelector()
+
+        extracted_candidate_frames = self.pool_extractor.map(frame_extractor.extract_candidate_frames, videos)
+        # Converting the nested list of extracted frames into 1D list
+        extracted_candidate_frames = [frame for frames in extracted_candidate_frames for frame in frames]
+        
+        self._remove_clips(videos)
+
+        image_selecter = ImageSelector(self.pool_selector)
         top_frames = image_selecter.select_best_frames(
             extracted_candidate_frames, no_of_frames
         )
@@ -66,3 +94,84 @@ class Video(object):
 
         file_full_path = os.path.join(file_path, file_name + file_ext)
         cv2.imwrite(file_full_path, frame)
+    
+    @FileDecorators.validate_file_path
+    def _split(self, file_path):
+        """Function to split the videos and persist the chunks
+
+        :param file_path: path of video file
+        :type file_path: str, required
+        :return: List of path of splitted video clips
+        :rtype: list
+        """
+        clipped_files = []
+        duration = VideoFileClip(file_path, audio=False).duration
+        # setting the start point to zero and the breaking point for the clip to be 25 or if video is big
+        # then relative to core available in the machine
+        clip_start, break_point = 0, duration//cpu_count() if duration//cpu_count() > 15 else 25
+
+        # Loop over the video duration to get the clip stating point and end point to split the video
+        while clip_start < duration:
+            
+            clip_end = clip_start + break_point
+
+            if clip_end > duration or (clip_end + self.min_video_duration) > duration:
+                    clip_end = duration
+
+            clipped_files.append(self.__write_videofile(file_path, clip_start, clip_end))
+            
+            clip_start = clip_end
+        return clipped_files
+
+    def __write_videofile(self, video_file_path, start, end):
+        """Function to clip the video for given start and end points and save the video
+
+        :param video_file_path: path of video file
+        :type video_file_path: str, required
+        :param start: start time for clipping
+        :type start: float, required
+        :param end: end time for clipping
+        :type end: float, required
+        :return: path of splitted video clip
+        :rtype: str
+        """
+        
+        name = os.path.split(video_file_path)[1]
+        
+        _clipped_file_path = os.path.join(self.temp_folder, \
+            "{0}_{1}_{2}.mp4".format(name.split(".")[0], int(1000*start), int(1000*end)))
+        
+        self._ffmpeg_extract_subclip(video_file_path, start, end, targetname=_clipped_file_path)
+        return _clipped_file_path
+
+    def _ffmpeg_extract_subclip(self, filename, t1, t2, targetname=None):
+        """ makes a new video file playing video file ``filename`` between
+            the times ``t1`` and ``t2``. 
+        :param filename: path of video file
+        :type filename: str, required
+        :param t1: time from where video to clip
+        :type t1: float, required
+        :param t2: time to which video to clip
+        :type t2: float, required
+        :param targetname: path where clipped file to be stored
+        :type targetname: str, optional
+        :return: None
+        """
+        name,ext = os.path.splitext(filename)
+
+        if not targetname:
+            T1, T2 = [int(1000*t) for t in [t1, t2]]
+            targetname = name + "%sSUB%d_%d.%s"(name, T1, T2, ext)
+        
+        cmd = [get_setting("FFMPEG_BINARY"),"-y",
+        "-i", filename,
+        "-ss", "%0.2f"%t1,
+        "-t", "%0.2f"%(t2-t1),
+        "-vcodec", "copy", "-acodec", "copy", targetname]
+        
+        subprocess_call(cmd, logger=None, errorprint=True)
+
+
+    
+
+            

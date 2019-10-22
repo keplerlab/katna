@@ -16,6 +16,9 @@ from skimage.filters.rank import entropy
 from skimage.morphology import disk
 from skimage import img_as_float
 
+import time
+
+import Katna.config as config
 
 class ImageSelector(object):
     """Class for selection of best top N images from input list of images, Currently following selection method are implemented:
@@ -26,15 +29,17 @@ class ImageSelector(object):
     :type object: class:`Object`
     """
 
-    def __init__(self):
+    def __init__(self, pool_obj):
+        # Setting for Multiprocessing Pool Object
+        self.pool_obj = pool_obj
 
         # Setting for optimum Brightness values
-        self.min_brightness_value = 10.0
-        self.max_brightness_value = 90.0
+        self.min_brightness_value = config.ImageSelector.min_brightness_value
+        self.max_brightness_value = config.ImageSelector.max_brightness_value
 
         # Setting for optimum Contrast/Entropy values
-        self.min_entropy_value = 1.0
-        self.max_entropy_value = 10.0
+        self.min_entropy_value = config.ImageSelector.min_entropy_value
+        self.max_entropy_value = config.ImageSelector.max_entropy_value
 
     def __get_brighness_score__(self, image):
         """Internal function to compute the brightness of input image , returns brightness score between 0 to 100.0 , 
@@ -99,28 +104,22 @@ class ImageSelector(object):
         :rtype: python list of images 
         """
 
-        output_images = []
+        n_files = len(input_img_files)
+        # print("hello")
+        # -------- calculating the brightness and entropy score by multiprocessing ------
+        brightness_score = np.array(self.pool_obj.map(self.__get_brighness_score__, input_img_files))
+        # print("hello")
+        entropy_score = np.array(self.pool_obj.map(self.__get_entropy_score__, input_img_files))
+        # print("hello")
+        # Closing the pool
+        # self.pool_obj.close()
+        # self.pool_obj.join()
 
-        for img_file in input_img_files:
-            brightness_ok = False
-            contrast_ok = False
-            brightness_score = self.__get_brighness_score__(img_file)
-            entropy_score = self.__get_entropy_score__(img_file)
-            if (
-                brightness_score > self.min_brightness_value
-                and brightness_score < self.max_brightness_value
-            ):
-                brightness_ok = True
-            if (
-                entropy_score > self.min_entropy_value
-                and entropy_score < self.max_entropy_value
-            ):
-                contrast_ok = True
+        # -------- Check if brightness and contrast scores are in the min and max defined range ------
+        brightness_ok = np.where(np.logical_and(brightness_score > self.min_brightness_value, brightness_score < self.max_brightness_value), True, False)
+        contrast_ok = np.where(np.logical_and(entropy_score > self.min_entropy_value, entropy_score < self.max_entropy_value), True, False)
 
-            if brightness_ok and contrast_ok:
-                output_images.append(img_file)
-
-        return output_images
+        return [input_img_files[i] for i in range(n_files) if brightness_ok[i] and contrast_ok[i]]
 
     def __prepare_cluster_sets__(self, files):
         """ Internal function for clustering input image files, returns array of indexs of each input file
@@ -187,6 +186,18 @@ class ImageSelector(object):
 
         return filtered_items
 
+    def __getstate__(self):
+        """Function to get the state of initialized class object and remove the pool object from it
+        """
+        self_dict = self.__dict__.copy()
+        del self_dict['pool_obj']
+        return self_dict
+
+    def __setstate__(self, state):
+        """Function to update the state of initialized class object woth the pool object
+        """
+        self.__dict__.update(state)
+
     def select_best_frames(self, input_key_frames, number_of_frames):
         """[summary] Public function for Image selector class: takes list of key-frames images and number of required
         frames as input, returns list of filtered keyframes
@@ -205,10 +216,12 @@ class ImageSelector(object):
 
         filtered_images_list = []
         # print(len(input_key_frames))
+        # t0 = time.process_time()
         input_key_frames = self.__filter_optimum_brightness_and_contrast_images__(
             input_key_frames
         )
-
+        # t1 = time.process_time()
+        # print("Time taken for filter brightness and contrast: ", t1-t0)
         if len(input_key_frames) >= self.nb_clusters:
             files_clusters_index_array = self.__prepare_cluster_sets__(
                 input_key_frames

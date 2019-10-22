@@ -8,7 +8,7 @@ import os
 import cv2
 import numpy as np
 from Katna.image_features.feature import Feature
-
+import Katna.config as config
 
 class EdgeFeature(Feature):
     """Class for getting edge detector Feature,
@@ -22,13 +22,13 @@ class EdgeFeature(Feature):
     def __init__(self, weight=0.0):
         super().__init__(weight)
         # min edge threshold value
-        self.min_val_threshold = 100
+        self.min_val_threshold = config.EdgeFeature.min_val_threshold
 
         # Max edge threshold value
-        self.min_val_threshold = 200
+        self.max_val_threshold = config.EdgeFeature.max_val_threshold
 
         # aperture_size/size of Sobel kernel for canny edge detector
-        self.ksize = 3
+        self.ksize = config.EdgeFeature.ksize
 
     def get_feature_map(self, image):
         """Public function for getting Feature map image from edges detection
@@ -38,4 +38,4 @@ class EdgeFeature(Feature):
         :return: single channel opencv numpy image with feature map from edge detection
         :rtype: numpy array
         """
-        return cv2.Canny(image, self.min_val_threshold, self.min_val_threshold, self.ksize)
+        return cv2.Canny(image, self.min_val_threshold, self.max_val_threshold, self.ksize)

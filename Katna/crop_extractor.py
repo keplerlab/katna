@@ -11,7 +11,7 @@ from Katna.crop_rect import CropRect
 import math
 import time
 import Katna.config as config
-
+from Katna.decorators import DebugDecorators
 
 class CropExtractor(object):
     """Class for extraction and scoring of all possible crops from input image for input crop size.
@@ -21,31 +21,21 @@ class CropExtractor(object):
     """
 
     def __init__(
-            self,
-            detail_weight=0.2,                     # default weight value for detail parameter
-            edge_radius=0.4,                       # default edge radius
-            edge_weight=-20,                       # default edge weight
-            outside_importance=-0.5,               # default value to set if the pixel is outside crop rectangle
-            rule_of_thirds=True,                   # boolean to set rule of third condition check
-            saliency_bias=0.2,                     # bias color value for saliency(+- error value)
-            saliency_weight=1.3,                   # default edge radius
-            down_sample_factor=8,                  # default value by which image size to be reduces for processing
-            face_bias=0.01,                        # bias color value for face(+- error value)
-            face_weight=3.4,                       # default weight value for face parameter
-            rects_weight=1,                        # default weight value for crop rectangles
+            self
     ):
 
-        self.detail_weight = detail_weight
-        self.edge_radius = edge_radius
-        self.edge_weight = edge_weight
-        self.outside_importance = outside_importance
-        self.rule_of_thirds = rule_of_thirds
-        self.saliency_bias = saliency_bias
-        self.saliency_weight = saliency_weight
-        self.down_sample_factor = down_sample_factor
-        self.face_bias = face_bias
-        self.face_weight = face_weight
-        self.rects_weight = rects_weight
+        self.detail_weight = config.CropScorer.detail_weight
+        self.edge_radius = config.CropScorer.edge_radius
+        self.edge_weight = config.CropScorer.edge_weight
+        self.outside_importance = config.CropScorer.outside_importance
+        self.rule_of_thirds = config.CropScorer.rule_of_thirds
+        self.saliency_bias = config.CropScorer.saliency_bias
+        self.saliency_weight = config.CropScorer.saliency_weight
+        self.down_sample_factor = config.Image.down_sample_factor
+        self.face_bias = config.CropScorer.face_bias
+        self.face_weight = config.CropScorer.face_weight
+        self.rects_weight = config.CropScorer.rects_weight
+        self.extracted_feature_maps = []
 
     def _get_all_possible_crops(
             self,
@@ -188,7 +178,7 @@ class CropExtractor(object):
         # importance score matrix wrt rule of thirds and edge radius
         importance = self._importance(crop_rect, importance_map)
 
-        if config.DEBUG is True:
+        if config.Image.DEBUG is True:
             crop_rect.debug_image = importance.copy()
             importance_max = np.max(crop_rect.debug_image)
             importance_min = np.min(crop_rect.debug_image)
@@ -279,10 +269,8 @@ class CropExtractor(object):
 
         end = time.time()
         # print("Time Spent in scoring Crop rectangles", end - start)
-        if config.DEBUG is True:
-            return all_possible_crops_rects, extracted_feature_maps
-        else:
-            return all_possible_crops_rects
+        self.extracted_feature_maps = extracted_feature_maps
+        return all_possible_crops_rects
 
     def extract_candidate_crops(
         self, inputImage, crop_width, crop_height, feature_list
@@ -322,22 +310,13 @@ class CropExtractor(object):
         crop_width_small = int(crop_width / self.down_sample_factor)
         crop_height_small = int(crop_height / self.down_sample_factor)
 
-        if config.DEBUG is True: 
-            extracted_candidate_crops, debug_images = self._extract_and_score_crop_rects(
-                image,
-                extracted_feature_maps,
-                feature_names,
-                crop_width_small,
-                crop_height_small
-            )
-        else:
-            extracted_candidate_crops = self._extract_and_score_crop_rects(
-                image,
-                extracted_feature_maps,
-                feature_names,
-                crop_width_small,
-                crop_height_small,
-            )
+        extracted_candidate_crops = self._extract_and_score_crop_rects(
+            image,
+            extracted_feature_maps,
+            feature_names,
+            crop_width_small,
+            crop_height_small,
+        )
 
         for crop_rect in extracted_candidate_crops:
             crop_rect.x = int(crop_rect.x * self.down_sample_factor)
@@ -345,7 +324,5 @@ class CropExtractor(object):
             crop_rect.w = int(crop_rect.w * self.down_sample_factor)
             crop_rect.h = int(crop_rect.h * self.down_sample_factor)
 
-        if config.DEBUG is True:
-            return extracted_candidate_crops, debug_images
-        else:
-            return extracted_candidate_crops
+
+        return extracted_candidate_crops

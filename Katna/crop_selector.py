@@ -21,7 +21,7 @@ class CropSelector(object):
     """
 
     def __init__(self):
-        pass
+        self.debug_image = None
 
     def _sort(self, filtered_crop_list):
         """ Function to sort the filtered crop list
@@ -54,10 +54,9 @@ class CropSelector(object):
         num_of_crops,
         input_crop_list,
         defined_filters,
-        filters=[],
-    ):
+        filters=[]):
         """Public Function for CropSelector class: takes list of
-        crop retangles and number of required crops as input and returns list
+        crop rectangles and number of required crops as input and returns list
         of filtered crop retangles as output. Also takes list of filters to be used for filtering out unwanted crop rectangles 
         as optional input.
 
@@ -75,24 +74,94 @@ class CropSelector(object):
         """
 
         filtered_crop_list = []
-        # print(len(input_key_frames))
-        if (defined_filters is not None or len(defined_filters) > 0
-            or filters != [] or len(filters) > 0):
-            for defFilter in defined_filters:
-                if type(defFilter).__name__ in filters:
-                    defFilter.set_image(input_image)
-                    for i in range(len(input_crop_list) - 1, -1, -1):
-                        # print(defFilter.get_filter_result(input_crop_list[i]))
-                        if (
-                            defFilter.get_filter_result(input_crop_list[i])
-                            is False
-                        ):
-                            #pass
-                            input_crop_list.remove(input_crop_list[i])
+        
+        #Has the user applied any filters
+        if self.__are_filters_defined(filters) is False:
+        
+            filtered_crop_list = self._sort(input_crop_list)
+            return filtered_crop_list
+        
+        #Are user added filters valid
+        if self.__are_filters_valid(defined_filters,filters) is False:
+            raise TypeError("Added filters do not match predefined filters")        
+        
+        #Apply the filter to all the crops. This is like scanning the crops with filters
+        for defFilter in defined_filters:        
 
+            defFilter.set_image(input_image)
+            input_crop_list = self.__remove_crops_from_list(defFilter, input_crop_list)
+
+        self.debug_image = input_image
+        
         filtered_crop_list = self._sort(input_crop_list)
 
-        if config.DEBUG is True:
-            return filtered_crop_list[:num_of_crops] + filtered_crop_list[-num_of_crops:], input_image
+        return self.__topk(filtered_crop_list, num_of_crops)
+
+    def __remove_crops_from_list(
+        self,
+        user_filter,
+        input_crop_list):
+        """ Private function to remove crops not matching the user added filter.
+        
+        :param user_filter: filter added by user
+        :type user_filter: custom object of type filter
+
+        :param input_crop_list: list of input crop in list of crop_rect format
+        :type input_crop_list: python list crop_rect data structure
+        
+        :return: Returns updated crop list
+        :rtype: python list of crop_rect data structure
+        """
+        for i in range(len(input_crop_list) - 1, -1, -1):    
+
+            if user_filter.get_filter_result(input_crop_list[i]) is False:
+                input_crop_list.remove(input_crop_list[i])
+
+        return input_crop_list
+
+    def __are_filters_defined(self, filters):
+        """Private Function to check if any filters have been added.
+
+        :param filters: User provided filter list. 
+        :type defined_filters: list of filter 
+
+        :return: True if filters are added by user
+        :rtype: boolean
+        """
+        if (filters != [] or len(filters) > 0):
+            return True
         else:
-            return filtered_crop_list[:num_of_crops]
+            return False
+
+    def __are_filters_valid(self, defined_filters, filters):
+        """Private Function to check if user added filters are valid.
+
+        :param defined_filters: Master List of filters. 
+        :type defined_filters: list of filter 
+        :param filters: User provided filter list. 
+        :type defined_filters: list of filter 
+
+        :return: True if valid filters
+        :rtype: boolean
+        """
+        if (defined_filters is not None or len(defined_filters) > 0):
+            for defFilter in defined_filters:
+                if not (type(defFilter).__name__ in filters):
+                    return False
+        # if reached here then added filters are valid
+        return True
+    
+    def __topk(self, crops_list, k):
+        """Private Function to return top k items from the crops list.
+
+        :param crops_list: crops left after applying all the filters. 
+        :type crops_list: list of crops 
+        :param K: number of crops to return. 
+        :type K: int 
+
+        :return: crops
+        :rtype: list of crops
+        """
+        return crops_list[:k]
+    
+    

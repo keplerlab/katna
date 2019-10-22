@@ -9,6 +9,7 @@ import sys
 import errno
 import functools
 import inspect
+import Katna.config as config
 
 
 class VideoDecorators(object):
@@ -125,3 +126,43 @@ def exception(logger):
         return wrapper
 
     return decorator
+
+
+class DebugDecorators(object):
+    """File validation decorator
+
+    Arguments:
+        object {[type]} -- [description]
+
+    Raises:
+        None: 
+
+    Returns:
+        [] -- [Decorated function]
+    """
+
+    @classmethod
+    def add_optional_debug_images_for_image_module(cls, decorated):
+        """Add optional debug images in image_module class if DEBUG option is True in config
+        """
+
+        @functools.wraps(decorated)
+        def wrapper(*args, **kwargs):
+            """ wrapper for decorated function
+
+            Arguments:
+                cls {VideoDecorators} -- [Video decorators class]
+
+            Returns:
+                [function] -- [Decorated function with optional debug images if Debug option is on in config]
+            """
+            if config.Image.DEBUG == True:
+                returnValue = decorated(*args, **kwargs)
+                args[0].debug_images = args[0].crop_extractor.extracted_feature_maps
+                if args[0].crop_selector.debug_image is not None:
+                    args[0].debug_images.append(args[0].crop_selector.debug_image)
+                return returnValue
+            else:
+                return decorated(*args, **kwargs)
+
+        return wrapper

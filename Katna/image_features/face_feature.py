@@ -35,11 +35,10 @@ class FaceFeature(Feature):
         """
         super().__init__(weight)
 
-        #self.model_file = "res10_300x300_ssd_iter_140000.caffemodel"
-        self.model_file = "res10_300x300_ssd_iter_140000_fp16.caffemodel"
-        self.prototxt_file = "deploy.prototxt"
-        self.cache_subdir = "models"
-        self.confidence = 0.5
+        self.model_file = config.FaceFeature.model_file
+        self.prototxt_file = config.FaceFeature.prototxt_file
+        self.cache_subdir = config.FaceFeature.cache_subdir
+        self.confidence = config.FaceFeature.confidence
 
         try:
             self.network_folder_path = os.path.join(
@@ -87,7 +86,7 @@ class FaceFeature(Feature):
         initialize the face detector and call this function directly to download the model file from public URL link.
         """
         # create response object
-        link = "https://raw.githubusercontent.com/opencv/opencv/master/samples/dnn/face_detector/deploy.prototxt"
+        link = config.FaceFeature.prototxt_download_link
         r = requests.get(link, stream=True)
         # download started
         print("Downloading model file...")
@@ -106,7 +105,7 @@ class FaceFeature(Feature):
         initialize the face detector and call this function directly to download the model file from public URL link.
         """
         # create response object
-        link = "https://raw.githubusercontent.com/opencv/opencv_3rdparty/dnn_samples_face_detector_20180205_fp16/res10_300x300_ssd_iter_140000_fp16.caffemodel"
+        link = config.FaceFeature.modelfile_download_link
         r = requests.get(link, stream=True)
         # download started
         print("Downloading model file...")

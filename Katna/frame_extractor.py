@@ -10,8 +10,7 @@ import numpy as np
 from scipy.signal import argrelextrema
 
 import tempfile
-
-
+import Katna.config as config
 
 # Class to hold information about each frame
 class Frame:
@@ -30,11 +29,11 @@ class FrameExtractor(object):
     def __init__(self):
 
         # Setting local maxima criteria
-        self.USE_LOCAL_MAXIMA = True
+        self.USE_LOCAL_MAXIMA = config.FrameExtractor.USE_LOCAL_MAXIMA
         # Lenght of sliding window taking difference
-        self.len_window = 20
+        self.len_window = config.FrameExtractor.len_window
         # Chunk size of Images to be processed at a time in memory 
-        self.max_frames_in_chunk = 2500
+        self.max_frames_in_chunk = config.FrameExtractor.max_frames_in_chunk
 
     def __extract_all_frames_from_video__(self, videopath):
         """Generator function for extracting frames from a input video which are sufficiently different from each other, 
@@ -101,7 +100,7 @@ class FrameExtractor(object):
             extracted_key_frames.append(frames[i - 1].frame)
         return extracted_key_frames
 
-    def __smooth__(self, x, window_len, window="hanning"):
+    def __smooth__(self, x, window_len, window=config.FrameExtractor.window_type):
         """smooth the data using a window with requested size.
         This method is based on the convolution of a scaled window with the signal.
         The signal is prepared by introducing reflected copies of the signal

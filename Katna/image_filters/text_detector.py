@@ -26,15 +26,11 @@ class TextDetector(Filter):
         min_confidence (for text detection)
         """
         super().__init__(weight)
-        self.min_confidence = 0.9
-        self.merge_threshold = 1
-
-        self.layerNames = [
-            "feature_fusion/Conv_7/Sigmoid",
-            "feature_fusion/concat_3",
-        ]
-        self.frozen_weights = "frozen_east_text_detection.pb"
-        self.cache_subdir = "models"
+        self.min_confidence = config.TextDetector.min_confidence
+        self.merge_threshold = config.TextDetector.merge_threshold
+        self.layerNames = config.TextDetector.layerNames
+        self.frozen_weights = config.TextDetector.frozen_weights
+        self.cache_subdir = config.TextDetector.cache_subdir
 
         try:
             self.network_folder_path = os.path.join(
@@ -71,7 +67,7 @@ class TextDetector(Filter):
         initialize the text detector and call this function directly to download the model file from public URL link.
         """
         # create response object
-        link = "https://github.com/oyyd/frozen_east_text_detection.pb/raw/master/frozen_east_text_detection.pb"
+        link = config.TextDetector.model_download_link
         r = requests.get(link, stream=True)
         # download started
         print("Downloading model file...")

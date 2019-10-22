@@ -7,6 +7,7 @@ import cv2 as cv2
 import numpy as np
 import scipy
 import skimage.transform
+import multiprocessing
 
 LIBDIR = os.path.dirname(os.path.abspath(__file__))
 modules_path = os.path.join(os.path.split(LIBDIR)[0], "Katna")
@@ -15,7 +16,7 @@ sys.path.append(modules_path)
 sys.path.append(test_path)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def video_object():
     """fixture for video object
     
@@ -23,6 +24,8 @@ def video_object():
         Video -- an instantiated video object
     """
     from video import Video
+    if __name__ == "__main__":
+        multiprocessing.set_start_method('spawn')
 
     return Video()
 
@@ -60,7 +63,6 @@ def test_validate_video_exception():
             dummy(file_path=video_file_path)
         )
 
-
 def test_extracted_frame_numbers(video_object):
     """
         Test case for extracted frame numbers.
@@ -95,7 +97,8 @@ def test_extracted_frame_quality(video_object, image_similarity_object):
     print(
         "Testing if extracted images are same as stored images inside data folder"
     )
-    for count in range(12):
+    
+    for count in range(expected_number_of_images):
         test_img_path = os.path.join(
             "tests", "data", "extracted_img_" + str(count) + ".jpeg"
         )
@@ -109,10 +112,23 @@ def test_extracted_frame_quality(video_object, image_similarity_object):
             )
             if abs(similairty - 0.0) < 0.01:
                 image_found = True
+                break
 
         os.remove("temp.jpeg")
         assert image_found == True
 
+def test_video_splitting(video_object):
+    """Test case for splitting logic for videos.. Used tide ad video because of edge case
+    """
+    large_video_file_path = os.path.join("tests", "data", "Tidead.mp4")
+    small_video_file_path = os.path.join("tests", "data", "pos_video.mp4")
+    n_clips_large = video_object._split(large_video_file_path)
+    n_clips_small = video_object._split(small_video_file_path)
+    video_object._remove_clips(n_clips_large)
+    video_object._remove_clips(n_clips_small)
+    # print(len(n_clips))
+    assert len(n_clips_large) == 5
+    assert len(n_clips_small) == 1
 
 @pytest.mark.skip(reason="no way of currently testing this")
 def test_extracted_frame_as_png(video_object):

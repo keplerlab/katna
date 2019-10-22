@@ -22,4 +22,29 @@ and follow the below commands.
     from Katna.image_filters.text_detector import TextDetector
     td = TextDetector()
     td.download_data()
+
+4) If you are running the code on windows, make sure to create the main file in the below format.
+
+.. code-block:: python
+
+    from Katna.video import Video
+
+    def main():
+        vd = Video()
+        # your code...
+
+    if __name__ == "__main__":
+        main()
+
+OR
+
+.. code-block:: python
+
+    from Katna.video import Video
+
+    if __name__ == "__main__":
+    
+        vd = Video()
+        # your code
+    
    
