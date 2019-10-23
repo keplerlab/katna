@@ -5,7 +5,7 @@ import os
 import setuptools
 from distutils.core import Command
 
-with open("README.md", "r") as fh:
+with open("README.md", "r", encoding='utf-8') as fh:
     long_description = fh.read()
 
 # This will store the models
