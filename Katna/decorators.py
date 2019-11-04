@@ -53,9 +53,7 @@ class VideoDecorators(object):
                 f_path = func_args.get(key)
 
             if bool(f_path is None or os.path.isfile(f_path) is False):
-                raise FileNotFoundError(
-                    errno.ENOENT, os.strerror(errno.ENOENT), f_path
-                )
+                raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), f_path)
             else:
                 return decorated(*args, **kwargs)
 
@@ -93,9 +91,7 @@ class FileDecorators(object):
                 f_path = func_args.get(key)
 
             if bool(f_path is None or os.path.exists(f_path) is False):
-                raise FileNotFoundError(
-                    errno.ENOENT, os.strerror(errno.ENOENT), f_path
-                )
+                raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), f_path)
             else:
                 return decorated(*args, **kwargs)
 

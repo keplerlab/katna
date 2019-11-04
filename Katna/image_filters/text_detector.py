@@ -9,10 +9,11 @@ import cv2
 import numpy as np
 import time
 import requests
-import random 
+import random
 from imutils.object_detection import non_max_suppression
 from Katna.image_filters.filter import Filter
 import Katna.config as config
+
 
 class TextDetector(Filter):
     """TextDetector Class: Class for implementation of text detector filter, inherit from Filter class
@@ -33,20 +34,14 @@ class TextDetector(Filter):
         self.cache_subdir = config.TextDetector.cache_subdir
 
         try:
-            self.network_folder_path = os.path.join(
-                os.path.expanduser("~"), ".katna"
-            )
+            self.network_folder_path = os.path.join(os.path.expanduser("~"), ".katna")
             if not os.access(self.network_folder_path, os.W_OK):
                 self.network_folder_path = os.path.join("/tmp", ".katna")
-            self.datadir = os.path.join(
-                self.network_folder_path, self.cache_subdir
-            )
+            self.datadir = os.path.join(self.network_folder_path, self.cache_subdir)
             if not os.path.exists(self.datadir):
                 os.makedirs(self.datadir)
 
-            self.network_file_path = os.path.join(
-                self.datadir, self.frozen_weights
-            )
+            self.network_file_path = os.path.join(self.datadir, self.frozen_weights)
             if not os.path.exists(self.network_file_path):
                 self.download_data()
 
@@ -137,7 +132,6 @@ class TextDetector(Filter):
         # return a tuple of the bounding boxes and associated confidences
         return (rects, confidences)
 
-
     def __merge_boxes(self, rects):
         """main function to detect text boxes from image
 
@@ -149,6 +143,7 @@ class TextDetector(Filter):
         :return: output image with the list of text boxes
         :rtype: file, list
         """
+
         def grouper(iterable, interval=2):
             prev = None
             group = []
@@ -161,6 +156,7 @@ class TextDetector(Filter):
                 prev = item
             if group:
                 yield group
+
         rects_used = []
         heights = list()
         for bbox in rects:
@@ -168,8 +164,12 @@ class TextDetector(Filter):
         heights = sorted(heights)  # Sort heights
         median_height = heights[len(heights) // 2] / 2  # Find half of the median height
 
-        bboxes_list = sorted(rects, key=lambda k: k[1])  # Sort the bounding boxes based on y1 coordinate ( y of the left-top coordinate )
-        combined_bboxes = grouper(bboxes_list, median_height)  # Group the bounding boxes
+        bboxes_list = sorted(
+            rects, key=lambda k: k[1]
+        )  # Sort the bounding boxes based on y1 coordinate ( y of the left-top coordinate )
+        combined_bboxes = grouper(
+            bboxes_list, median_height
+        )  # Group the bounding boxes
         for group in combined_bboxes:
             x_min = min(group, key=lambda k: k[0])[0]  # Find min of x1
             x_max = max(group, key=lambda k: k[2])[2]  # Find max of x2
@@ -199,12 +199,7 @@ class TextDetector(Filter):
         # construct a blob from the image and then perform a forward pass of
         # the model to obtain the two output layer sets
         blob = cv2.dnn.blobFromImage(
-            self.image,
-            1.0,
-            (W, H),
-            (123.68, 116.78, 103.94),
-            swapRB=True,
-            crop=False,
+            self.image, 1.0, (W, H), (123.68, 116.78, 103.94), swapRB=True, crop=False
         )
 
         self.net.setInput(blob)
@@ -219,14 +214,12 @@ class TextDetector(Filter):
         for (startX, startY, endX, endY) in boxes:
             # scale the bounding box coordinates based on the respective
             # ratios
-            
+
             startX = int(startX * rW)
             startY = int(startY * rH)
             endX = int(endX * rW)
             endY = int(endY * rH)
-            cv2.rectangle(
-                self.image, (startX, startY), (endX, endY), (0, 0, 255), 3
-            )
+            cv2.rectangle(self.image, (startX, startY), (endX, endY), (0, 0, 255), 3)
             text_rects.append([startX, startY, endX, endY])
 
         text_rects = sorted(text_rects, key=lambda item: item[0])
@@ -235,7 +228,6 @@ class TextDetector(Filter):
             final_rects = self.__merge_boxes(text_rects)
 
         return final_rects
-
 
     def set_image(self, image):
         """Public set_image function, This will detect all text boxes in input image and
@@ -248,7 +240,6 @@ class TextDetector(Filter):
             return None
         self.image = image
         self.text_rects = self.__detect_text()
-
 
     def get_filter_result(self, crop):
         """Main public function of TextDetector filter class,
@@ -277,5 +268,5 @@ class TextDetector(Filter):
                 return False
             else:
                 return True
-            
+
         return True

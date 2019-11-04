@@ -32,17 +32,22 @@ class Video(object):
     """
 
     def __init__(self):
+        # If the duration of the clipped video is less than **min_video_duration**
+        # then, the clip will be added with the previous clipped
         self.min_video_duration = config.Video.min_video_duration
         # Creating the multiprocessing pool
-        self.n_processes = cpu_count()//2 - 1
+        self.n_processes = cpu_count() // 2 - 1
         self.pool_extractor = Pool(processes=self.n_processes)
         self.pool_selector = Pool(processes=self.n_processes)
 
+        # Folder to save the videos after clipping
         self.temp_folder = os.path.abspath(os.path.join("clipped"))
         if not os.path.isdir(self.temp_folder):
             os.mkdir(self.temp_folder)
 
     def _remove_clips(self, video_clips):
+        """Remove video clips from the temp directory
+        """
         for clip in video_clips:
             os.remove(clip)
             # print(clip, " removed!")
@@ -64,10 +69,16 @@ class Video(object):
 
         frame_extractor = FrameExtractor()
 
-        extracted_candidate_frames = self.pool_extractor.map(frame_extractor.extract_candidate_frames, videos)
+        # Passing all the clipped videos for  the frame extraction using map function of the 
+        # multiprocessing pool
+        extracted_candidate_frames = self.pool_extractor.map(
+            frame_extractor.extract_candidate_frames, videos
+        )
         # Converting the nested list of extracted frames into 1D list
-        extracted_candidate_frames = [frame for frames in extracted_candidate_frames for frame in frames]
-        
+        extracted_candidate_frames = [
+            frame for frames in extracted_candidate_frames for frame in frames
+        ]
+
         self._remove_clips(videos)
 
         image_selecter = ImageSelector(self.pool_selector)
@@ -94,7 +105,7 @@ class Video(object):
 
         file_full_path = os.path.join(file_path, file_name + file_ext)
         cv2.imwrite(file_full_path, frame)
-    
+
     @FileDecorators.validate_file_path
     def _split(self, file_path):
         """Function to split the videos and persist the chunks
@@ -106,20 +117,29 @@ class Video(object):
         """
         clipped_files = []
         duration = VideoFileClip(file_path, audio=False).duration
-        # setting the start point to zero and the breaking point for the clip to be 25 or if video is big
+        # setting the start point to zero
+        # Setting the breaking point for the clip to be 25 or if video is big
         # then relative to core available in the machine
-        clip_start, break_point = 0, duration//cpu_count() if duration//cpu_count() > 15 else 25
+        clip_start, break_point = (
+            0,
+            duration // cpu_count() if duration // cpu_count() > 15 else 25,
+        )
 
         # Loop over the video duration to get the clip stating point and end point to split the video
         while clip_start < duration:
-            
+
             clip_end = clip_start + break_point
-
-            if clip_end > duration or (clip_end + self.min_video_duration) > duration:
-                    clip_end = duration
-
-            clipped_files.append(self.__write_videofile(file_path, clip_start, clip_end))
             
+            # Setting the end position of the particular clip equals to the end time of original clip,
+            # if end position or end position added with the **min_video_duration** is greater than 
+            # the end time of original video
+            if clip_end > duration or (clip_end + self.min_video_duration) > duration:
+                clip_end = duration
+
+            clipped_files.append(
+                self.__write_videofile(file_path, clip_start, clip_end)
+            )
+
             clip_start = clip_end
         return clipped_files
 
@@ -135,13 +155,23 @@ class Video(object):
         :return: path of splitted video clip
         :rtype: str
         """
-        
+
         name = os.path.split(video_file_path)[1]
-        
-        _clipped_file_path = os.path.join(self.temp_folder, \
-            "{0}_{1}_{2}.mp4".format(name.split(".")[0], int(1000*start), int(1000*end)))
-        
-        self._ffmpeg_extract_subclip(video_file_path, start, end, targetname=_clipped_file_path)
+
+        # creating a unique name for the clip video 
+        # Naming Format: <video name>_<start position>_<end position>.mp4
+        _clipped_file_path = os.path.join(
+            self.temp_folder,
+            "{0}_{1}_{2}.mp4".format(
+                name.split(".")[0], int(1000 * start), int(1000 * end)
+            ),
+        )
+
+        # Calling the ffmpeg to extract the clip with start & end position and
+        # save it to the target location(temp dir)
+        self._ffmpeg_extract_subclip(
+            video_file_path, start, end, targetname=_clipped_file_path
+        )
         return _clipped_file_path
 
     def _ffmpeg_extract_subclip(self, filename, t1, t2, targetname=None):
@@ -157,21 +187,26 @@ class Video(object):
         :type targetname: str, optional
         :return: None
         """
-        name,ext = os.path.splitext(filename)
+        name, ext = os.path.splitext(filename)
 
         if not targetname:
-            T1, T2 = [int(1000*t) for t in [t1, t2]]
-            targetname = name + "%sSUB%d_%d.%s"(name, T1, T2, ext)
-        
-        cmd = [get_setting("FFMPEG_BINARY"),"-y",
-        "-i", filename,
-        "-ss", "%0.2f"%t1,
-        "-t", "%0.2f"%(t2-t1),
-        "-vcodec", "copy", "-acodec", "copy", targetname]
-        
+            T1, T2 = [int(1000 * t) for t in [t1, t2]]
+            targetname = name + "{0}SUB{1}_{2}.{3}".format(name, T1, T2, ext)
+
+        cmd = [
+            get_setting("FFMPEG_BINARY"),
+            "-y",
+            "-i",
+            filename,
+            "-ss",
+            "%0.2f" % t1,
+            "-t",
+            "%0.2f" % (t2 - t1),
+            "-vcodec",
+            "copy",
+            "-acodec",
+            "copy",
+            targetname,
+        ]
+
         subprocess_call(cmd, logger=None, errorprint=True)
-
-
-    
-
-            

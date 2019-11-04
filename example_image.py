@@ -39,7 +39,7 @@ def main():
         crop_aspect_ratio=crop_aspect_ratio,
         num_of_crops=no_of_crops_to_returned,
         filters=filters,
-        down_sample_factor=8
+        down_sample_factor=8,
     )
     # im = cv2.imread(image_file_path)
     # print(im.shape)
@@ -54,21 +54,22 @@ def main():
     # print(crop_list)
     if len(crop_list) > 0:
         img = cv2.imread(image_file_path)
-        for counter, crop in enumerate(crop_list):                        
-            img_module.save_crop_to_disk(crop, img, \
+        for counter, crop in enumerate(crop_list):
+            img_module.save_crop_to_disk(
+                crop,
+                img,
                 file_path=output_folder_cropped_image,
-                file_name="cropped_image_" + str(counter), 
+                file_name="cropped_image_" + str(counter),
                 file_ext=".jpeg",
             )
         # print("Top Crop Corrected", top_crop, top_crop.score)
-        
+
     else:
         print(
             "No Perfect crop found for {0}x{1} with for Image {2}".format(
-                        crop_width, crop_height ,image_file_path
+                crop_width, crop_height, image_file_path
             )
         )
-
 
 
 main()

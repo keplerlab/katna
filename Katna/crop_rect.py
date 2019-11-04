@@ -8,6 +8,7 @@ import cv2
 import numpy as np
 import Katna.config as config
 
+
 class CropRect(object):
     """Data structure class for storing image crop rectangles
 
@@ -52,7 +53,5 @@ class CropRect(object):
         :return: cropped image according to given spec
         :rtype: Opencv Numpy Image
         """
-        crop_img = input_image[
-            self.y: self.y + self.h, self.x: self.x + self.w
-        ]
+        crop_img = input_image[self.y : self.y + self.h, self.x : self.x + self.w]
         return crop_img

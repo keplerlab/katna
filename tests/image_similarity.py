@@ -81,10 +81,7 @@ class ImageSimilarity(object):
         # resizing returns float vals 0:255; convert to ints for downstream tasks
         if norm_size:
             img = skimage.transform.resize(
-                img,
-                (self.height, self.width),
-                mode="constant",
-                preserve_range=True,
+                img, (self.height, self.width), mode="constant", preserve_range=True
             )
         if norm_exposure:
             img = self.normalize_exposure(img)
@@ -102,11 +99,7 @@ class ImageSimilarity(object):
     """
         img_a = self.get_img(path_a, norm_exposure=True)
         img_b = self.get_img(path_b, norm_exposure=True)
-        return (
-            np.sum(np.absolute(img_a - img_b))
-            / (self.height * self.width)
-            / 255
-        )
+        return np.sum(np.absolute(img_a - img_b)) / (self.height * self.width) / 255
 
     def earth_movers_distance(self, path_a, path_b):
         """

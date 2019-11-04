@@ -13,16 +13,15 @@ import time
 import Katna.config as config
 from Katna.decorators import DebugDecorators
 
+
 class CropExtractor(object):
     """Class for extraction and scoring of all possible crops from input image for input crop size.
     Currently features being used for scoring a given crop retangle are: Edge, saliency and face detection.
-    Additionally crop scoring also takes following metrics into account: Distance of pixel in crop rectangle from crop boundary 
-    and rule of third. 
+    Additionally crop scoring also takes following metrics into account: Distance of pixel in crop rectangle from crop boundary
+    and rule of third.
     """
 
-    def __init__(
-            self
-    ):
+    def __init__(self):
 
         self.detail_weight = config.CropScorer.detail_weight
         self.edge_radius = config.CropScorer.edge_radius
@@ -38,16 +37,16 @@ class CropExtractor(object):
         self.extracted_feature_maps = []
 
     def _get_all_possible_crops(
-            self,
-            image,
-            crop_width,
-            crop_height,
-            max_scale=1,
-            min_scale=0.9,
-            scale_step=0.1,
-            step=8,
-        ):
-        """Internal function for getting list of all possible Crop_rect for input image. 
+        self,
+        image,
+        crop_width,
+        crop_height,
+        max_scale=1,
+        min_scale=0.9,
+        scale_step=0.1,
+        step=8,
+    ):
+        """Internal function for getting list of all possible Crop_rect for input image.
 
         :param object: base class inheritance
         :type object: class:`Object`
@@ -68,17 +67,23 @@ class CropExtractor(object):
         :return: all_possible_crops_rect
         :rtype: list of CropRect
         """
+        # This function takes a sliding window approach for getting all possible crop 
+        # with given crop specification. 
         image_width, image_height = image.shape[1], image.shape[0]
         # print("Width,height", image_width, image_height)
         # get all possible crops using sliding window
+
+        # Variable to collect all possible crops 
         all_possible_crops_rects = []
+
+        # Start sliding window from from range 0 to max_scale
         for scale in (
-                i / 100
-                for i in range(
-                    int(max_scale * 100),
-                    int((min_scale - scale_step) * 100),
-                    -int(scale_step * 100),
-                )
+            i / 100
+            for i in range(
+                int(max_scale * 100),
+                int((min_scale - scale_step) * 100),
+                -int(scale_step * 100),
+            )
         ):
             for y in range(0, image_height, step):
                 if not (y + crop_height * scale) <= image_height:
@@ -87,9 +92,7 @@ class CropExtractor(object):
                     if not (x + crop_width * scale) <= image_width:
                         break
                     all_possible_crops_rects.append(
-                        CropRect(
-                            x, y, crop_width * scale, crop_height * scale
-                        )
+                        CropRect(x, y, crop_width * scale, crop_height * scale)
                     )
         if not all_possible_crops_rects:
             raise ValueError(locals())
@@ -104,6 +107,7 @@ class CropExtractor(object):
         :return: weight of rule of thirds [0, 1]
         :rtype: int
         """
+        # Rule 
         x = ((x + 2 / 3) % 2 * 0.5 - 0.5) * 16
         return np.maximum(1 - x * x, 0)
 
@@ -120,10 +124,18 @@ class CropExtractor(object):
         :return: modified importance array
         :rtype: numpy array
         """
-        # make grid vector instead of linear
-        y, x = np.ogrid[int(crop_rect.y):int(crop_rect.y+crop_rect.h), int(crop_rect.x):int(crop_rect.x+crop_rect.w)]
-        x, y = (x-crop_rect.x) / crop_rect.w, (y- crop_rect.y) / crop_rect.h
+        # Select image around a grid size of crop width and crop height around 
+        # crop center
+        y, x = np.ogrid[
+            int(crop_rect.y) : int(crop_rect.y + crop_rect.h),
+            int(crop_rect.x) : int(crop_rect.x + crop_rect.w),
+        ]
 
+        # Subtract values in grid with Crop retangle center value so
+        # Values far from center of grid would have hight amplitude
+        x, y = (x - crop_rect.x) / crop_rect.w, (y - crop_rect.y) / crop_rect.h
+
+        # Apply abs operation around center of grid 
         px, py = abs(0.5 - x) * 2, abs(0.5 - y) * 2
         px1 = px - 1 + self.edge_radius
         py1 = py - 1 + self.edge_radius
@@ -139,10 +151,13 @@ class CropExtractor(object):
             s = (np.maximum(0, s + d + 0.5) * 1.2) * (
                 self._thirds(px) + self._thirds(py)
             )
-        sdSum = s+d
-        #print(sdSum.shape, crop_rect)
+        sdSum = s + d
+
         # Updating the value of importance matrix using rule of thirds and edge distance
-        importance_map[int(crop_rect.y):int(crop_rect.y+crop_rect.h), int(crop_rect.x):int(crop_rect.x+crop_rect.w)] = sdSum
+        importance_map[
+            int(crop_rect.y) : int(crop_rect.y + crop_rect.h),
+            int(crop_rect.x) : int(crop_rect.x + crop_rect.w),
+        ] = sdSum
         # should return wxh/hxw
         return importance_map
 
@@ -182,25 +197,30 @@ class CropExtractor(object):
             crop_rect.debug_image = importance.copy()
             importance_max = np.max(crop_rect.debug_image)
             importance_min = np.min(crop_rect.debug_image)
-            float_range =  (importance_max - importance_min)
-            crop_rect.debug_image = ( crop_rect.debug_image - importance_min )/float_range 
-            crop_rect.debug_image = 255 * crop_rect.debug_image 
+            float_range = importance_max - importance_min
+            crop_rect.debug_image = (
+                crop_rect.debug_image - importance_min
+            ) / float_range
+            crop_rect.debug_image = 255 * crop_rect.debug_image
             crop_rect.debug_image = crop_rect.debug_image.astype(np.uint8)
 
-
-        #print("Debug Image",crop_rect.debug_image)
+        # print("Debug Image",crop_rect.debug_image)
         detail = np.array(feature_maps_data)[:, :, 2] / 255
         # detailT = detail.T
         rect_score_rects = np.sum(rect_score_rects * importance)
         # Skin score calculations
-        a = (np.array(feature_maps_data)[:, :, 1]/ 255) * (detail + self.face_bias)
+        a = (np.array(feature_maps_data)[:, :, 1] / 255) * (detail + self.face_bias)
         b = a * importance
         rect_score_face = np.sum(b)
         # edge score calculations
         rect_score_detail = detail * importance
         rect_score_detail = np.sum(rect_score_detail)
         # Saliency score calculations
-        rect_score_saliency = np.sum((np.array(feature_maps_data)[:, :, 0]/ 255) * (detail + self.saliency_bias) * importance)
+        rect_score_saliency = np.sum(
+            (np.array(feature_maps_data)[:, :, 0] / 255)
+            * (detail + self.saliency_bias)
+            * importance
+        )
 
         # Scoring mechanism
         rect_score_total = (
@@ -222,7 +242,7 @@ class CropExtractor(object):
         max_scale=1,
         min_scale=0.9,
         scale_step=0.1,
-        step=8
+        step=8,
     ):
         """Internal function to get all crop rects and score each crop retangle given input feature maps for image
 
@@ -263,9 +283,7 @@ class CropExtractor(object):
         feature_maps_image = np.dstack(extracted_feature_maps)
         start = time.time()
         for crop_rect in all_possible_crops_rects:
-            crop_rect.score = self._score(
-                feature_maps_image, crop_rect
-            )
+            crop_rect.score = self._score(feature_maps_image, crop_rect)
 
         end = time.time()
         # print("Time Spent in scoring Crop rectangles", end - start)
@@ -323,6 +341,5 @@ class CropExtractor(object):
             crop_rect.y = int(crop_rect.y * self.down_sample_factor)
             crop_rect.w = int(crop_rect.w * self.down_sample_factor)
             crop_rect.h = int(crop_rect.h * self.down_sample_factor)
-
 
         return extracted_candidate_crops

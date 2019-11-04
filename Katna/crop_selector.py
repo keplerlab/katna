@@ -11,6 +11,7 @@ import cv2
 import numpy as np
 import Katna.config as config
 
+
 class CropSelector(object):
     """Class for selection of top n crop rectangles from input list of crop rectangles
     ,It also implements filtering functionality, currently following filtering
@@ -49,12 +50,8 @@ class CropSelector(object):
         return sorted_list
 
     def select_candidate_crops(
-        self,
-        input_image,
-        num_of_crops,
-        input_crop_list,
-        defined_filters,
-        filters=[]):
+        self, input_image, num_of_crops, input_crop_list, defined_filters, filters=[]
+    ):
         """Public Function for CropSelector class: takes list of
         crop rectangles and number of required crops as input and returns list
         of filtered crop retangles as output. Also takes list of filters to be used for filtering out unwanted crop rectangles 
@@ -74,33 +71,30 @@ class CropSelector(object):
         """
 
         filtered_crop_list = []
-        
-        #Has the user applied any filters
+
+        # Has the user applied any filters
         if self.__are_filters_defined(filters) is False:
-        
+
             filtered_crop_list = self._sort(input_crop_list)
             return filtered_crop_list
-        
-        #Are user added filters valid
-        if self.__are_filters_valid(defined_filters,filters) is False:
-            raise TypeError("Added filters do not match predefined filters")        
-        
-        #Apply the filter to all the crops. This is like scanning the crops with filters
-        for defFilter in defined_filters:        
+
+        # Are user added filters valid
+        if self.__are_filters_valid(defined_filters, filters) is False:
+            raise TypeError("Added filters do not match predefined filters")
+
+        # Apply the filter to all the crops. This is like scanning the crops with filters
+        for defFilter in defined_filters:
 
             defFilter.set_image(input_image)
             input_crop_list = self.__remove_crops_from_list(defFilter, input_crop_list)
 
         self.debug_image = input_image
-        
+
         filtered_crop_list = self._sort(input_crop_list)
 
         return self.__topk(filtered_crop_list, num_of_crops)
 
-    def __remove_crops_from_list(
-        self,
-        user_filter,
-        input_crop_list):
+    def __remove_crops_from_list(self, user_filter, input_crop_list):
         """ Private function to remove crops not matching the user added filter.
         
         :param user_filter: filter added by user
@@ -112,8 +106,11 @@ class CropSelector(object):
         :return: Returns updated crop list
         :rtype: python list of crop_rect data structure
         """
-        for i in range(len(input_crop_list) - 1, -1, -1):    
-
+        # Iterate from last item to first item of python list input_crop_list 
+        for i in range(len(input_crop_list) - 1, -1, -1):
+            # Remove item from list if filter response is false 
+            # please note iterating list from last to first item ensures 
+            # you do not remove items are removed in right order
             if user_filter.get_filter_result(input_crop_list[i]) is False:
                 input_crop_list.remove(input_crop_list[i])
 
@@ -128,7 +125,8 @@ class CropSelector(object):
         :return: True if filters are added by user
         :rtype: boolean
         """
-        if (filters != [] or len(filters) > 0):
+        # Check filters which are defined actually are present
+        if filters != [] or len(filters) > 0:
             return True
         else:
             return False
@@ -144,13 +142,15 @@ class CropSelector(object):
         :return: True if valid filters
         :rtype: boolean
         """
-        if (defined_filters is not None or len(defined_filters) > 0):
+
+        if defined_filters is not None or len(defined_filters) > 0:
             for defFilter in defined_filters:
+                # Check if user asked filters **filters** are in library implemented filters **defFilter**
                 if not (type(defFilter).__name__ in filters):
                     return False
         # if reached here then added filters are valid
         return True
-    
+
     def __topk(self, crops_list, k):
         """Private Function to return top k items from the crops list.
 
@@ -163,5 +163,3 @@ class CropSelector(object):
         :rtype: list of crops
         """
         return crops_list[:k]
-    
-    

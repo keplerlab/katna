@@ -19,7 +19,9 @@ from Katna.decorators import DebugDecorators
 class UserFiltersEnum:
     """ Enum class for filters
     """
+
     text = "TextDetector"
+
 
 class Image(object):
     """Class for all image cropping operations
@@ -39,7 +41,9 @@ class Image(object):
         self.features = featureList.get_features()
         self.definedFilters = filterList.get_filters()
 
-    def _get_crop_specs(self, image_height, image_width, ratio_height, ratio_width, isHeightSmall=True):
+    def _get_crop_specs(
+        self, image_height, image_width, ratio_height, ratio_width, is_height_small=True
+    ):
         """Function to create the crop specs for a given aspect ratio
 
         :param image_height: height of image
@@ -55,27 +59,49 @@ class Image(object):
         :return: list of crop height and crop width
         :rtype:list of tuples
         """
+
+        # multiplication factor by which height/width of crop should be decreased to get crop specs 
         multiply_by = 1
         crop_list_tuple = []
-        hr, wr = image_height/ratio_height, image_width/ratio_width
-        if not isHeightSmall:
+
+        # Calculating the height and width ratio wrt aspect ratio
+        hr, wr = image_height / ratio_height, image_width / ratio_width
+
+        # Check if height is smaller than the width.If yes, interchange height and width.
+        if not is_height_small:
             image_height, image_width = image_width, image_height
             hr, wr = wr, hr
-        crop_height, crop_width = image_height, hr*ratio_width
-        while (crop_height >= image_height//8) and (crop_width >= image_width//8):
-            
-            crop_height, crop_width = int(crop_height), int((ratio_width/ratio_height)*crop_height)
-            # print(crop_height, crop_width, multiply_by, image_height//8, image_width//8)
+        crop_height, crop_width = image_height, hr * ratio_width
+
+        # Decreasing the height and width for crops while checking it don't get small by 1/8 of image height/width
+        while (crop_height >= image_height // 8) and (crop_width >= image_width // 8):
+
+            crop_height, crop_width = (
+                int(crop_height),
+                int((ratio_width / ratio_height) * crop_height),
+            )
+
             crop_list_tuple.append((crop_height, crop_width))
 
-            crop_height /= ratio_height*multiply_by
+            crop_height /= ratio_height * multiply_by
             multiply_by += 1
-            # print("Next: ", crop_height, crop_width, multiply_by, image_height//8, image_width//8)
+
         return crop_list_tuple
 
+
+
+    # Apply optional Debug mode decorator , If config=DEBUG is true this decorator 
+    # will populate internal variables of Image module.debug_images with debug images
+    # Which you can see by opencv Imshow to check if every feature is working as expected 
     @DebugDecorators.add_optional_debug_images_for_image_module
     def crop_image_from_cvimage(
-        self, input_image, crop_width, crop_height, num_of_crops, filters=[], down_sample_factor=config.Image.down_sample_factor
+        self,
+        input_image,
+        crop_width,
+        crop_height,
+        num_of_crops,
+        filters=[],
+        down_sample_factor=config.Image.down_sample_factor,
     ):
         """smartly crops the imaged based on the specification - width and height
 
@@ -96,12 +122,19 @@ class Image(object):
         """
 
         self.crop_extractor.down_sample_factor = down_sample_factor
-        #print("input_image.shape", input_image.shape)
-        if input_image.shape[0] + 5 <= crop_height or input_image.shape[1]+5  <= crop_width:
-            print("Error: crop width or crop height larger than Image",
-            "input_image.shape", input_image.shape,
-            "crop_width", crop_width,
-            "crop_height", crop_height,
+        # print("input_image.shape", input_image.shape)
+        if (
+            input_image.shape[0] + 5 <= crop_height
+            or input_image.shape[1] + 5 <= crop_width
+        ):
+            print(
+                "Error: crop width or crop height larger than Image",
+                "input_image.shape",
+                input_image.shape,
+                "crop_width",
+                crop_width,
+                "crop_height",
+                crop_height,
             )
 
             return []
@@ -122,19 +155,24 @@ class Image(object):
         # self.filters = [eval("user_filters_enum."+x) for x in filters]
 
         crops_list = self.crop_selector.select_candidate_crops(
-        input_image,
-        num_of_crops,
-        extracted_candidate_crops,
-        self.definedFilters,
-        self.filters
+            input_image,
+            num_of_crops,
+            extracted_candidate_crops,
+            self.definedFilters,
+            self.filters,
         )
-        
+
         return crops_list
-            
 
     @FileDecorators.validate_file_path
     def crop_image(
-        self, file_path, crop_width, crop_height, num_of_crops, filters=[], down_sample_factor=config.Image.down_sample_factor
+        self,
+        file_path,
+        crop_width,
+        crop_height,
+        num_of_crops,
+        filters=[],
+        down_sample_factor=config.Image.down_sample_factor,
     ):
         """smartly crops the imaged based on the specification - width and height
 
@@ -156,12 +194,24 @@ class Image(object):
 
         imgFile = cv2.imread(file_path)
 
-        crop_list = self.crop_image_from_cvimage(input_image=imgFile, crop_width=crop_width, crop_height=crop_height, num_of_crops=num_of_crops, filters=filters, down_sample_factor=down_sample_factor)
+        crop_list = self.crop_image_from_cvimage(
+            input_image=imgFile,
+            crop_width=crop_width,
+            crop_height=crop_height,
+            num_of_crops=num_of_crops,
+            filters=filters,
+            down_sample_factor=down_sample_factor,
+        )
         return crop_list
 
     @FileDecorators.validate_file_path
     def crop_image_with_aspect(
-        self, file_path, crop_aspect_ratio, num_of_crops, filters=[], down_sample_factor=8
+        self,
+        file_path,
+        crop_aspect_ratio,
+        num_of_crops,
+        filters=[],
+        down_sample_factor=8,
     ):
         """smartly crops the imaged based on the aspect ratio and returns number of specified crops for each crop spec found in the image with
         the specified aspect ratio
@@ -183,19 +233,32 @@ class Image(object):
         imgFile = cv2.imread(file_path)
         image_height, image_width, _ = imgFile.shape
         ratio_width, ratio_height = map(int, crop_aspect_ratio.split(":"))
-        hr, wr = image_height/ratio_height, image_width/ratio_width
+        hr, wr = image_height / ratio_height, image_width / ratio_width
         crop_list_tuple, crop_list = [], []
         if hr <= wr:
-            crop_list_tuple += self._get_crop_specs(image_height, image_width, ratio_height, ratio_width, isHeightSmall=True)
+            crop_list_tuple += self._get_crop_specs(
+                image_height, image_width, ratio_height, ratio_width, is_height_small=True
+            )
         elif wr < hr:
-            crop_list_tuple += self._get_crop_specs(image_height, image_width, ratio_height, ratio_width, isHeightSmall=False)
-    
-        for crop_height, crop_width in crop_list_tuple:
-            crop_list += self.crop_image_from_cvimage(input_image=imgFile, crop_width=crop_width, crop_height=crop_height, num_of_crops=num_of_crops, filters=filters, down_sample_factor=down_sample_factor)
+            crop_list_tuple += self._get_crop_specs(
+                image_height,
+                image_width,
+                ratio_height,
+                ratio_width,
+                is_height_small=False,
+            )
 
-        sorted_list = sorted(
-            crop_list, key=lambda x: float(x.score), reverse=True
-        )
+        for crop_height, crop_width in crop_list_tuple:
+            crop_list += self.crop_image_from_cvimage(
+                input_image=imgFile,
+                crop_width=crop_width,
+                crop_height=crop_height,
+                num_of_crops=num_of_crops,
+                filters=filters,
+                down_sample_factor=down_sample_factor,
+            )
+
+        sorted_list = sorted(crop_list, key=lambda x: float(x.score), reverse=True)
         return sorted_list[:num_of_crops]
 
     @FileDecorators.validate_file_path

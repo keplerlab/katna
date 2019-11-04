@@ -23,7 +23,8 @@ and follow the below commands.
     td = TextDetector()
     td.download_data()
 
-4) If you are running the code on windows, make sure to create the main file in the below format.
+4) If you are running the code on windows, make sure to create the main file in the 
+below format.
 
 .. code-block:: python
 
@@ -46,5 +47,16 @@ OR
     
         vd = Video()
         # your code
-    
+
+
+5) On windows, ensure that anaconda has admin rights if installing with anaconda as it fails with
+the write permission while installing some modules.
+
+6) Python version 3.8 not supported due to the numpy and moviepy errors with this python 
+version.
+
+7) If you get "RuntimeError: No ffmpeg exe could be found. Install ffmpeg on your system, or 
+set the IMAGEIO_FFMPEG_EXE environment variable". Go to the **imageio-ffmpeg-*.egg** folder inside your
+**site-packages** folder, there's ffmpeg file inside binaries folder set it's path to environment variable.
+
    

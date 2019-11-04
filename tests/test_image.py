@@ -25,6 +25,7 @@ def process_images(path, temp_dir, feature, which):
             i += 1
     return i
 
+
 @pytest.fixture(scope="module")
 def image_similarity_object():
     """fixture for image similarity object
@@ -35,6 +36,7 @@ def image_similarity_object():
     from image_similarity import ImageSimilarity
 
     return ImageSimilarity()
+
 
 @pytest.fixture(scope="module")
 def image_object():
@@ -47,6 +49,7 @@ def image_object():
 
     return Image()
 
+
 @pytest.fixture(scope="module")
 def text_detector_object():
     """fixture for text detection object
@@ -57,6 +60,7 @@ def text_detector_object():
     from Katna.image_filters.text_detector import TextDetector
 
     return TextDetector()
+
 
 def test_saliency(tmpdir_factory):
     from Katna.image_features.saliency_feature import SaliencyFeature
@@ -106,7 +110,7 @@ def test_filters_list():
 
 
 def test_text_detector(tmpdir_factory, text_detector_object):
-    
+
     from Katna.crop_rect import CropRect
 
     crop1 = CropRect(0, 0, 100, 100)
@@ -160,10 +164,11 @@ def test_image(image_object):
     assert len(crop_list) == no_of_crops_to_returned
     assert len(crop_list1) == 0
 
+
 def test_crop_quality(tmpdir_factory, image_object, image_similarity_object):
     import os.path
     import cv2
-    
+
     # number of images to be returned
     no_of_crops_to_returned = 3
 
@@ -188,10 +193,11 @@ def test_crop_quality(tmpdir_factory, image_object, image_similarity_object):
     print(crop_list)
     image_object.save_crop_to_disk(crop_list[0], img, temp_dir, "crop_img", ".jpg")
     similairty = image_similarity_object.pixel_sim(
-                os.path.join(path, "23018877_crop.jpg"), os.path.join(temp_dir, "crop_img.jpg")
-            )
+        os.path.join(path, "23018877_crop.jpg"), os.path.join(temp_dir, "crop_img.jpg")
+    )
     print("Similarity: ", similairty)
     assert round(similairty, 1) <= 0.3
+
 
 def test_validate_image_exception():
     """
@@ -204,15 +210,12 @@ def test_validate_image_exception():
     from decorators import FileDecorators
 
     @FileDecorators.validate_file_path
-    def dummy(
-        file_path
-    ):  # Dummy function because we only want to test the decorator
+    def dummy(file_path):  # Dummy function because we only want to test the decorator
         return True
 
     with pytest.raises(FileNotFoundError):
-        assert FileDecorators.validate_file_path(
-            dummy(file_path=image_file_path)
-        )
+        assert FileDecorators.validate_file_path(dummy(file_path=image_file_path))
+
 
 def test_aspect_ratio(tmpdir_factory, image_object):
     import os.path
@@ -240,11 +243,14 @@ def test_aspect_ratio(tmpdir_factory, image_object):
         num_of_crops=no_of_crops_to_returned,
         filters=filters,
     )
-    ratio = str(aspect_ratio[0]/aspect_ratio[1])
+    ratio = str(aspect_ratio[0] / aspect_ratio[1])
     for crop in crop_list:
-        cv2.imwrite(os.path.join(temp_dir, "cropped.jpeg"), img[crop.y:crop.y+crop.h, crop.x:crop.x+crop.w])
+        cv2.imwrite(
+            os.path.join(temp_dir, "cropped.jpeg"),
+            img[crop.y : crop.y + crop.h, crop.x : crop.x + crop.w],
+        )
         crop_img = cv2.imread(os.path.join(temp_dir, "cropped.jpeg"))
-        value = str(crop_img.shape[1]/crop_img.shape[0])
+        value = str(crop_img.shape[1] / crop_img.shape[0])
         print(value[:4], ratio[:4])
         if value[:3] != ratio[:3]:
             assert False

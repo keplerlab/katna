@@ -2,11 +2,15 @@
 # -*- coding: utf-8 -*-
 import re
 import os
+import sys
 import setuptools
 from distutils.core import Command
 
 with open("README.md", "r", encoding='utf-8') as fh:
     long_description = fh.read()
+
+if sys.version_info >= (3,8):
+    sys.exit("Python version greater than 3.7 not supported because of numpy and moviepy compatibility issues with python version 3.8")
 
 # This will store the models
 network_folder_path = os.path.join(os.path.expanduser("~"), ".katna")
@@ -40,7 +44,7 @@ dep_groups = {
         numpy>=1.15
         imutils
         requests
-        moviepy==1.0.1
+        moviepy>=1.0.1
 """
     )
 }
@@ -64,7 +68,7 @@ test_requirements = to_list(
 
 setuptools.setup(
     name="katna",
-    version="0.4.0.0",
+    version="0.4.1.0",
     author="keplerlab",
     author_email="keplerwaasi@gmail.com",
     description="Katna is a tool that automates video key/best frames extraction.",

@@ -32,8 +32,58 @@ class FrameExtractor(object):
         self.USE_LOCAL_MAXIMA = config.FrameExtractor.USE_LOCAL_MAXIMA
         # Lenght of sliding window taking difference
         self.len_window = config.FrameExtractor.len_window
-        # Chunk size of Images to be processed at a time in memory 
+        # Chunk size of Images to be processed at a time in memory
         self.max_frames_in_chunk = config.FrameExtractor.max_frames_in_chunk
+
+    def __calculate_frame_difference(self, frame, curr_frame, prev_frame):
+        """Function to calculate the difference between current frame and previous frame
+
+        :param frame: frame from the video
+        :type frame: numpy array
+        :param curr_frame: current frame from the video in LUV format
+        :type curr_frame: numpy array
+        :param prev_frame: previous frame from the video in LUV format
+        :type prev_frame: numpy array
+        :return: difference count and frame if None is empty or undefined else None
+        :rtype: tuple
+        """
+
+        if curr_frame is not None and prev_frame is not None:
+            # Calculating difference between current and previous frame
+            diff = cv2.absdiff(curr_frame, prev_frame)
+            count = np.sum(diff)
+            frame = Frame(frame, count)
+
+            return count, frame
+        return None
+
+    def __process_frame(self, frame, prev_frame, frame_diffs, frames):
+        """Function to calculate the difference between current frame and previous frame
+
+        :param frame: frame from the video
+        :type frame: numpy array
+        :param prev_frame: previous frame from the video in LUV format
+        :type prev_frame: numpy array
+        :param frame_diffs: list of frame differences
+        :type frame_diffs: list of int
+        :param frames: list of frames
+        :type frames: list of numpy array
+        :return: previous frame and current frame
+        :rtype: tuple
+        """
+
+        luv = cv2.cvtColor(frame, cv2.COLOR_BGR2LUV)
+        curr_frame = luv
+        # Calculating the frame difference for previous and current frame
+        frame_diff = self.__calculate_frame_difference(frame, curr_frame, prev_frame)
+        
+        if frame_diff is not None:
+            count, frame = frame_diff
+            frame_diffs.append(count)
+            frames.append(frame)
+        prev_frame = curr_frame
+
+        return prev_frame, curr_frame
 
     def __extract_all_frames_from_video__(self, videopath):
         """Generator function for extracting frames from a input video which are sufficiently different from each other, 
@@ -57,16 +107,9 @@ class FrameExtractor(object):
             frames = []
             for _ in range(0, self.max_frames_in_chunk):
                 if ret:
-                    luv = cv2.cvtColor(frame, cv2.COLOR_BGR2LUV)
-                    curr_frame = luv
-                    if curr_frame is not None and prev_frame is not None:
-                        # logic here
-                        diff = cv2.absdiff(curr_frame, prev_frame)
-                        count = np.sum(diff)
-                        frame_diffs.append(count)
-                        frame = Frame(frame, count)
-                        frames.append(frame)
-                    prev_frame = curr_frame
+                    # Calling process frame function to calculate the frame difference and adding the difference 
+                    # in **frame_diffs** list and frame to **frames** list
+                    prev_frame, curr_frame = self.__process_frame(frame, prev_frame, frame_diffs, frames)
                     i = i + 1
                     ret, frame = cap.read()
                     # print(frame_count)
@@ -92,12 +135,14 @@ class FrameExtractor(object):
         """
         extracted_key_frames = []
         diff_array = np.array(frame_diffs)
+        # Normalizing the frame differences based on windows parameters
         sm_diff_array = self.__smooth__(diff_array, self.len_window)
-        frame_indexes = np.asarray(argrelextrema(sm_diff_array, np.greater))[
-            0
-        ]
-        for i in frame_indexes:
-            extracted_key_frames.append(frames[i - 1].frame)
+
+        # Get the indexes of those frames which have maximum differences
+        frame_indexes = np.asarray(argrelextrema(sm_diff_array, np.greater))[0]
+
+        for frame_index in frame_indexes:
+            extracted_key_frames.append(frames[frame_index - 1].frame)
         return extracted_key_frames
 
     def __smooth__(self, x, window_len, window=config.FrameExtractor.window_type):
@@ -115,44 +160,34 @@ class FrameExtractor(object):
         numpy.hanning, numpy.hamming, numpy.bartlett, numpy.blackman, numpy.convolve
         scipy.signal.lfilter
         
-        param x: the input signal
-        type x: numpy.ndarray
-        param window_len: the dimension of the smoothing window
-        type window_len: slidding window length
-        param window: the type of window from 'flat', 'hanning', 'hamming', 'bartlett', 'blackman' flat window will produce a moving average smoothing.
-        type window: str
-        return: the smoothed signal
-        rtype: ndarray
+        :param x: the frame difference list
+        :type x: numpy.ndarray
+        :param window_len: the dimension of the smoothing window
+        :type window_len: slidding window length
+        :param window: the type of window from 'flat', 'hanning', 'hamming', 'bartlett', 'blackman' flat window will produce a moving average smoothing.
+        :type window: str
+        :return: the smoothed signal
+        :rtype: ndarray
         """
-        # print(len(x), window_len)
+        # This function takes 
         if x.ndim != 1:
             raise (ValueError, "smooth only accepts 1 dimension arrays.")
 
         if x.size < window_len:
-            raise (
-                ValueError,
-                "Input vector needs to be bigger than window size.",
-            )
+            raise (ValueError, "Input vector needs to be bigger than window size.")
 
         if window_len < 3:
             return x
 
-        if not window in [
-            "flat",
-            "hanning",
-            "hamming",
-            "bartlett",
-            "blackman",
-        ]:
+        if not window in ["flat", "hanning", "hamming", "bartlett", "blackman"]:
             raise (
                 ValueError,
-                "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'",
+                "Smoothing Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'",
             )
 
-        s = np.r_[
-            2 * x[0] - x[window_len:1:-1], x, 2 * x[-1] - x[-1:-window_len:-1]
-        ]
-        # print(len(s))
+        # Doing row-wise merging of frame differences wrt window length. frame difference
+        # by factor of two and subtracting the frame differences from index == window length in reverse direction
+        s = np.r_[2 * x[0] - x[window_len:1:-1], x, 2 * x[-1] - x[-1:-window_len:-1]]
 
         if window == "flat":  # moving average
             w = np.ones(window_len, "d")
@@ -172,18 +207,22 @@ class FrameExtractor(object):
         :return: opencv.Image.Image objects
         :rtype: list
         """
+
         extracted_candidate_key_frames = []
 
         # Get all frames from video in chunks using python Generators
-        frame_extractor_from_video_generator = \
-        self.__extract_all_frames_from_video__(
+        frame_extractor_from_video_generator = self.__extract_all_frames_from_video__(
             videopath
         )
+
+        # Loop over every frame in the frame extractor generator object and calculate the
+        # local maxima of frames 
         for frames, frame_diffs in frame_extractor_from_video_generator:
             extracted_candidate_key_frames_chunk = []
             if self.USE_LOCAL_MAXIMA:
-                extracted_candidate_key_frames_chunk = \
-                    self.__get_frames_in_local_maxima__(
+
+                # Getting the frame with maximum frame difference
+                extracted_candidate_key_frames_chunk = self.__get_frames_in_local_maxima__(
                     frames, frame_diffs
                 )
                 extracted_candidate_key_frames.extend(

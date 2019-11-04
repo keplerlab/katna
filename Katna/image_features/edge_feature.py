@@ -10,6 +10,7 @@ import numpy as np
 from Katna.image_features.feature import Feature
 import Katna.config as config
 
+
 class EdgeFeature(Feature):
     """Class for getting edge detector Feature,
     Constructor Parameters:- feature weight \n 
@@ -38,4 +39,6 @@ class EdgeFeature(Feature):
         :return: single channel opencv numpy image with feature map from edge detection
         :rtype: numpy array
         """
-        return cv2.Canny(image, self.min_val_threshold, self.max_val_threshold, self.ksize)
+        return cv2.Canny(
+            image, self.min_val_threshold, self.max_val_threshold, self.ksize
+        )

@@ -11,7 +11,7 @@ import numpy as np
 import time
 import requests
 import imutils
-import random 
+import random
 
 
 from Katna.image_features.feature import Feature
@@ -41,20 +41,14 @@ class FaceFeature(Feature):
         self.confidence = config.FaceFeature.confidence
 
         try:
-            self.network_folder_path = os.path.join(
-                os.path.expanduser("~"), ".katna"
-            )
+            self.network_folder_path = os.path.join(os.path.expanduser("~"), ".katna")
             if not os.access(self.network_folder_path, os.W_OK):
                 self.network_folder_path = os.path.join("/tmp", ".katna")
-            self.datadir = os.path.join(
-                self.network_folder_path, self.cache_subdir
-            )
+            self.datadir = os.path.join(self.network_folder_path, self.cache_subdir)
             if not os.path.exists(self.datadir):
                 os.makedirs(self.datadir)
 
-            self.network_model_file_path = os.path.join(
-                self.datadir, self.model_file
-            )
+            self.network_model_file_path = os.path.join(self.datadir, self.model_file)
 
             self.network_prototxt_file_path = os.path.join(
                 self.datadir, self.prototxt_file
@@ -66,18 +60,21 @@ class FaceFeature(Feature):
             if not os.path.exists(self.network_prototxt_file_path):
                 self.download_proto()
 
-            #print("model file..." + self.network_prototxt_file_path + " Model file " +  self.network_model_file_path)
+            # print("model file..." + self.network_prototxt_file_path + " Model file " +  self.network_model_file_path)
 
-            self.net = cv2.dnn.readNetFromCaffe(self.network_prototxt_file_path, self.network_model_file_path)
+            self.net = cv2.dnn.readNetFromCaffe(
+                self.network_prototxt_file_path, self.network_model_file_path
+            )
 
         except Exception:
             raise FileNotFoundError(
-                self.model_file + " or " + self.prototxt_file 
+                self.model_file
+                + " or "
+                + self.prototxt_file
                 + " seems to be missing.\
                  Download the file and specify the full path\
                       while initializing FaceFeature class"
             )
-
 
     def download_proto(self):
         """Public function for downloading the network weight from the URL link, to be used for
@@ -97,7 +94,6 @@ class FaceFeature(Feature):
                     f.write(chunk)
         print("Prototext file downloaded.")
 
-
     def download_model(self):
         """Public function for downloading the network weight from the URL link, to be used for
         face detection functionality. 
@@ -116,7 +112,6 @@ class FaceFeature(Feature):
                     f.write(chunk)
         print("Caffe Model file downloaded.")
 
-
     def get_feature_map(self, image):
         """Public function for getting Feature map image from Face detection in input Image
 
@@ -125,17 +120,19 @@ class FaceFeature(Feature):
         :return: single channel opencv numpy image with feature map from Face detection
         :rtype: numpy array
         """
-        
-        #frame = imutils.resize(image, width=400)
+
+        # frame = imutils.resize(image, width=400)
         # grab the frame dimensions and convert it to a blob
         frame = image.copy()
         (h, w) = frame.shape[:2]
-        blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)), 1.0, (300, 300), (104.0, 177.0, 123.0))
+        blob = cv2.dnn.blobFromImage(
+            cv2.resize(frame, (300, 300)), 1.0, (300, 300), (104.0, 177.0, 123.0)
+        )
         # pass the blob through the network and obtain the detections and
         # predictions
         self.net.setInput(blob)
         detections = self.net.forward()
-        gray = np.zeros((h,w), dtype=np.uint8)
+        gray = np.zeros((h, w), dtype=np.uint8)
 
         # loop over the detections
         for i in range(0, detections.shape[2]):
@@ -157,7 +154,7 @@ class FaceFeature(Feature):
             # probability
             text = "{:.2f}%".format(confidence * 100)
             y = startY - 10 if startY - 10 > 10 else startY + 10
-            cv2.rectangle(gray, (startX, startY), (endX, endY),(120), -1)
-            #cv2.putText(gray, text, (startX, y), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (127), 2)
+            cv2.rectangle(gray, (startX, startY), (endX, endY), (120), -1)
+            # cv2.putText(gray, text, (startX, y), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (127), 2)
 
         return gray

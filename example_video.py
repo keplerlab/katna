@@ -10,17 +10,16 @@ def main():
     # Extract specific number of key frames from video
     # if os.name == 'nt':
     #     multiprocessing.freeze_support()
-    
+
     vd = Video()
 
     # folder to save extracted images
     output_folder_video_image = "selectedframes"
-    out_dir_path =  os.path.join(".", output_folder_video_image)
+    out_dir_path = os.path.join(".", output_folder_video_image)
 
     if not os.path.isdir(out_dir_path):
         os.mkdir(out_dir_path)
-        
-    
+
     # number of images to be returned
     no_of_frames_to_returned = 20
     # VIdeo file path
@@ -41,6 +40,7 @@ def main():
         )
     print(f"Exracted key frames file path = {out_dir_path}")
 
+
 if __name__ == "__main__":
-    multiprocessing.set_start_method('spawn')
+    multiprocessing.set_start_method("spawn")
     main()
