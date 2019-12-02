@@ -74,9 +74,8 @@ class CropSelector(object):
 
         # Has the user applied any filters
         if self.__are_filters_defined(filters) is False:
-
             filtered_crop_list = self._sort(input_crop_list)
-            return filtered_crop_list
+            return self.__topk(filtered_crop_list, num_of_crops)
 
         # Are user added filters valid
         if self.__are_filters_valid(defined_filters, filters) is False:
