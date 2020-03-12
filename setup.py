@@ -49,6 +49,9 @@ dep_groups = {
     )
 }
 
+__version__ = None # Explicitly set version.
+exec(open('Katna/version.py').read()) # loads __version__
+
 requirements = [y for x in dep_groups.values() for y in x]
 setup_requirements = to_list(
     """
@@ -68,7 +71,7 @@ test_requirements = to_list(
 
 setuptools.setup(
     name="katna",
-    version="0.4.1.1",
+    version=__version__,
     author="keplerlab",
     author_email="keplerwaasi@gmail.com",
     description="Katna is a tool that automates video key/best frames extraction.",

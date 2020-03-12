@@ -37,6 +37,8 @@ class Video(object):
         self.min_video_duration = config.Video.min_video_duration
         # Creating the multiprocessing pool
         self.n_processes = cpu_count() // 2 - 1
+        if self.n_processes < 1:
+            self.n_processes = None
         self.pool_extractor = Pool(processes=self.n_processes)
         self.pool_selector = Pool(processes=self.n_processes)
 
