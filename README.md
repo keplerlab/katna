@@ -2,7 +2,7 @@
 ## **Katna**: Tool for automating common vide keyframe extraction and Image Autocrop tasks
 
 ### Resources 
-* Homepage and Reference: <https://keplervaani.com/katna/>
+* Homepage and Reference: <https://katna.readthedocs.io/>
 
 ### Description
 Katna automates the boring, error prone task of videos key/best frames extraction and manual time consuming task of image cropping.
@@ -111,7 +111,7 @@ set the IMAGEIO_FFMPEG_EXE environment variable". Go to the **imageio_ffmpeg-*.e
 ### How to use Library
 
 1) Refer to quickstart section in Katna Reference 
-   from https://keplervaani.com/katna/tutorials.html
+   from https://katna.readthedocs.io/
 
 ### Attributions
 1) We have used the SAD (Sum of absolute difference) code from https://github.com/amanwalia92/KeyFramesExtraction  
