@@ -89,7 +89,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     project_urls={
-        "Documentation": "https://keplervaani.com/katna",
+        "Documentation": "https://katna.readthedocs.io",
         "Source": "https://github.com/keplerlab/Katna",
         "Tracker": "https://github.com/keplerlab/Katna/issues",
     },
