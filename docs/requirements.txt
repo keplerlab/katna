@@ -1,4 +1,2 @@
 sphinx
-sphinx-js
-sphinx-rtd-theme
 katna
