@@ -61,7 +61,7 @@ More selection features are in developement pipeline
     ```
 6) Create a new anaconda environment if you are using anaconda python distribution
     ```
-    conda create --name katna python=3
+    conda create --name katna python=3.7
     source activate katna
     ```
 

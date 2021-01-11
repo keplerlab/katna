@@ -210,10 +210,9 @@ def test_save_frame_to_disk(video_object, tmpdir):
     """
 
     # Save the file to a temporary location
-    test_file_name = "save_frame_to_disk_1.jpeg"
-    test_file_location = os.path.join(".", "data", test_file_name)
+    test_file_name = "23018877.jpg"
+    test_file_location = os.path.join("tests", "data", test_file_name)
     img = cv2.imread(test_file_location, cv2.IMREAD_UNCHANGED)
-
     # tempdir is pytest provided fixture for temporary folders
     copy_location = tmpdir.mkdir("katna_test_dir")
 

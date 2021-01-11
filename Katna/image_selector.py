@@ -15,7 +15,7 @@ from sklearn.cluster import KMeans
 from skimage.filters.rank import entropy
 from skimage.morphology import disk
 from skimage import img_as_float
-
+import itertools  
 import time
 
 import Katna.config as config
@@ -37,10 +37,12 @@ class ImageSelector(object):
         # Setting for optimum Brightness values
         self.min_brightness_value = config.ImageSelector.min_brightness_value
         self.max_brightness_value = config.ImageSelector.max_brightness_value
+        self.brightness_step = config.ImageSelector.brightness_step 
 
         # Setting for optimum Contrast/Entropy values
         self.min_entropy_value = config.ImageSelector.min_entropy_value
         self.max_entropy_value = config.ImageSelector.max_entropy_value
+        self.entropy_step = config.ImageSelector.entropy_step 
 
     def __get_brighness_score__(self, image):
         """Internal function to compute the brightness of input image , returns brightness score between 0 to 100.0 , 
@@ -104,6 +106,7 @@ class ImageSelector(object):
         """
 
         n_files = len(input_img_files)
+
         # -------- calculating the brightness and entropy score by multiprocessing ------
         brightness_score = np.array(
             self.pool_obj.map(self.__get_brighness_score__, input_img_files)
@@ -256,26 +259,46 @@ class ImageSelector(object):
 
         self.nb_clusters = number_of_frames
 
+        filtered_key_frames = []
         filtered_images_list = []
+        # Repeat until number of frames 
+        min_brightness_values = np.arange(config.ImageSelector.min_brightness_value, -0.01, -self.brightness_step)
+        max_brightness_values = np.arange(config.ImageSelector.max_brightness_value, 100.01, self.brightness_step)
+        min_entropy_values = np.arange(config.ImageSelector.min_entropy_value, -0.01, -self.entropy_step)
+        max_entropy_values = np.arange(config.ImageSelector.max_entropy_value, 10.01, self.entropy_step)
 
-        # Selecting only those images which have good brishtness and contrast
-        input_key_frames = self.__filter_optimum_brightness_and_contrast_images__(
-            input_key_frames
-        )
-        
+        for (min_brightness_value, max_brightness_value, min_entropy_value, max_entropy_value) in itertools.zip_longest(min_brightness_values, max_brightness_values, min_entropy_values, max_entropy_values): 
+            if min_brightness_value is None:
+                min_brightness_value = 0.0
+            if max_brightness_value is None:
+                max_brightness_value = 100.0
+            if min_entropy_value is None:
+                min_entropy_value = 0.0
+            if max_entropy_value is None:
+                max_entropy_value = 10.0
+            self.min_brightness_value = min_brightness_value
+            self.max_brightness_value = max_brightness_value
+            self.min_entropy_value = min_entropy_value
+            self.max_entropy_value = max_entropy_value
+            filtered_key_frames = self.__filter_optimum_brightness_and_contrast_images__(
+                input_key_frames, 
+            )
+            if len(filtered_key_frames) >= number_of_frames:
+                break
+
         # Selecting the best images from each cluster by first preparing the clusters on basis of histograms 
         # and then selecting the best images from every cluster
-        if len(input_key_frames) >= self.nb_clusters:
-            files_clusters_index_array = self.__prepare_cluster_sets__(input_key_frames)
+        if len(filtered_key_frames) >= self.nb_clusters:
+            files_clusters_index_array = self.__prepare_cluster_sets__(filtered_key_frames)
             selected_images_index = self.__get_best_images_index_from_each_cluster__(
-                input_key_frames, files_clusters_index_array
+                filtered_key_frames, files_clusters_index_array
             )
 
             for index in selected_images_index:
-                img = input_key_frames[index]
+                img = filtered_key_frames[index]
                 filtered_images_list.append(img)
         else:
             # if number of required files are less than requested key-frames return all the files
-            for img in input_key_frames:
+            for img in filtered_key_frames:
                 filtered_images_list.append(img)
         return filtered_images_list

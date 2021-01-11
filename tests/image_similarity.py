@@ -5,7 +5,8 @@
 """
 
 import warnings
-from skimage.measure import compare_ssim
+from skimage.metrics import structural_similarity as compare_ssim
+#from skimage.measure import compare_ssim
 from skimage.transform import resize
 from scipy.stats import wasserstein_distance
 import scipy
