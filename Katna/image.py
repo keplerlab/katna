@@ -41,6 +41,7 @@ class Image(object):
         self.features = featureList.get_features()
         self.definedFilters = filterList.get_filters()
 
+
     def _get_crop_specs(
         self, image_height, image_width, ratio_height, ratio_width, is_height_small=True
     ):
@@ -67,27 +68,36 @@ class Image(object):
         # Calculating the height and width ratio wrt aspect ratio
         hr, wr = image_height / ratio_height, image_width / ratio_width
 
+        #print("hr, wr",hr, wr)
         # Check if height is smaller than the width.If yes, interchange height and width.
         if not is_height_small:
             image_height, image_width = image_width, image_height
             hr, wr = wr, hr
         crop_height, crop_width = image_height, hr * ratio_width
 
-        # Decreasing the height and width for crops while checking it don't get small by 1/8 of image height/width
-        while (crop_height >= image_height // 8) and (crop_width >= image_width // 8):
+
+        # Decreasing the height and width for crops while checking it don't get small by 1/(min) of image height/width
+        while True:
+            if not((crop_height >= (image_height // config.Image.min_image_to_crop_factor)) and (crop_width >= (image_width // config.Image.min_image_to_crop_factor))):
+                break
 
             crop_height, crop_width = (
-                int(crop_height),
-                int((ratio_width / ratio_height) * crop_height),
-            )
-
+                                int(crop_height),
+                                int((ratio_width / ratio_height) * crop_height),
+                            )
+            
             crop_list_tuple.append((crop_height, crop_width))
 
-            crop_height /= ratio_height * multiply_by
-            multiply_by += 1
+            crop_height /=  multiply_by
+
+            crop_height, crop_width = (
+                        int(crop_height),
+                        int((ratio_width / ratio_height) * crop_height),
+                    )
+            
+            multiply_by += config.Image.crop_height_reduction_factor_in_each_iteration
 
         return crop_list_tuple
-
 
 
     # Apply optional Debug mode decorator , If config=DEBUG is true this decorator 
@@ -122,20 +132,19 @@ class Image(object):
         """
 
         self.crop_extractor.down_sample_factor = down_sample_factor
-        # print("input_image.shape", input_image.shape)
         if (
             input_image.shape[0] + 5 <= crop_height
             or input_image.shape[1] + 5 <= crop_width
         ):
-            print(
-                "Error: crop width or crop height larger than Image",
-                "input_image.shape",
-                input_image.shape,
-                "crop_width",
-                crop_width,
-                "crop_height",
-                crop_height,
-            )
+            # print(
+            #     "Error: crop width or crop height larger than Image",
+            #     "input_image.shape",
+            #     input_image.shape,
+            #     "crop_width",
+            #     crop_width,
+            #     "crop_height",
+            #     crop_height,
+            # )
 
             return []
 

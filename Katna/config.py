@@ -11,6 +11,12 @@ class Image:
     down_sample_factor = 8
     # Debug flag
     DEBUG = False
+    # Crop_height_reduction_factor_in_each_iterationnot found crop height
+    # will be reduced by this multiplier/factor and search for candidate crops
+    # is resumed.
+    # Decreasing the height and width for crops while checking it don't get small by 1/(min_image_to_crop_factor) of image height/width
+    min_image_to_crop_factor = 4
+    crop_height_reduction_factor_in_each_iteration = 0.05
 
 
 # # Configurations for Scoring crops for crop extractor
