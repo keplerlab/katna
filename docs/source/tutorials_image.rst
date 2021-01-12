@@ -32,7 +32,7 @@ Refer to API reference for further details. Below are the six parameters of the 
 
 **crop_height**: height of crop to extract
 
-**no_of_crops_to_returned**: number of crops rectangles to be extracted
+**no_of_crops_to_return**: number of crops rectangles to be extracted
 
 **filters**: You can use this **optional** parameter to filter out unwanted crop rectangles according to some filtering criteria.
 At the moment only "text" detection filter is implemented and more filters will be added in future 
@@ -52,7 +52,7 @@ consider increasing this parameter for faster image cropping.  By default input 
         file_path=image_file_path,
         crop_width=<crop_width>,
         crop_height=<crop_height>,
-        num_of_crops=<no_of_crops_to_returned>,
+        num_of_crops=<no_of_crops_to_return>,
         filters=<filters>,
         down_sample_factor=<number_by_which_image_to_downsample>
      )
@@ -86,7 +86,7 @@ expects you to specify the aspect ratio in string format eg. '4:3' or '16:9'.
      crop_list = img_module.crop_image_with_aspect(
         file_path=image_file_path,
         crop_aspect_ratio=<crop_aspect_ratio>,
-        num_of_crops=<no_of_crops_to_returned>,
+        num_of_crops=<no_of_crops_to_return>,
         filters=<filters>,
         down_sample_factor=<number_by_which_image_to_downsample>
      )
@@ -115,10 +115,49 @@ Refer to API reference for further details.
             file_ext=<file_ext>,
         )
 
-Code below is a complete example.
+
+**Crop all images in a directory**
+
+To run crop image for all images in a directory, call the **crop_image_from_dir**
+method. This method accepts following parameters and returns a dictionary containing file path as key
+and list of crop rectangles (in crop_rect data structure) as its values.
+Below are the six parameters of the function
+
+**dir_path**: directory path where images from which crop has to be extracted
+
+**crop_width**: width of crop to extract
+
+**crop_height**: height of crop to extract
+
+**no_of_crops_to_return**: number of crops rectangles to be extracted
+
+**filters**: You can use this **optional** parameter to filter out unwanted crop rectangles according to some filtering criteria.
+At the moment only "text" detection filter is implemented and more filters will be added in future
+will be added in future. Passing on "text" detection filter ensures crop rectangle contains text, additionally it checks
+that detected "text" inside an image is not abruptly cropped by any crop_rectangle.
+By default, filters are not applied.
+
+**down_sample_factor**: You can use this **optional** feature to specify the down sampling factor. For large images
+consider increasing this parameter for faster image cropping.  By default input images are downsampled by factor of
+**8** before processing.
 
 .. code-block:: python
-   :emphasize-lines: 3,5,16-18,20-21,27-34,43-44
+
+     input_dir_path = <Path to directory where images are stored>
+
+     crop_list = img_module.crop_image_from_dir(
+        dir_path=input_dir_path,
+        crop_width=<crop_width>,
+        crop_height=<crop_height>,
+        num_of_crops=<no_of_crops_to_return>,
+        filters=<filters>,
+        down_sample_factor=<number_by_which_image_to_downsample>
+     )
+
+Code below is a complete example for a single image.
+
+.. code-block:: python
+   :emphasize-lines: 1-3,5,16-17,20-21,27-37,43-48
    :linenos:
 
     import os.path
@@ -137,9 +176,9 @@ Code below is a complete example.
             output_folder_cropped_image))
 
     # number of images to be returned
-    no_of_crops_to_returned = 3
+    no_of_crops_to_return = 3
 
-    # crop dimentions
+    # crop dimensions
     crop_width = 1000
     crop_height = 600
 
@@ -154,7 +193,7 @@ Code below is a complete example.
         file_path=image_file_path,
         crop_width=crop_width,
         crop_height=crop_height,
-        num_of_crops=no_of_crops_to_returned,
+        num_of_crops=no_of_crops_to_return,
         filters= filters,
         down_sample_factor=8
     )
@@ -177,3 +216,73 @@ Code below is a complete example.
                         crop_width, crop_height ,image_file_path
             )
         )
+
+
+Code below is a complete example for a directory containing images.
+
+.. code-block:: python
+   :emphasize-lines: 1-4,17-18,21-22,28,30-37,42-43,51-55
+   :linenos:
+
+    import os.path
+    import cv2
+    import ntpath
+    from Katna.image import Image
+
+    img_module = Image()
+
+    # folder to save extracted images
+    output_folder_cropped_image = "selectedcrops"
+
+    if not os.path.isdir(os.path.join(".", \
+                output_folder_cropped_image)):
+
+        os.mkdir(os.path.join(".",\
+            output_folder_cropped_image))
+
+    # number of images to be returned
+    no_of_crops_to_return = 3
+
+    # crop dimensions
+    crop_width = 300
+    crop_height = 400
+
+    # Filters
+    filters = ["text"]
+
+    # Directory containing images to be cropped
+    input_dir_path = os.path.join(".", "tests", "data")
+
+    crop_data = img_module.crop_image_from_dir(
+        dir_path=input_dir_path,
+        crop_width=crop_width,
+        crop_height=crop_height,
+        num_of_crops=no_of_crops_to_return,
+        filters=filters,
+        down_sample_factor=8
+    )
+
+    for filepath, crops in crop_data.items():
+
+        # name of the image file
+        filename = ntpath.basename(filepath)
+        name = filename.split(".")[0]
+
+        # folder path where the images will be stored
+        output_file_parent_folder_path = os.path.join(".", output_folder_cropped_image, name)
+
+        if not os.path.exists(output_file_parent_folder_path):
+            os.makedirs(output_file_parent_folder_path)
+
+        if len(crops) > 0:
+            img = cv2.imread(filepath)
+            for count, crop in enumerate(crops):
+                img_module.save_crop_to_disk(crop, img, output_file_parent_folder_path,
+                                              name + "_cropped" + "_" + str(count), ".jpeg")
+
+        else:
+            print(
+               "No Perfect crop found for {0}x{1} with for Image {2}".format(
+                           crop_width, crop_height ,filepath
+               )
+            )

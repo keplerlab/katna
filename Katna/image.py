@@ -173,6 +173,52 @@ class Image(object):
 
         return crops_list
 
+    @FileDecorators.validate_dir_path
+    def crop_image_from_dir(
+            self,
+            dir_path,
+            crop_width,
+            crop_height,
+            num_of_crops,
+            filters=[],
+            down_sample_factor=config.Image.down_sample_factor,
+    ):
+        """smartly crops all the images (inside a directory) based on the specification - width and height
+
+        :param dir_path: Input Directory path
+        :type dir_path: str, required
+        :param crop_width: output crop width
+        :type crop_width: int
+        :param crop_height: output crop height
+        :type crop_height: int
+        :param num_of_crops: number of crops required
+        :type num_of_crops: int
+        :param filters: filters to be applied for cropping(checks if image contains english text and the crop rectangle doesn't cut the text)
+        :type filters: list (eg. ['text'])
+        :param down_sample_factor: number by which you want to reduce image height & width (use it if image is large or to fasten the process)
+        :type down_sample_factor: int [default=8]
+        :return: crop dict with key as filepath and crop list for the file
+        :rtype: dict
+        """
+
+        all_crops = {}
+        for path, subdirs, files in os.walk(dir_path):
+            for filename in files:
+                filepath = os.path.join(path, filename)
+                if filename.lower().endswith(".jpeg") or filename.lower().endswith(".png") or \
+                        filename.lower().endswith(".jpg"):
+                    image_file_path = os.path.join(path, filename)
+                    crop_list = self.crop_image(
+                        image_file_path,
+                        crop_width,
+                        crop_height,
+                        num_of_crops,
+                        filters,
+                        down_sample_factor)
+                    all_crops[filepath] = crop_list
+
+        return all_crops
+
     @FileDecorators.validate_file_path
     def crop_image(
         self,

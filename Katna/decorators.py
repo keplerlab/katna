@@ -67,6 +67,37 @@ class FileDecorators(object):
     """
 
     @classmethod
+    def validate_dir_path(cls, decorated):
+        """Validate if the input path is a valid dir or location
+
+        :param decorated: decorated function
+        :type decorated: function, required
+        :return: function if the path is valid
+        :rtype: function object
+        """
+
+        @functools.wraps(decorated)
+        def wrapper(*args, **kwargs):
+            """ wrapper for decorated function. args and kwargs are standard
+            function parameters.
+            """
+            func_args = inspect.getcallargs(decorated, *args, **kwargs)
+
+            key = "dir_path"
+
+            if key not in func_args:
+                raise Exception("dir_path parameter is missing")
+            else:
+                f_path = func_args.get(key)
+
+            if bool(f_path is None or os.path.exists(f_path) is False):
+                raise NotADirectoryError(errno.ENOENT, os.strerror(errno.ENOENT), f_path)
+            else:
+                return decorated(*args, **kwargs)
+
+        return wrapper
+
+    @classmethod
     def validate_file_path(cls, decorated):
         """Validate if the input path is a valid file or location
 

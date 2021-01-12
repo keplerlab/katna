@@ -54,6 +54,29 @@ class Video(object):
             os.remove(clip)
             # print(clip, " removed!")
 
+    @FileDecorators.validate_dir_path
+    def extract_frames_as_images_from_dir(self, no_of_frames, dir_path):
+        """Returns a dict of best key images/frames from the videos in the directory.
+
+        :param no_of_frames: Number of key frames to be extracted
+        :type no_of_frames: int, required
+        :param dir_path: Directory location with videos
+        :type dir_path: str, required
+        :return: Dictionary with key as filepath and numpy.2darray Image objects
+        :rtype: dict
+        """
+
+        all_videos_top_frames = {}
+        for path, subdirs, files in os.walk(dir_path):
+            for filename in files:
+                filepath = os.path.join(path, filename)
+                if filename.lower().endswith(".mp4") or filename.lower().endswith(".mov"):
+                    video_file_path = os.path.join(path, filename)
+                    video_top_frames = self.extract_frames_as_images(no_of_frames, video_file_path)
+                    all_videos_top_frames[filepath] = video_top_frames
+
+        return all_videos_top_frames
+
     @FileDecorators.validate_file_path
     def extract_frames_as_images(self, no_of_frames, file_path):
         """Returns a list of best key images/frames from the video.
@@ -71,7 +94,7 @@ class Video(object):
 
         frame_extractor = FrameExtractor()
 
-        # Passing all the clipped videos for  the frame extraction using map function of the 
+        # Passing all the clipped videos for  the frame extraction using map function of the
         # multiprocessing pool
         extracted_candidate_frames = self.pool_extractor.map(
             frame_extractor.extract_candidate_frames, videos

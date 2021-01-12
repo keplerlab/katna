@@ -35,13 +35,13 @@ Refer to API reference for further details. Below are the two parameters require
 
 .. code-block:: python
 
-     imgs = vd.extract_frames_as_images(no_of_frames = no_of_frames_to_returned, \
+     imgs = vd.extract_frames_as_images(no_of_frames = no_of_frames_to_return, \
      file_path= video_file_path)
 
 
 **Step 4 (Optional)**
 
-Incase you want to persist the extracted key frames then call the **save_frame_to_disk** method.
+In case you want to persist the extracted key frames then call the **save_frame_to_disk** method.
 The method accepts three parameters and returns nothing. 
 Refer to API reference for further details. Below are the two parameters required by the method
 
@@ -59,10 +59,26 @@ Refer to API reference for further details. Below are the two parameters require
      vd.save_frame_to_disk(img, file_path=output_folder_video_image, \
           file_name="test_"+str(counter), file_ext=".jpeg")
 
-Code below is a complete example.
+**Extract keyframes for all videos in a directory**
+
+Call the **extract_frames_as_images_from_dir** method.
+The method accepts two parameters and return a dictionary with the file path as the key
+and list of numpy 2D array (which are images) as its value.
+
+1. **no_of_frames**: Number of key frames to be extracted
+
+2. **dir_path**: Directory path which has all the videos.
 
 .. code-block:: python
-   :emphasize-lines: 1,8,11,14,17-18,20-21,27-28
+
+     imgs = vd.extract_frames_as_images_from_dir(no_of_frames = no_of_frames_to_return, \
+     dir_path= dir_path_containing_videos)
+
+
+Code below is a complete example for a single video file.
+
+.. code-block:: python
+   :emphasize-lines: 1,8,11,14,17-18,21-23,26-28
    :linenos:
 
    from Katna.video import Video
@@ -75,13 +91,13 @@ Code below is a complete example.
      vd = Video()
 
      #number of key-frame images to be extracted
-     no_of_frames_to_returned = 12
+     no_of_frames_to_return = 12
 
      #Input Video file path
      video_file_path = os.path.join(".", "tests","data", "pos_video.mp4")
 
      #Call the public key-frame extraction method
-     imgs = vd.extract_frames_as_images(no_of_frames = no_of_frames_to_returned, \
+     imgs = vd.extract_frames_as_images(no_of_frames = no_of_frames_to_return, \
           file_path= video_file_path)
 
      # Make folder for saving frames
@@ -93,4 +109,60 @@ Code below is a complete example.
      for counter,img in enumerate(imgs):
           vd.save_frame_to_disk(img, file_path=output_folder_video_image, \
                file_name="test_"+str(counter), file_ext=".jpeg")
+
+
+Code below is a complete example for a directory containing videos.
+
+.. code-block:: python
+   :emphasize-lines: 1,9,12,16,19-20,23-25,28,31-32,35,38-39,42-44
+   :linenos:
+
+   from Katna.video import Video
+   import os
+   import ntpath
+
+   # For windows, the below if condition is must.
+   if __name__ == "__main__":
+
+     #instantiate the video class
+     vd = Video()
+
+     #number of key-frame images to be extracted
+     no_of_frames_to_return = 3
+
+     #Input Video directory path
+     #All .mp4 and .mov files inside this directory will be used for keyframe extraction)
+     videos_dir_path = os.path.join(".", "tests","data")
+
+     #Call the public key-frame extraction method
+     imgs = vd.extract_frames_as_images_from_dir(no_of_frames = no_of_frames_to_return, \
+          dir_path = videos_dir_path)
+
+     # Make folder for saving frames
+     output_folder_video_image = 'selectedframes'
+     if not os.path.isdir(os.path.join(".", output_folder_video_image)):
+          os.mkdir(os.path.join(".", output_folder_video_image))
+
+     # Save all the frames to disk by segregating them into folders having the same name as the video file
+     for filepath, keyframe_data_li in imgs.items():
+
+          # name of the video file
+          filename = ntpath.basename(filepath)
+          name = filename.split(".")[0]
+
+          # folder path where the images will be stored
+          output_file_parent_folder_path = os.path.join(".", output_folder_video_image, name)
+
+          # make folder with name of video if it doesnt exist
+          if not os.path.exists(output_file_parent_folder_path):
+               os.makedirs(output_file_parent_folder_path)
+
+          # save keyframes inside the folder
+          for counter, img in enumerate(keyframe_data_li):
+               vd.save_frame_to_disk(img, file_path=output_file_parent_folder_path,
+                    file_name=name + "_" + str(counter), file_ext=".jpeg")
+
+
+
+
 
