@@ -57,3 +57,4 @@ html_static_path = ['_static']
 
 # -- Set start point ---------------------
 master_doc = 'index'
+html_logo = "logo.png"
