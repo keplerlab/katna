@@ -44,7 +44,7 @@ dep_groups = {
         numpy>=1.15
         imutils
         requests
-        moviepy >=1.0.1, <=1.0.3
+        moviepy >=1.0.1
 """
     )
 }

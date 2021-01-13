@@ -21,9 +21,7 @@ from multiprocessing import Pool, Process, cpu_count
 from moviepy.editor import VideoFileClip
 
 from moviepy.tools import subprocess_call
-from moviepy.config import get_setting
-
-
+import moviepy.config as moviepyConfig
 class Video(object):
     """Class for all video frames operations
 
@@ -219,7 +217,7 @@ class Video(object):
             targetname = name + "{0}SUB{1}_{2}.{3}".format(name, T1, T2, ext)
 
         cmd = [
-            get_setting("FFMPEG_BINARY"),
+            moviepyConfig.FFMPEG_BINARY,
             "-y",
             "-i",
             filename,
