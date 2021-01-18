@@ -42,9 +42,10 @@ dep_groups = {
         scikit-image
         opencv-contrib-python>=3.4.7
         numpy>=1.15
+        imageio_ffmpeg>=0.2.0
         imutils
         requests
-        moviepy >=1.0.1
+        ffmpy
 """
     )
 }
