@@ -262,7 +262,7 @@ class Video(object):
             else:
                 line = [line for line in lines if "Duration:" in line][-1]
             match = re.findall("([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9])", line)[0]
-            video_duration = self.convert_to_seconds(match)
+            video_duration = self._convert_to_seconds(match)
         except Exception:
             raise IOError(
                 f"error: failed to read the duration of file {filename}.\n"
@@ -270,7 +270,7 @@ class Video(object):
             )
         return video_duration
 
-    def convert_to_seconds(self, time):
+    def _convert_to_seconds(self, time):
         """Will convert any time into seconds.
         If the type of `time` is not valid,
         it's returned as is.
