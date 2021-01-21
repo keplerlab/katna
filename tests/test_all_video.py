@@ -71,7 +71,7 @@ def test_extracted_frame_numbers(video_object):
     video_file_path = os.path.join("tests", "data", "pos_video.mp4")
     expected_number_of_images = 10
 
-    imgs = video_object.extract_frames_as_images(
+    imgs = video_object.extract_video_keyframes(
         expected_number_of_images, video_file_path
     )
 
@@ -88,7 +88,7 @@ def test_extracted_frame_quality(video_object, image_similarity_object):
     video_file_path = os.path.join("tests", "data", "pos_video.mp4")
     expected_number_of_images = 12
 
-    imgs = video_object.extract_frames_as_images(
+    imgs = video_object.extract_video_keyframes(
         expected_number_of_images, video_file_path
     )
 
@@ -139,7 +139,7 @@ def test_extracted_frame_as_png(video_object):
     expected_number_of_images = 10
     file_type = "png"
 
-    imgs = video_object.extract_frames_as_images(
+    imgs = video_object.extract_video_keyframes(
         expected_number_of_images, video_file_path, file_type
     )
 
@@ -159,7 +159,7 @@ def test_extracted_frame_as_jpg(video_object):
     video_file_path = os.path.join(".", "data", "pos_video.mp4")
     expected_number_of_images = 10
 
-    imgs = video_object.extract_frames_as_images(
+    imgs = video_object.extract_video_keyframes(
         expected_number_of_images, video_file_path
     )
 

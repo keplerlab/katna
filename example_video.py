@@ -26,7 +26,7 @@ def main():
     video_file_path = os.path.join(".", "tests", "data", "pos_video.mp4")
     print(f"Input video file path = {video_file_path}")
 
-    imgs = vd.extract_frames_as_images(
+    imgs = vd.extract_video_keyframes(
         no_of_frames=no_of_frames_to_returned, file_path=video_file_path
     )
 

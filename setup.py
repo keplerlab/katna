@@ -34,6 +34,19 @@ def to_list(buffer):
 #   pip install -e .
 #
 # IMPORTANT: when updating these, please make sure to sync conda/meta.yaml
+# 
+# Important dependencies and their use:
+# opencv-contrib-python: opencv library with contrib extension for image
+#                        processing tasks
+# image_ffmpeg: This module automatically installs ffmpeg binaries for use
+#               in frames extraction from video
+# ffmpy: Thin wrapper on top of ffmpeg binary for calling ffmpeg executables
+#        using python, used in video duration calculation and frame extraction
+#        from video
+# requests: python requests library is used for downloading text detection model
+#           if needed.
+# scipy, scikit-learn, numpy, imutils are used for general io for images and
+# and utilities
 dep_groups = {
     "core": to_list(
         """
@@ -50,6 +63,7 @@ dep_groups = {
     )
 }
 
+# Get version info from Katna/version.py location
 __version__ = None # Explicitly set version.
 exec(open('Katna/version.py').read()) # loads __version__
 

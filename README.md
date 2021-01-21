@@ -101,9 +101,9 @@ by running command "python -m pip uninstall opencv-contrib-python" and then agai
 5) On windows, ensure that anaconda has admin rights if installing with anaconda as it fails with 
 the write permission while installing some modules.
 
-6) If you get "RuntimeError: No ffmpeg exe could be found. Install ffmpeg on your system, or 
-set the IMAGEIO_FFMPEG_EXE environment variable". Go to the **imageio_ffmpeg-*.egg** folder inside your
-**site-packages** folder, there's ffmpeg file inside binaries folder set it's path to environment variable.
+6) If you get "RuntimeError: No ffmpeg exe could be found". Install ffmpeg on your system, and/or set the IMAGEIO_FFMPEG_EXE or FFMPEG_EXE environment variable to path of your ffmpeg binary.
+Usually ffmpeg is installed using imageio-ffmpeg package, Check **imageio_ffmpeg-*.egg** folder inside your
+**site-packages** folder, there should be a ffmpeg file inside binaries folder, check if this file has proper read/executable permission set and additionally set it's path to environment variable.
 
  
 ### How to use Library

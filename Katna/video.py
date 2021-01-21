@@ -18,6 +18,7 @@ import Katna.config as config
 import subprocess
 import re
 import ffmpy
+from imageio_ffmpeg import get_ffmpeg_exe
 from multiprocessing import Pool, Process, cpu_count
 class Video(object):
     """Class for all video frames operations
@@ -28,7 +29,7 @@ class Video(object):
 
     def __init__(self):
         # Find out location of ffmpeg binary on system
-        self._get_ffmpeg_binary()
+        self._set_ffmpeg_binary_path()
         # If the duration of the clipped video is less than **min_video_duration**
         # then, the clip will be added with the previous clipped
         self.min_video_duration = config.Video.min_video_duration
@@ -45,15 +46,25 @@ class Video(object):
             os.mkdir(self.temp_folder)
 
     def _remove_clips(self, video_clips):
-        """Remove video clips from the temp directory"""
+        """Remove video clips from the temp directory given list of video clips
+
+        :param video_clips: [description]
+        :type video_clips: [type]
+        """
         for clip in video_clips:
-            # TODO it should be inside try catch block
-            os.remove(clip)
+            try:
+                os.remove(clip)
+            except OSError:
+                print("Error in removing clip: " + clip)
             # print(clip, " removed!")
 
     @FileDecorators.validate_dir_path
-    def extract_frames_as_images_from_dir(self, no_of_frames, dir_path):
-        """Returns a dict of best key images/frames from the videos in the directory.
+    def extract_keyframes_from_videos_dir(self, no_of_frames, dir_path):
+        """Returns best key images/frames from the videos in the given directory.
+        you need to mention number of keyframes as well as directory path 
+        containing videos. Function returns python dictionary with key as filepath
+        each dictionary element contains list of python numpy image objects as 
+        keyframes. 
 
         :param no_of_frames: Number of key frames to be extracted
         :type no_of_frames: int, required
@@ -64,14 +75,14 @@ class Video(object):
         """
 
         all_videos_top_frames = {}
+
         for path, subdirs, files in os.walk(dir_path):
             for filename in files:
                 filepath = os.path.join(path, filename)
-                if filename.lower().endswith(".mp4") or filename.lower().endswith(
-                    ".mov"
-                ):
+
+                if self._check_if_valid_video(filename):
                     video_file_path = os.path.join(path, filename)
-                    video_top_frames = self.extract_frames_as_images(
+                    video_top_frames = self.extract_video_keyframes(
                         no_of_frames, video_file_path
                     )
                     all_videos_top_frames[filepath] = video_top_frames
@@ -79,8 +90,38 @@ class Video(object):
         return all_videos_top_frames
 
     @FileDecorators.validate_file_path
-    def extract_frames_as_images(self, no_of_frames, file_path):
-        """Returns a list of best key images/frames from the video.
+    def _check_if_valid_video(self, file_path):
+        """Function to check if given video file is a valid video compatible with
+        ffmpeg/opencv
+
+        :param file_path: video filename
+        :type file_path: str
+        :return: Return True if valid video file else False
+        :rtype: bool
+        """
+        try:
+            vid = cv2.VideoCapture(file_path)
+            if vid.isOpened():
+                # Making sure we can read at least two frames from video
+                ret, frame = vid.read()
+                ret, frame = vid.read()
+                # Making sure video frame is not empty
+                if frame is not None:
+                    return True
+                else:
+                    return False
+            else:
+                return False
+        except cv2.error as e:
+            print("cv2.error:", e)
+            return False
+        except Exception as e:
+            print("Exception:", e)
+            return False
+
+    @FileDecorators.validate_file_path
+    def extract_video_keyframes(self, no_of_frames, file_path):
+        """Returns a list of best key images/frames from a single video.
 
         :param no_of_frames: Number of key frames to be extracted
         :type no_of_frames: int, required
@@ -90,25 +131,29 @@ class Video(object):
         :rtype: list
         """
 
-        # Split the videos into chunks. Each split(video) will be stored in a temp location
-        videos = self._split(file_path)
+        # Split the input video into chunks. Each split(video) will be stored
+        # in a temp 
+        if not self._check_if_valid_video(file_path):
+            raise Exception("Invalid or corrupted video: "+ file_path)
+
+        chunked_videos = self._split(file_path)
 
         frame_extractor = FrameExtractor()
 
         # Passing all the clipped videos for  the frame extraction using map function of the
         # multiprocessing pool
         extracted_candidate_frames = self.pool_extractor.map(
-            frame_extractor.extract_candidate_frames, videos
+            frame_extractor.extract_candidate_frames, chunked_videos
         )
         # Converting the nested list of extracted frames into 1D list
         extracted_candidate_frames = [
             frame for frames in extracted_candidate_frames for frame in frames
         ]
 
-        self._remove_clips(videos)
+        self._remove_clips(chunked_videos)
 
-        image_selecter = ImageSelector(self.pool_selector)
-        top_frames = image_selecter.select_best_frames(
+        image_selector = ImageSelector(self.pool_selector)
+        top_frames = image_selector.select_best_frames(
             extracted_candidate_frames, no_of_frames
         )
 
@@ -118,7 +163,7 @@ class Video(object):
     def save_frame_to_disk(self, frame, file_path, file_name, file_ext):
         """saves an in-memory numpy image array on drive.
 
-        :param frame: In-memory image. This would have been generated by extract_frames_as_images method
+        :param frame: In-memory image. This would have been generated by extract_video_keyframes method
         :type frame: numpy.ndarray, required
         :param file_name: name of the image.
         :type file_name: str, required
@@ -163,13 +208,13 @@ class Video(object):
                 clip_end = duration
 
             clipped_files.append(
-                self.__write_videofile(file_path, clip_start, clip_end)
+                self._write_videofile(file_path, clip_start, clip_end)
             )
 
             clip_start = clip_end
         return clipped_files
 
-    def __write_videofile(self, video_file_path, start, end):
+    def _write_videofile(self, video_file_path, start, end):
         """Function to clip the video for given start and end points and save the video
 
         :param video_file_path: path of video file
@@ -199,8 +244,9 @@ class Video(object):
         return _clipped_file_path
 
     def _ffmpeg_extract_subclip(self, filename, t1, t2, targetname=None):
-        """makes a new video file playing video file ``filename`` between
-            the times ``t1`` and ``t2``.
+        """chops a new video clip from video file ``filename`` between
+            the times ``t1`` and ``t2``, Uses ffmpy wrapper on top of ffmpeg
+            library
         :param filename: path of video file
         :type filename: str, required
         :param t1: time from where video to clip
@@ -218,6 +264,8 @@ class Video(object):
             targetname = name + "{0}SUB{1}_{2}.{3}".format(name, T1, T2, ext)
 
         timeParamter = "-ss " + "%0.2f" % t1 + " -t " + "%0.2f" % (t2 - t1)
+
+        # Uses ffmpeg binary for video clipping using ffmpy wrapper
         FFMPEG_BINARY = os.getenv("FFMPEG_BINARY")
         ff = ffmpy.FFmpeg(
             executable=FFMPEG_BINARY,
@@ -226,17 +274,25 @@ class Video(object):
         )
         ff.run()
 
-    def _get_video_duration_with_ffmpeg(self, filename):
-        """Get file infos using ffmpeg.
+
+    @FileDecorators.validate_file_path
+    def _get_video_duration_with_ffmpeg(self, file_path):
+        """Get video duration using ffmpeg binary.
         Based on function ffmpeg_parse_infos inside repo
         https://github.com/Zulko/moviepy/moviepy/video/io/ffmpeg_reader.py
         The MIT License (MIT)
         Copyright (c) 2015 Zulko
         Returns a video duration in second
+        
+        :param file_path: video file path
+        :type file_path: string
+        :raises IOError: 
+        :return: duration of video clip in seconds
+        :rtype: float
         """
         FFMPEG_BINARY = os.getenv("FFMPEG_BINARY")
         # Open the file in a pipe, read output
-        ff = ffmpy.FFmpeg(executable=FFMPEG_BINARY, inputs={filename: ""}, outputs={None: "-f null -"})
+        ff = ffmpy.FFmpeg(executable=FFMPEG_BINARY, inputs={file_path: ""}, outputs={None: "-f null -"})
         _, error = ff.run(
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -246,14 +302,15 @@ class Video(object):
         if "No such file or directory" in lines[-1]:
             raise IOError(
                 (
-                    "MoviePy error: the file %s could not be found!\n"
+                    "Error: the file %s could not be found!\n"
                     "Please check that you entered the correct "
                     "path."
                 )
-                % filename
+                % file_path
             )
 
-        # get duration (in seconds)
+        # get duration (in seconds) by parsing ffmpeg file info returned by 
+        # ffmpeg binary
         video_duration = None
         decode_file = False
         try:
@@ -265,13 +322,13 @@ class Video(object):
             video_duration = self._convert_to_seconds(match)
         except Exception:
             raise IOError(
-                f"error: failed to read the duration of file {filename}.\n"
+                f"error: failed to read the duration of file {file_path}.\n"
                 f"Here are the file infos returned by ffmpeg:\n\n{infos}"
             )
         return video_duration
 
     def _convert_to_seconds(self, time):
-        """Will convert any time into seconds.
+        """ Will convert any time into seconds.
         If the type of `time` is not valid,
         it's returned as is.
         Here are the accepted formats::
@@ -289,7 +346,13 @@ class Video(object):
         99.5
         >>> convert_to_seconds('33.5')      # only secs
         33.5
-        """
+
+        :param time: time_string
+        :type time: string
+        :return: time in seconds
+        :rtype: float
+        """        
+
         factors = (1, 60, 3600)
 
         if isinstance(time, str):
@@ -300,9 +363,8 @@ class Video(object):
 
         return sum(mult * part for mult, part in zip(factors, reversed(time)))
 
-
-    def _get_ffmpeg_binary(self):
-        """ Function for getting path to ffmpeg libarary on your system to be
+    def _set_ffmpeg_binary_path(self):
+        """ Function for getting path to ffmpeg binary on your system to be
         used by ffmpy
         # Derived from ffmpeg detection code borrowed from moviepy 
         # https://github.com/Zulko/moviepy/moviepy/config.py
@@ -312,8 +374,8 @@ class Video(object):
         :raises IOError: [description]
         """
         FFMPEG_BINARY = os.getenv("FFMPEG_BINARY", "ffmpeg-imageio")
+
         if FFMPEG_BINARY == "ffmpeg-imageio":
-            from imageio_ffmpeg import get_ffmpeg_exe
             FFMPEG_BINARY = get_ffmpeg_exe()
         else:
             success, err = self._try_cmd([FFMPEG_BINARY])
@@ -331,10 +393,10 @@ class Video(object):
         # The MIT License (MIT)
         # Copyright (c) 2015 Zulko
         #
-        :param cmd: [description]
-        :type cmd: [type]
-        :return: [description]
-        :rtype: [type]
+        :param cmd: command to execute
+        :type cmd: string
+        :return: True/False with error
+        :rtype: Bool, Error
         """
         try:
             popen_params = self._cross_platform_popen_params(
@@ -349,7 +411,7 @@ class Video(object):
 
 
     def _cross_platform_popen_params(self, popen_params):
-        """
+        """ 
         # Derived from ffmpeg detection code borrowed from moviepy 
         # https://github.com/Zulko/moviepy/moviepy/config.py
         # The MIT License (MIT)
@@ -360,6 +422,11 @@ class Video(object):
         Currently, the implementation will add to them:
         - ``creationflags=0x08000000``: no extra unwanted window opens on Windows
         when the child process is created. Only added on Windows.
+
+        :param popen_params: original popen_parameters
+        :type popen_params: dict
+        :return: modified popen_parameters
+        :rtype: dict
         """
         if os.name == "nt":
             popen_params["creationflags"] = 0x08000000
