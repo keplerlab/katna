@@ -105,12 +105,16 @@ the write permission while installing some modules.
 Usually ffmpeg is installed using imageio-ffmpeg package, Check **imageio_ffmpeg-*.egg** folder inside your
 **site-packages** folder, there should be a ffmpeg file inside binaries folder, check if this file has proper read/executable permission set and additionally set it's path to environment variable.
 
- 
 ### How to use Library
 
 1) Refer to quickstart section in Katna Reference 
    from https://katna.readthedocs.io/
 
+### Update: katna version 0.5.0
+In version 0.5.0 we have changed name of some of the public functions inside
+for Katna.video module used for keyframe extraction,
+1) extract_frames_as_images method is changed to extract_video_keyframes.
+2) extract_frames_as_images_from_dir method is changed to extract_keyframes_from_videos_dir
 ### Attributions
 1) We have used the SAD (Sum of absolute difference) code from https://github.com/amanwalia92/KeyFramesExtraction  
 2) We have used project Smartcrop https://github.com/jwagner/smartcrop.js/ for Smart crop feature in Katna Image module

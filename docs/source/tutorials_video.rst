@@ -1,10 +1,11 @@
 .. _tutorials_video:
 
-How to Use
-==========
+How to Use Katna.video
+========================
 
-Video
-------
+Extract keyframes for a video
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 **Step 1**
 
 Import the video module 
@@ -59,22 +60,6 @@ Refer to API reference for further details. Below are the two parameters require
      vd.save_frame_to_disk(img, file_path=output_folder_video_image, \
           file_name="test_"+str(counter), file_ext=".jpeg")
 
-**Extract keyframes for all videos in a directory**
-
-Call the **extract_keyframes_from_videos_dir** method.
-The method accepts two parameters and return a dictionary with the file path as the key
-and list of numpy 2D array (which are images) as its value.
-
-1. **no_of_frames**: Number of key frames to be extracted
-
-2. **dir_path**: Directory path which has all the videos.
-
-.. code-block:: python
-
-     imgs = vd.extract_keyframes_from_videos_dir(no_of_frames = no_of_frames_to_return, \
-     dir_path= dir_path_containing_videos)
-
-
 Code below is a complete example for a single video file.
 
 .. code-block:: python
@@ -109,6 +94,23 @@ Code below is a complete example for a single video file.
      for counter,img in enumerate(imgs):
           vd.save_frame_to_disk(img, file_path=output_folder_video_image, \
                file_name="test_"+str(counter), file_ext=".jpeg")
+
+
+Extract keyframes for all videos in a directory
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Call the **extract_keyframes_from_videos_dir** method.
+The method accepts two parameters and return a dictionary with the file path as the key
+and list of numpy 2D array (which are images) as its value.
+
+1. **no_of_frames**: Number of key frames to be extracted
+
+2. **dir_path**: Directory path which has all the videos.
+
+.. code-block:: python
+
+     imgs = vd.extract_keyframes_from_videos_dir(no_of_frames = no_of_frames_to_return, \
+     dir_path= dir_path_containing_videos)
 
 
 Code below is a complete example for a directory containing videos.

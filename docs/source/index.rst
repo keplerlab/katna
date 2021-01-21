@@ -50,8 +50,9 @@ Additional selection features and retention filters are in development pipeline.
    Installation <installation>
    Quickstart video module <tutorials_video>
    Quickstart image module <tutorials_image>
-   API reference <modules>
+   Understanding katna <understanding_katna>
    Troubleshooting <troubleshooting>
+   API reference <modules>
 
 Indices and tables
 ==================

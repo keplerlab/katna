@@ -1,10 +1,11 @@
 .. _tutorials_image:
 
-How to Use
-==========
+How to Use Katna.image
+========================
 
-Image
-------
+Crop a single image
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 **Step 1**
 
 Import the image module.
@@ -115,45 +116,6 @@ Refer to API reference for further details.
             file_ext=<file_ext>,
         )
 
-
-**Crop all images in a directory**
-
-To run crop image for all images in a directory, call the **crop_image_from_dir**
-method. This method accepts following parameters and returns a dictionary containing file path as key
-and list of crop rectangles (in crop_rect data structure) as its values.
-Below are the six parameters of the function
-
-**dir_path**: directory path where images from which crop has to be extracted
-
-**crop_width**: width of crop to extract
-
-**crop_height**: height of crop to extract
-
-**no_of_crops_to_return**: number of crops rectangles to be extracted
-
-**filters**: You can use this **optional** parameter to filter out unwanted crop rectangles according to some filtering criteria.
-At the moment only "text" detection filter is implemented and more filters will be added in future
-will be added in future. Passing on "text" detection filter ensures crop rectangle contains text, additionally it checks
-that detected "text" inside an image is not abruptly cropped by any crop_rectangle.
-By default, filters are not applied.
-
-**down_sample_factor**: You can use this **optional** feature to specify the down sampling factor. For large images
-consider increasing this parameter for faster image cropping.  By default input images are downsampled by factor of
-**8** before processing.
-
-.. code-block:: python
-
-     input_dir_path = <Path to directory where images are stored>
-
-     crop_list = img_module.crop_image_from_dir(
-        dir_path=input_dir_path,
-        crop_width=<crop_width>,
-        crop_height=<crop_height>,
-        num_of_crops=<no_of_crops_to_return>,
-        filters=<filters>,
-        down_sample_factor=<number_by_which_image_to_downsample>
-     )
-
 Code below is a complete example for a single image.
 
 .. code-block:: python
@@ -216,6 +178,46 @@ Code below is a complete example for a single image.
                         crop_width, crop_height ,image_file_path
             )
         )
+
+
+Crop all images in a directory
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To run crop image for all images in a directory, call the **crop_image_from_dir**
+method. This method accepts following parameters and returns a dictionary containing file path as key
+and list of crop rectangles (in crop_rect data structure) as its values.
+Below are the six parameters of the function
+
+**dir_path**: directory path where images from which crop has to be extracted
+
+**crop_width**: width of crop to extract
+
+**crop_height**: height of crop to extract
+
+**no_of_crops_to_return**: number of crops rectangles to be extracted
+
+**filters**: You can use this **optional** parameter to filter out unwanted crop rectangles according to some filtering criteria.
+At the moment only "text" detection filter is implemented and more filters will be added in future
+will be added in future. Passing on "text" detection filter ensures crop rectangle contains text, additionally it checks
+that detected "text" inside an image is not abruptly cropped by any crop_rectangle.
+By default, filters are not applied.
+
+**down_sample_factor**: You can use this **optional** feature to specify the down sampling factor. For large images
+consider increasing this parameter for faster image cropping.  By default input images are downsampled by factor of
+**8** before processing.
+
+.. code-block:: python
+
+     input_dir_path = <Path to directory where images are stored>
+
+     crop_list = img_module.crop_image_from_dir(
+        dir_path=input_dir_path,
+        crop_width=<crop_width>,
+        crop_height=<crop_height>,
+        num_of_crops=<no_of_crops_to_return>,
+        filters=<filters>,
+        down_sample_factor=<number_by_which_image_to_downsample>
+     )
 
 
 Code below is a complete example for a directory containing images.
