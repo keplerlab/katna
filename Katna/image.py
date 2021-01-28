@@ -287,34 +287,16 @@ class Image(object):
         imgFile = cv2.imread(file_path)
         image_height, image_width, _ = imgFile.shape
         ratio_width, ratio_height = map(int, crop_aspect_ratio.split(":"))
-        hr, wr = image_height / ratio_height, image_width / ratio_width
-        crop_list_tuple, crop_list = [], []
-        if hr <= wr:
-            crop_list_tuple += self._get_crop_specs(
-                image_height,
-                image_width,
-                ratio_height,
-                ratio_width,
-                is_height_small=True,
-            )
-        elif wr < hr:
-            crop_list_tuple += self._get_crop_specs(
-                image_height,
-                image_width,
-                ratio_height,
-                ratio_width,
-                is_height_small=False,
-            )
-
-        for crop_height, crop_width in crop_list_tuple:
-            crop_list += self.crop_image_from_cvimage(
-                input_image=imgFile,
-                crop_width=crop_width,
-                crop_height=crop_height,
-                num_of_crops=num_of_crops,
-                filters=filters,
-                down_sample_factor=down_sample_factor,
-            )
+        crop_list = self._generate_crop_options_given_for_given_aspect_ratio(
+            imgFile,
+            image_width,
+            image_height,
+            ratio_width,
+            ratio_height,
+            num_of_crops=num_of_crops,
+            filters=filters,
+            down_sample_factor=down_sample_factor,
+        )
 
         sorted_list = sorted(crop_list, key=lambda x: float(x.score), reverse=True)
         return sorted_list[:num_of_crops]
@@ -364,44 +346,104 @@ class Image(object):
             print("Error: Invalid Image, check image path: ", file_path)
             return
         imgFile = cv2.imread(file_path)
-        image_height, image_width, _ = imgFile.shape
-        if (target_width / target_height) == (image_width / image_height):
+        input_image_height, input_image_width, _ = imgFile.shape
+
+        target_image_aspect_ratio = target_width / target_height
+        input_image_aspect_ratio = input_image_width / input_image_height
+
+        if input_image_aspect_ratio == target_image_aspect_ratio:
             target_image = cv2.resize(imgFile, (target_width, target_height))
             return target_image
         else:
-            hr, wr = image_height / target_height, image_width / target_width
-            crop_list_tuple, crop_list = [], []
-            if hr <= wr:
-                crop_list_tuple += self._get_crop_specs(
-                    image_height,
-                    image_width,
-                    target_height,
-                    target_width,
-                    is_height_small=True,
-                )
-            elif wr < hr:
-                crop_list_tuple += self._get_crop_specs(
-                    image_height,
-                    image_width,
-                    target_height,
-                    target_width,
-                    is_height_small=False,
-                )
-
-            for crop_height, crop_width in crop_list_tuple:
-                crop_list += self.crop_image_from_cvimage(
-                    input_image=imgFile,
-                    crop_width=crop_width,
-                    crop_height=crop_height,
-                    num_of_crops=1,
-                    filters=[],
-                    down_sample_factor=down_sample_factor,
-                )
-
+            crop_list = self._generate_crop_options_given_for_given_aspect_ratio(
+                imgFile,
+                input_image_width,
+                input_image_height,
+                target_width,
+                target_height,
+                num_of_crops=1,
+                filters=[],
+                down_sample_factor=down_sample_factor,
+            )
+            # From list of crop options sort and get best crop using crop score variables in each
+            # crop option
             sorted_list = sorted(crop_list, key=lambda x: float(x.score), reverse=True)
+            # Get top crop image
             resized_image = sorted_list[0].get_image_crop(imgFile)
             target_image = cv2.resize(resized_image, (target_width, target_height))
             return target_image
+
+    def _generate_crop_options_given_for_given_aspect_ratio(
+        self,
+        imgFile,
+        input_image_width,
+        input_image_height,
+        target_width,
+        target_height,
+        num_of_crops,
+        filters,
+        down_sample_factor,
+    ):
+        """ Internal function to which for given aspect ratio (target_width/target_height)
+        Generates ,scores and returns list of image crops 
+
+        :param imgFile: Input image
+        :type imgFile: opencv image
+        :param input_image_width: input image width
+        :type input_image_width: int
+        :param input_image_height: input image height
+        :type input_image_height: int
+        :param target_width: target aspect ratio width
+        :type target_width: int
+        :param target_height: target aspect ratio height
+        :type target_height: int
+        :param num_of_crops: number of crop needed in the end
+        :type num_of_crops: int
+        :param filters: filters
+        :type filters: list of filters
+        :param down_sample_factor: image down sample factor for optimizing processing time
+        :type down_sample_factor: int
+        :return: list of candidate crop rectangles as per input aspect ratio
+        :rtype: list of CropRect
+        """
+        crop_list_tuple, crop_list = [], []
+        # Calculate height ratio and width ratio of input and target image
+        height_ratio, width_ratio = (
+            input_image_height / target_height,
+            input_image_width / target_width,
+        )
+
+        # Generate candidate crops, _get_crop_spec function changes it's behavior based
+        # on whether height_ratio is greater or smaller than width ratio.
+        if height_ratio <= width_ratio:
+            crop_list_tuple += self._get_crop_specs(
+                input_image_height,
+                input_image_width,
+                target_height,
+                target_width,
+                is_height_small=True,
+            )
+        else:  # elif width_ratio < height_ratio:
+            crop_list_tuple += self._get_crop_specs(
+                input_image_height,
+                input_image_width,
+                target_height,
+                target_width,
+                is_height_small=False,
+            )
+
+        # For each of crop_specifications generated by _get_crop_spec() function
+        # generate actual crop as well as give score to each of these crop 
+        for crop_height, crop_width in crop_list_tuple:
+            crop_list += self.crop_image_from_cvimage(
+                input_image=imgFile,
+                crop_width=crop_width,
+                crop_height=crop_height,
+                num_of_crops=num_of_crops,
+                filters=filters,
+                down_sample_factor=down_sample_factor,
+            )
+        return crop_list
 
     @FileDecorators.validate_dir_path
     def resize_image_from_dir(
