@@ -165,6 +165,42 @@ def test_image(image_object):
     assert len(crop_list1) == 0
 
 
+
+def test_image_resize(image_object):
+    import os.path
+    import cv2
+
+
+    # crop dimensions
+    target_width = 800
+    target_height = 600
+
+    target_width1 = 200
+    target_height1 = 200
+
+    path = os.path.join("tests", "data")
+    image_file_path = os.path.join(path, "test_image_for_text.jpeg")
+    print(f"image_file_path = {image_file_path}")
+
+    resized_image = image_object.resize_image(
+        file_path=image_file_path,
+        target_width=target_width,
+        target_height=target_height,
+    )
+    resized_image1 = image_object.resize_image(
+        file_path=image_file_path,
+        target_width=target_width1,
+        target_height=target_height1,
+    )
+    assert resized_image is not None
+    assert resized_image1 is not None
+    resized_image_height, resized_image_width, _ = resized_image.shape
+    resized_image1_height, resized_image1_width, _ = resized_image1.shape
+    assert resized_image_height == target_height
+    assert resized_image_width == target_width
+    assert resized_image1_height == target_height1
+    assert resized_image1_width == target_width1
+
 def test_crop_quality(tmpdir_factory, image_object, image_similarity_object):
     import os.path
     import cv2

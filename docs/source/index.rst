@@ -25,16 +25,29 @@ Key-frames are defined as the representative frames of a video stream, the frame
 
 Image Module:
 -------------
-This module handles the task(s) for smart cropping.
+This module handles the task(s) for smart cropping and smart image resizing.
 
-The Smart crop feature tries to automatically identify important image areas where the user will focus more and tries to retain it while cropping.
-For a given input cropping dimension/final output image size, following selection and filtering criteria are used.
+The Smart crop feature tries to automatically identify important image areas
+where the user will focus more and tries to retain it while cropping.
+For a given input cropping dimension/final output image size,
+following selection and filtering criteria are used.
 
 **Crop selection and filtering criteria**
 
 1. Edge, saliency and Face features.
 2. Distance of crop from Image edge, Rule of third
-3. Crop filters. At the moment only text filter is supported. Text filter ensures that cropped rectangle contains text, also it ensures that texts present is not abruptly cropped.  
+3. Crop filters. At the moment only text filter is supported.
+   Text filter ensures that cropped rectangle contains text, also it ensures
+   that texts present is not abruptly cropped.  
+
+Similar to Smart crop Katna image module supports **Smart image resizing** feature.
+Given an input image and target image resolution it will perform simple image image resize
+if if aspect ratio is same for input and target image. 
+But in case of aspect ratio is different than smart image resize will extract a optimum crop
+in target resolution and then resizes image to target resolution.
+This ensures image resize without actually skewing output image.
+**Please not that if aspect ratio of input and output image are not same katna image_resize can lead to some loss of image content**
+
 
 **Supported Video and image file formats**
 ##########################################
