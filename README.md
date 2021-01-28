@@ -1,5 +1,5 @@
 
-## **Katna**: Tool for automating common vide keyframe extraction and Image Autocrop tasks
+## **Katna**: Tool for automating common vide keyframe extraction and Image Autocrop and Smart image resize tasks
 
 ### Resources 
 * Homepage and Reference: <https://katna.readthedocs.io/>
@@ -25,7 +25,7 @@ Key-frames are defined as the representative frames of a video stream, the frame
 
 Image Module:
 -------------
-This module handles the task(s) related to smart cropping.
+This module handles the task(s) related to smart cropping and image resizing.
 
 The Smart image cropping is happening in way that the module identifies the best part or the area where someone focus more
 and interprets this information while cropping the image.
@@ -35,6 +35,8 @@ and interprets this information while cropping the image.
 1. Edge, saliency and Face detection features are detected in the input image
 2. All the crops with specified dimensions are extracted with calculation of score for each crop wrt to extracted features
 3. The crops will be passes through filters specified which will remove the crops which filter rejects
+
+Similar to Smart crop Katna image module supports **Smart image resizing** feature. Given an input image it can resize image to target resolution with simple resizing if aspect ratio is same for input and target image. If aspect ratio is different than smart image resize will first crops biggest good quality crop in target resolution and then resizes image in target resolution. This ensures image resize without actually skewing input image. *Please not that if aspect ratio of input and output image are not same katna image_resize can lead to some loss of image content*
 
 **Supported Video and image file formats**
 ##########################################
