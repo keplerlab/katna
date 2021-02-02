@@ -16,7 +16,7 @@ def main():
         os.mkdir(out_dir_path)
 
     # VIdeo file path
-    video_file_path = os.path.join(".", "tests", "data", "2019-07-05 15-39-40.mp4")
+    video_file_path = os.path.join(".", "tests", "data", "pos_video.mp4")
     print(f"Input video file path = {video_file_path}")
 
     ic(video_file_path)
