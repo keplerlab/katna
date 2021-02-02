@@ -14,6 +14,9 @@ from Katna.decorators import FileDecorators
 
 from Katna.frame_extractor import FrameExtractor
 from Katna.image_selector import ImageSelector
+from Katna.video_compressor import VideoCompressor
+import Katna.helper_functions as helper
+
 import Katna.config as config
 import subprocess
 import re
@@ -29,7 +32,7 @@ class Video(object):
 
     def __init__(self):
         # Find out location of ffmpeg binary on system
-        self._set_ffmpeg_binary_path()
+        helper._set_ffmpeg_binary_path()
         # If the duration of the clipped video is less than **min_video_duration**
         # then, the clip will be added with the previous clipped
         self.min_video_duration = config.Video.min_video_duration
@@ -37,8 +40,7 @@ class Video(object):
         self.n_processes = cpu_count() // 2 - 1
         if self.n_processes < 1:
             self.n_processes = None
-        self.pool_extractor = Pool(processes=self.n_processes)
-        self.pool_selector = Pool(processes=self.n_processes)
+
 
         # Folder to save the videos after clipping
         self.temp_folder = os.path.abspath(os.path.join("clipped"))
@@ -80,7 +82,7 @@ class Video(object):
             for filename in files:
                 filepath = os.path.join(path, filename)
 
-                if self._check_if_valid_video(filename):
+                if helper._check_if_valid_video(filename):
                     video_file_path = os.path.join(path, filename)
                     video_top_frames = self.extract_video_keyframes(
                         no_of_frames, video_file_path
@@ -90,37 +92,84 @@ class Video(object):
         return all_videos_top_frames
 
     @FileDecorators.validate_file_path
-    def _check_if_valid_video(self, file_path):
-        """Function to check if given video file is a valid video compatible with
-        ffmpeg/opencv
+    def extract_video_keyframes(self, no_of_frames, file_path):
+        """Returns a list of best key images/frames from a single video.
 
-        :param file_path: video filename
-        :type file_path: str
-        :return: Return True if valid video file else False
-        :rtype: bool
+        :param no_of_frames: Number of key frames to be extracted
+        :type no_of_frames: int, required
+        :param file_path: video file location
+        :type file_path: str, required
+        :return: List of numpy.2darray Image objects
+        :rtype: list
         """
-        try:
-            vid = cv2.VideoCapture(file_path)
-            if vid.isOpened():
-                # Making sure we can read at least two frames from video
-                ret, frame = vid.read()
-                ret, frame = vid.read()
-                # Making sure video frame is not empty
-                if frame is not None:
-                    return True
-                else:
-                    return False
-            else:
-                return False
-        except cv2.error as e:
-            print("cv2.error:", e)
-            return False
-        except Exception as e:
-            print("Exception:", e)
-            return False
+        
+        self.pool_extractor = Pool(processes=self.n_processes)
+        self.pool_selector = Pool(processes=self.n_processes)
+        # Split the input video into chunks. Each split(video) will be stored
+        # in a temp
+        if not helper._check_if_valid_video(file_path):
+            raise Exception("Invalid or corrupted video: "+ file_path)
+
+        chunked_videos = self._split(file_path)
+
+        frame_extractor = FrameExtractor()
+
+        # Passing all the clipped videos for  the frame extraction using map function of the
+        # multiprocessing pool
+        extracted_candidate_frames = self.pool_extractor.map(
+            frame_extractor.extract_candidate_frames, chunked_videos
+        )
+        # Converting the nested list of extracted frames into 1D list
+        extracted_candidate_frames = [
+            frame for frames in extracted_candidate_frames for frame in frames
+        ]
+
+        self._remove_clips(chunked_videos)
+
+        image_selector = ImageSelector(self.pool_selector)
+        top_frames = image_selector.select_best_frames(
+            extracted_candidate_frames, no_of_frames
+        )
+
+        return top_frames
+
 
     @FileDecorators.validate_file_path
-    def extract_video_keyframes(self, no_of_frames, file_path):
+    def compress_video(self, file_path, dir_path):
+        """Returns a list of best key images/frames from a single video.
+
+        :param no_of_frames: Number of key frames to be extracted
+        :type no_of_frames: int, required
+        :param file_path: video file location
+        :type file_path: str, required
+        """
+
+        # Split the input video into chunks. Each split(video) will be stored
+        # in a temp 
+        if not helper._check_if_valid_video(file_path):
+            raise Exception("Invalid or corrupted video: "+ file_path)
+
+        #chunked_videos = self._split(file_path)
+
+        video_compressor = VideoCompressor()
+        status = video_compressor.compress_video(file_path, dir_path="")
+        # # Passing all the clipped videos for  the frame extraction using map function of the
+        # # multiprocessing pool
+        # extracted_candidate_frames = self.pool_extractor.map(
+        #     frame_extractor.extract_candidate_frames, chunked_videos
+        # )
+        # # Converting the nested list of extracted frames into 1D list
+        # extracted_candidate_frames = [
+        #     frame for frames in extracted_candidate_frames for frame in frames
+        # ]
+
+        # self._remove_clips(chunked_videos)
+
+        return status
+
+
+    @FileDecorators.validate_file_path
+    def compress_videos_from_dir(self, folder_path, config):
         """Returns a list of best key images/frames from a single video.
 
         :param no_of_frames: Number of key frames to be extracted
@@ -319,7 +368,7 @@ class Video(object):
             else:
                 line = [line for line in lines if "Duration:" in line][-1]
             match = re.findall("([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9])", line)[0]
-            video_duration = self._convert_to_seconds(match)
+            video_duration = helper._convert_to_seconds(match)
         except Exception:
             raise IOError(
                 f"error: failed to read the duration of file {file_path}.\n"
@@ -327,107 +376,3 @@ class Video(object):
             )
         return video_duration
 
-    def _convert_to_seconds(self, time):
-        """ Will convert any time into seconds.
-        If the type of `time` is not valid,
-        it's returned as is.
-        Here are the accepted formats::
-        >>> convert_to_seconds(15.4)   # seconds
-        15.4
-        >>> convert_to_seconds((1, 21.5))   # (min,sec)
-        81.5
-        >>> convert_to_seconds((1, 1, 2))   # (hr, min, sec)
-        3662
-        >>> convert_to_seconds('01:01:33.045')
-        3693.045
-        >>> convert_to_seconds('01:01:33,5')    # coma works too
-        3693.5
-        >>> convert_to_seconds('1:33,5')    # only minutes and secs
-        99.5
-        >>> convert_to_seconds('33.5')      # only secs
-        33.5
-
-        :param time: time_string
-        :type time: string
-        :return: time in seconds
-        :rtype: float
-        """        
-
-        factors = (1, 60, 3600)
-
-        if isinstance(time, str):
-            time = [float(part.replace(",", ".")) for part in time.split(":")]
-
-        if not isinstance(time, (tuple, list)):
-            return time
-
-        return sum(mult * part for mult, part in zip(factors, reversed(time)))
-
-    def _set_ffmpeg_binary_path(self):
-        """ Function for getting path to ffmpeg binary on your system to be
-        used by ffmpy
-        # Derived from ffmpeg detection code borrowed from moviepy 
-        # https://github.com/Zulko/moviepy/moviepy/config.py
-        # The MIT License (MIT)
-        # Copyright (c) 2015 Zulko
-        #
-        :raises IOError: [description]
-        """
-        FFMPEG_BINARY = os.getenv("FFMPEG_BINARY", "ffmpeg-imageio")
-
-        if FFMPEG_BINARY == "ffmpeg-imageio":
-            FFMPEG_BINARY = get_ffmpeg_exe()
-        else:
-            success, err = self._try_cmd([FFMPEG_BINARY])
-            if not success:
-                raise IOError(
-                    f"{err} - The path specified for the ffmpeg binary might be wrong"
-                )
-        os.environ["FFMPEG_BINARY"] = FFMPEG_BINARY
-
-
-    def _try_cmd(self, cmd):
-        """
-        # Derived from ffmpeg detection code borrowed from moviepy 
-        # https://github.com/Zulko/moviepy/moviepy/config.py
-        # The MIT License (MIT)
-        # Copyright (c) 2015 Zulko
-        #
-        :param cmd: command to execute
-        :type cmd: string
-        :return: True/False with error
-        :rtype: Bool, Error
-        """
-        try:
-            popen_params = self._cross_platform_popen_params(
-                {"stdout": subprocess.PIPE, "stderr": subprocess.PIPE, "stdin": subprocess.DEVNULL}
-            )
-            proc = subprocess.Popen(cmd, **popen_params)
-            proc.communicate()
-        except Exception as err:
-            return False, err
-        else:
-            return True, None
-
-
-    def _cross_platform_popen_params(self, popen_params):
-        """ 
-        # Derived from ffmpeg detection code borrowed from moviepy 
-        # https://github.com/Zulko/moviepy/moviepy/config.py
-        # The MIT License (MIT)
-        # Copyright (c) 2015 Zulko
-        #
-        Wrap with this function a dictionary of ``subprocess.Popen`` kwargs and
-        will be ready to work without unexpected behaviours in any platform.
-        Currently, the implementation will add to them:
-        - ``creationflags=0x08000000``: no extra unwanted window opens on Windows
-        when the child process is created. Only added on Windows.
-
-        :param popen_params: original popen_parameters
-        :type popen_params: dict
-        :return: modified popen_parameters
-        :rtype: dict
-        """
-        if os.name == "nt":
-            popen_params["creationflags"] = 0x08000000
-        return popen_params

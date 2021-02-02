@@ -82,6 +82,9 @@ class Video:
     # Debug flag
     DEBUG = False
     min_video_duration = 5.0
+    
+    # https://trac.ffmpeg.org/wiki/Encode/H.264
+    video_compression_crf_parameter = 28
 
 
 class ImageSelector:
