@@ -36,7 +36,7 @@ class Video(object):
         # If the duration of the clipped video is less than **min_video_duration**
         # then, the clip will be added with the previous clipped
         self.min_video_duration = config.Video.min_video_duration
-        # Creating the multiprocessing pool
+        # Calculating optimum number of processes for multiprocessing
         self.n_processes = cpu_count() // 2 - 1
         if self.n_processes < 1:
             self.n_processes = None
@@ -102,7 +102,7 @@ class Video(object):
         :return: List of numpy.2darray Image objects
         :rtype: list
         """
-        
+        # Creating the multiprocessing pool
         self.pool_extractor = Pool(processes=self.n_processes)
         self.pool_selector = Pool(processes=self.n_processes)
         # Split the input video into chunks. Each split(video) will be stored
@@ -116,16 +116,16 @@ class Video(object):
 
         # Passing all the clipped videos for  the frame extraction using map function of the
         # multiprocessing pool
-        extracted_candidate_frames = self.pool_extractor.map(
-            frame_extractor.extract_candidate_frames, chunked_videos
-        )
-        # Converting the nested list of extracted frames into 1D list
-        extracted_candidate_frames = [
-            frame for frames in extracted_candidate_frames for frame in frames
-        ]
+        with self.pool_extractor:
+            extracted_candidate_frames = self.pool_extractor.map(
+                frame_extractor.extract_candidate_frames, chunked_videos
+            )
+            # Converting the nested list of extracted frames into 1D list
+            extracted_candidate_frames = [
+                frame for frames in extracted_candidate_frames for frame in frames
+            ]
 
         self._remove_clips(chunked_videos)
-
         image_selector = ImageSelector(self.pool_selector)
         top_frames = image_selector.select_best_frames(
             extracted_candidate_frames, no_of_frames
