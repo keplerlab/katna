@@ -24,7 +24,6 @@ import ffmpy
 from imageio_ffmpeg import get_ffmpeg_exe
 from multiprocessing import Pool, Process, cpu_count
 
-
 class Video(object):
     """Class for all video frames operations
 
@@ -193,10 +192,10 @@ class Video(object):
         )
         return status
 
-    @FileDecorators.validate_file_path
+    @FileDecorators.validate_dir_path
     def compress_videos_from_dir(
         self,
-        folder_path,
+        dir_path,
         force_overwrite=False,
         crf_parameter=config.Video.video_compression_crf_parameter,
         output_video_codec=config.Video.video_compression_codec,
@@ -205,8 +204,8 @@ class Video(object):
     ):
         """Function to compress input video files in a folder
 
-        :param folder_path: Input folder path
-        :type folder_path: str
+        :param dir_path: Input folder path
+        :type dir_path: str
         :param force_overwrite: optional parameter if True then if there is \
         already a file in output file location function will overwrite it, defaults to False
         :type force_overwrite: bool, optional
@@ -232,18 +231,24 @@ class Video(object):
         :rtype: bool
         """
         status = True
-        for path, subdirs, files in os.walk(folder_path):
+        list_of_videos_to_process = []
+        # Collect all the valid video files inside folder
+        for path, _, files in os.walk(dir_path):
             for filename in files:
                 video_file_path = os.path.join(path, filename)
                 if helper._check_if_valid_video(video_file_path):
-                    statusI = self.compress_video(
-                        video_file_path,
-                        force_overwrite=force_overwrite,
-                        crf_parameter=crf_parameter,
-                        output_video_codec=output_video_codec,
-                        out_dir_path=out_dir_path,
-                    )
-                    status = bool(status and statusI)
+                    list_of_videos_to_process.append(video_file_path)
+
+        # Need to run in two sepearte loops to prevent recursion            
+        for video_file_path in list_of_videos_to_process:
+            statusI = self.compress_video(
+                video_file_path,
+                force_overwrite=force_overwrite,
+                crf_parameter=crf_parameter,
+                output_video_codec=output_video_codec,
+                out_dir_path=out_dir_path,
+            )
+            status = bool(status and statusI)
         return status
 
 

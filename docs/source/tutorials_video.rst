@@ -301,12 +301,12 @@ videos needs to be picked for compression returns status whether compression was
 successfully or not. 
 Refer to API reference for further details. Below are the parameters required by the method
 
-1. **folder_path**: Input videos full folder path. This is the only compulsory parameter
+1. **dir_path**: Input videos full folder path. This is the only compulsory parameter
 
 
 .. code-block:: python
 
-     status = vd.compress_videos_from_dir(folder_path=input_video_folder_path)
+     status = vd.compress_videos_from_dir(dir_path=input_video_folder_path)
 
 
 **Step 4 (Optional)**
@@ -339,7 +339,7 @@ video to be saved, defaults to “”
 
 .. code-block:: python
 
-     vd.compress_videos_from_dir(folder_path, force_overwrite=False, \
+     vd.compress_videos_from_dir(dir_path, force_overwrite=False, \
      crf_parameter=23, output_video_codec='libx264', out_dir_path='')
 
 Code below is a complete example for a single video file.
@@ -367,7 +367,7 @@ Code below is a complete example for a single video file.
           print(f"Input video folder path = {video_folder_path}")
 
           status = vd.compress_videos_from_dir(
-               file_path=video_folder_path,
+               dir_path=video_folder_path,
                out_dir_path=out_dir_path
           )
 

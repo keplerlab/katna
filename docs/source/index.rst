@@ -7,14 +7,31 @@ Katna documentation
 ===============================
 Katna automates the boring, error prone task of videos key/best frames extraction,
 video compression and manual time consuming task of image cropping.
+In summary you should consider using Katna library if you have following tasks which you 
+want to automate:
 
-Katna is divided into two modules namely video and image.
+#. You have video/videos from who you want to extract keyframe/keyframes. 
+   Please note Key-frames are defined as the representative frames of a video stream,
+   the frames that provide the most accurate and compact summary of the video content.
+#. You have video/videos you want to compress down to smaller size.
+#. You have image/images which you want to smartly resize to a target resolution.
+   (e.g. 500x500, 1080p (1920x1080) etc.)
+#. You have image/images from which you want to intelligently extract a crop with a target resolution.
+   (e.g. Get a crop of size 500x500 from image of size 1920x1080)
+#. You want to extract a crop of particular aspect ratio e.g. 4:3 from your input image/images.
+   (e.g. Get a crop of aspect ratio 1:1 from image of resolution 1920x1080 (16:9 aspect ratio image))
+
+
+
+Katna is divided into two modules namely video and image module.
+In next sections we will learn more about them in more details.
 
 Video Module:
 -------------
 This module handles the task(s) for key frame(s) extraction and video compression.
 
-Key-frames are defined as the representative frames of a video stream, the frames that provide the most accurate and compact summary of the video content.
+Key-frames are defined as the representative frames of a video stream,
+the frames that provide the most accurate and compact summary of the video content.
 
 **Frame extraction and selection criteria**
 
