@@ -80,7 +80,14 @@ Katna.image\_selector module
    :noindex:
 
 
+Katna.video\_compressor module
+---------------------------------
 
+.. automodule:: Katna.video_compressor
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :noindex:
 
 
 

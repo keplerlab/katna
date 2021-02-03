@@ -1,17 +1,17 @@
 
-## **Katna**: Tool for automating common vide keyframe extraction and Image Autocrop and Smart image resize tasks
+## **Katna**: Tool for automating video keyframe extraction, video compression, Image Autocrop and Smart image resize tasks
 
 ### Resources 
 * Homepage and Reference: <https://katna.readthedocs.io/>
 
 ### Description
-Katna automates the boring, error prone task of videos key/best frames extraction and manual time consuming task of image cropping.
+Katna automates the boring, error prone task of videos key/best frames extraction, video compression and manual time consuming task of smart image cropping and smart image resize.
 
 Katna is divided into two modules namely video and image.
 
 Video Module:
 -------------
-This module handles the task(s) related to key frame extraction.
+This module handles the task(s) for key frame(s) extraction and video compression.
 
 Key-frames are defined as the representative frames of a video stream, the frames that provide the most accurate and compact summary of the video content.
 
@@ -22,6 +22,8 @@ Key-frames are defined as the representative frames of a video stream, the frame
 3. Entropy/contrast score filtering of extracted frames
 4. K-Means Clustering of frames using image histogram
 5. Selection of best frame from clusters based on and variance of laplacian (image blur detection)
+
+Video compression is handled using ffmpeg library. Details about which could be read in [Katna.video_compressor module](https://katna.readthedocs.io/en/latest/understanding_katna.html#katna-video-compressor) section.
 
 Image Module:
 -------------
@@ -112,6 +114,11 @@ Usually ffmpeg is installed using imageio-ffmpeg package, Check **imageio_ffmpeg
 1) Refer to quickstart section in Katna Reference 
    from https://katna.readthedocs.io/
 
+
+### Update: katna version 0.7.0
+Added support for video compression in Katna.video module.
+### Update: katna version 0.6.0
+Added support for smart image resize in Katna.image module.
 ### Update: katna version 0.5.0
 In version 0.5.0 we have changed name of some of the public functions inside
 for Katna.video module used for keyframe extraction,

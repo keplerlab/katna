@@ -165,3 +165,212 @@ Code below is a complete example for a directory containing videos.
                     file_name=name + "_" + str(counter), file_ext=".jpeg")
 
 
+
+
+Compress video using Katna
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Step 1**
+
+Import the video module 
+
+.. code-block:: python
+
+   from Katna.video import Video
+
+**Step 2**
+
+Instantiate the video class inside your main module (necessary for multiprocessing in windows)
+
+.. code-block:: python
+
+     if __name__ == "__main__":
+          vd = Video()
+   
+**Step 3**
+
+Call the **compress_video** method.
+The method accepts one required parameter that is path to input file returns status whether compression was done 
+successfully or not. 
+Refer to API reference for further details. Below are the parameters required by the method
+
+1. **file_path**: Input video full file path. This is the only compulsory parameter
+
+
+.. code-block:: python
+
+     status = vd.compress_video(file_path= video_file_path)
+
+
+**Step 4 (Optional)**
+
+In case you play around with the different parameters like where to save compressed file etc.
+you can change optional parameters in compress_video function.
+Refer to API reference for further details. Below are the optional parameters supported by the method
+
+1. **force_overwrite** (bool, optional) – optional parameter if True then if there \
+is already a file in output file location function will overwrite it, defaults to False
+
+2. **crf_parameter** (int, optional) – Constant Rate Factor Parameter for 
+controlling amount of video compression to be applied, The range of the quantizer 
+scale is 0-51: where 0 is lossless, 23 is default, and 51 is worst possible. 
+It is recommend to keep this value between 20 to 30 A lower value is a higher quality, 
+you can change default value by changing config.Video.video_compression_crf_parameter
+
+3. **output_video_codec** (str, optional) – Type of video codec to choose, 
+Currently supported options are libx264 and libx265, libx264 is default option. 
+libx264 is more widely supported on different operating systems and platforms, 
+libx265 uses more advanced x265 codec and results in better compression and even 
+less output video sizes with same or better quality. Right now libx265 is not as 
+widely compatible on older versions of MacOS and Widows by default. 
+If wider video compatibility is your goal you should use libx264., 
+you can change default value by changing Katna.config.Video.video_compression_codec
+
+4. **out_dir_path** (str, optional) – output folder path where you want output 
+video to be saved, defaults to “”
+
+5. **out_file_name** (str, optional) – output filename, if not mentioned it will 
+be same as input filename, defaults to “”
+
+
+.. code-block:: python
+
+     vd.compress_video(file_path, force_overwrite=False, \
+     crf_parameter=23, output_video_codec='libx264', out_dir_path='', out_file_name='')
+
+Code below is a complete example for a single video file.
+
+.. code-block:: python
+   :emphasize-lines: 2,6,19-22
+   :linenos:
+
+     import os
+     from Katna.video import Video
+
+     def main():
+
+          vd = Video()
+
+          # folder to save extracted images
+          output_folder_for_compressed_videos= "compressed_folder"
+          out_dir_path = os.path.join(".", output_folder_for_compressed_videos)
+
+          if not os.path.isdir(out_dir_path):
+               os.mkdir(out_dir_path)
+
+          # Video file path
+          video_file_path = os.path.join(".", "tests", "data", "pos_video.mp4")
+          print(f"Input video file path = {video_file_path}")
+
+          status = vd.compress_video(
+               file_path=video_file_path,
+               out_dir_path=out_dir_path
+          )
+
+
+     if __name__ == "__main__":
+          main()
+
+
+
+Compress all videos in folder using Katna
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Step 1**
+
+Import the video module 
+
+.. code-block:: python
+
+   from Katna.video import Video
+
+**Step 2**
+
+Instantiate the video class inside your main module (necessary for multiprocessing in windows)
+
+.. code-block:: python
+
+     if __name__ == "__main__":
+          vd = Video()
+   
+**Step 3**
+
+Call the **compress_videos_from_dir** method.
+The method accepts one required parameter that is path to input folder where
+videos needs to be picked for compression returns status whether compression was done 
+successfully or not. 
+Refer to API reference for further details. Below are the parameters required by the method
+
+1. **folder_path**: Input videos full folder path. This is the only compulsory parameter
+
+
+.. code-block:: python
+
+     status = vd.compress_videos_from_dir(folder_path=input_video_folder_path)
+
+
+**Step 4 (Optional)**
+
+In case you play around with the different parameters like where to save compressed file etc.
+you can change optional parameters in compress_video function.
+Refer to API reference for further details. Below are the optional parameters supported by the method
+
+1. **force_overwrite** (bool, optional) – optional parameter if True then if there \
+is already a file in output file location function will overwrite it, defaults to False
+
+2. **crf_parameter** (int, optional) – Constant Rate Factor Parameter for 
+controlling amount of video compression to be applied, The range of the quantizer 
+scale is 0-51: where 0 is lossless, 23 is default, and 51 is worst possible. 
+It is recommend to keep this value between 20 to 30 A lower value is a higher quality, 
+you can change default value by changing config.Video.video_compression_crf_parameter
+
+3. **output_video_codec** (str, optional) – Type of video codec to choose, 
+Currently supported options are libx264 and libx265, libx264 is default option. 
+libx264 is more widely supported on different operating systems and platforms, 
+libx265 uses more advanced x265 codec and results in better compression and even 
+less output video sizes with same or better quality. Right now libx265 is not as 
+widely compatible on older versions of MacOS and Widows by default. 
+If wider video compatibility is your goal you should use libx264., 
+you can change default value by changing Katna.config.Video.video_compression_codec
+
+4. **out_dir_path** (str, optional) – output folder path where you want output 
+video to be saved, defaults to “”
+
+
+.. code-block:: python
+
+     vd.compress_videos_from_dir(folder_path, force_overwrite=False, \
+     crf_parameter=23, output_video_codec='libx264', out_dir_path='')
+
+Code below is a complete example for a single video file.
+
+.. code-block:: python
+   :emphasize-lines: 2,6,19-22
+   :linenos:
+
+     import os
+     from Katna.video import Video
+
+     def main():
+
+          vd = Video()
+
+          # folder to save extracted images
+          output_folder_for_compressed_videos= "compressed_folder"
+          out_dir_path = os.path.join(".", output_folder_for_compressed_videos)
+
+          if not os.path.isdir(out_dir_path):
+               os.mkdir(out_dir_path)
+
+          # Video file path
+          video_folder_path = os.path.join(".", "tests", "data")
+          print(f"Input video folder path = {video_folder_path}")
+
+          status = vd.compress_videos_from_dir(
+               file_path=video_folder_path,
+               out_dir_path=out_dir_path
+          )
+
+
+     if __name__ == "__main__":
+          main()

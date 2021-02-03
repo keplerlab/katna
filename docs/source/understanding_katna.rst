@@ -8,17 +8,21 @@ each modules working.
 Katna.video Module:
 --------------------
 
-Video module handles the task(s) for key frame(s) extraction.
-This module has two primary public functions for keyframe extraction,
-which are extract_video_keyframes and extract_keyframes_from_videos_dir,
-extract_video_keyframes is the primary function which given a video file
-extracts most important keyframe from a video. extract_keyframes_from_videos_dir
+Video module handles the task(s) for key frame(s) extraction and video compression.
+This module has four primary public functions for keyframe extraction
+video_compression, which are **extract_video_keyframes**, **extract_keyframes_from_videos_dir**, **compress_video** and **compress_videos_from_dir**.
+
+**extract_video_keyframes** is the primary function which given a video file
+extracts most important keyframe from a video. **extract_keyframes_from_videos_dir**
 actually runs extract_video_frames function for all video files in a directory
-recursively. 
-Katna.video first takes a video and divides a big video in smaller chunks of 
+recursively.
+Katna.video frame extraction feature first takes a video and divides a big video in smaller chunks of 
 videos, it runs video frame extraction and frame selector tasks on these chunked
 videos in parallel. For each chunked video actual frame extraction is done in
 Katna by following two separate modules.
+
+Details about public  **compress_video** and **compress_videos_from_dir**
+functions is listed in :ref:`Katna.video_compressor`. 
 
 Katna.frame_extractor module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -47,6 +51,57 @@ cluster is done using variance of laplacian sorting. In image processing world
 variance of laplacian method is often used for image blur detection. 
 This sorting and selection ensures that least blurred image is selected
 from cluster.
+
+
+.. _Katna.video_compressor:
+
+Katna.video_compressor module
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Apart from Frame extraction Katna.video module can also do efficient video
+compression. It is done by internal module called internally by Katna.video_compressor
+module and exposed publicly by two public functions: 
+**compress_video** and **compress_videos_from_dir**
+As the name suggests **compress_video** function does video compression on a
+single input video file and **compress_videos_from_dir** function recursively
+compresses all videos in a given input folder.
+Katna.video_compressor includes actual implementation of video compression using ffmpeg
+library.
+
+As discussed  **compress_video** functions
+can compress a given input video and saves the output in same folder with
+name=original_input_file_name + "_compressed" with mp4 extension. You can change
+this behavior and other Configurations using optional parameters. 
+ 
+In case you play around with the different parameters like where to save compressed file etc.
+you can change optional parameters in compress_video function.
+Below are the optional parameters supported by the method
+
+1. **force_overwrite** (bool, optional) – optional parameter if True then if there \
+is already a file in output file location function will overwrite it, defaults to False
+
+2. **crf_parameter** (int, optional) – Constant Rate Factor Parameter for 
+controlling amount of video compression to be applied, The range of the quantizer 
+scale is 0-51: where 0 is lossless, 23 is default, and 51 is worst possible. 
+It is recommend to keep this value between 20 to 30 A lower value is a higher quality, 
+you can change default value by changing config.Video.video_compression_crf_parameter
+
+3. **output_video_codec** (str, optional) – Type of video codec to choose, 
+Currently supported options are libx264 and libx265, libx264 is default option. 
+libx264 is more widely supported on different operating systems and platforms, 
+libx265 uses more advanced x265 codec and results in better compression and even 
+less output video sizes with same or better quality. Right now libx265 is not as 
+widely compatible on older versions of MacOS and Widows by default. 
+If wider video compatibility is your goal you should use libx264., 
+you can change default value by changing Katna.config.Video.video_compression_codec
+
+4. **out_dir_path** (str, optional) – output folder path where you want output 
+video to be saved, defaults to “”
+
+5. **out_file_name** (str, optional) – output filename, if not mentioned it will 
+be same as input filename, defaults to “”
+
+
 
 
 Katna.image Module:

@@ -14,12 +14,17 @@ from Katna.decorators import FileDecorators
 
 from Katna.frame_extractor import FrameExtractor
 from Katna.image_selector import ImageSelector
+from Katna.video_compressor import VideoCompressor
+import Katna.helper_functions as helper
+
 import Katna.config as config
 import subprocess
 import re
 import ffmpy
 from imageio_ffmpeg import get_ffmpeg_exe
 from multiprocessing import Pool, Process, cpu_count
+
+
 class Video(object):
     """Class for all video frames operations
 
@@ -29,16 +34,14 @@ class Video(object):
 
     def __init__(self):
         # Find out location of ffmpeg binary on system
-        self._set_ffmpeg_binary_path()
+        helper._set_ffmpeg_binary_path()
         # If the duration of the clipped video is less than **min_video_duration**
         # then, the clip will be added with the previous clipped
         self.min_video_duration = config.Video.min_video_duration
-        # Creating the multiprocessing pool
+        # Calculating optimum number of processes for multiprocessing
         self.n_processes = cpu_count() // 2 - 1
         if self.n_processes < 1:
             self.n_processes = None
-        self.pool_extractor = Pool(processes=self.n_processes)
-        self.pool_selector = Pool(processes=self.n_processes)
 
         # Folder to save the videos after clipping
         self.temp_folder = os.path.abspath(os.path.join("clipped"))
@@ -61,10 +64,10 @@ class Video(object):
     @FileDecorators.validate_dir_path
     def extract_keyframes_from_videos_dir(self, no_of_frames, dir_path):
         """Returns best key images/frames from the videos in the given directory.
-        you need to mention number of keyframes as well as directory path 
+        you need to mention number of keyframes as well as directory path
         containing videos. Function returns python dictionary with key as filepath
-        each dictionary element contains list of python numpy image objects as 
-        keyframes. 
+        each dictionary element contains list of python numpy image objects as
+        keyframes.
 
         :param no_of_frames: Number of key frames to be extracted
         :type no_of_frames: int, required
@@ -80,7 +83,7 @@ class Video(object):
             for filename in files:
                 filepath = os.path.join(path, filename)
 
-                if self._check_if_valid_video(filename):
+                if helper._check_if_valid_video(filename):
                     video_file_path = os.path.join(path, filename)
                     video_top_frames = self.extract_video_keyframes(
                         no_of_frames, video_file_path
@@ -88,36 +91,6 @@ class Video(object):
                     all_videos_top_frames[filepath] = video_top_frames
 
         return all_videos_top_frames
-
-    @FileDecorators.validate_file_path
-    def _check_if_valid_video(self, file_path):
-        """Function to check if given video file is a valid video compatible with
-        ffmpeg/opencv
-
-        :param file_path: video filename
-        :type file_path: str
-        :return: Return True if valid video file else False
-        :rtype: bool
-        """
-        try:
-            vid = cv2.VideoCapture(file_path)
-            if vid.isOpened():
-                # Making sure we can read at least two frames from video
-                ret, frame = vid.read()
-                ret, frame = vid.read()
-                # Making sure video frame is not empty
-                if frame is not None:
-                    return True
-                else:
-                    return False
-            else:
-                return False
-        except cv2.error as e:
-            print("cv2.error:", e)
-            return False
-        except Exception as e:
-            print("Exception:", e)
-            return False
 
     @FileDecorators.validate_file_path
     def extract_video_keyframes(self, no_of_frames, file_path):
@@ -130,11 +103,13 @@ class Video(object):
         :return: List of numpy.2darray Image objects
         :rtype: list
         """
-
+        # Creating the multiprocessing pool
+        self.pool_extractor = Pool(processes=self.n_processes)
+        self.pool_selector = Pool(processes=self.n_processes)
         # Split the input video into chunks. Each split(video) will be stored
-        # in a temp 
-        if not self._check_if_valid_video(file_path):
-            raise Exception("Invalid or corrupted video: "+ file_path)
+        # in a temp
+        if not helper._check_if_valid_video(file_path):
+            raise Exception("Invalid or corrupted video: " + file_path)
 
         chunked_videos = self._split(file_path)
 
@@ -142,22 +117,135 @@ class Video(object):
 
         # Passing all the clipped videos for  the frame extraction using map function of the
         # multiprocessing pool
-        extracted_candidate_frames = self.pool_extractor.map(
-            frame_extractor.extract_candidate_frames, chunked_videos
-        )
-        # Converting the nested list of extracted frames into 1D list
-        extracted_candidate_frames = [
-            frame for frames in extracted_candidate_frames for frame in frames
-        ]
+        with self.pool_extractor:
+            extracted_candidate_frames = self.pool_extractor.map(
+                frame_extractor.extract_candidate_frames, chunked_videos
+            )
+            # Converting the nested list of extracted frames into 1D list
+            extracted_candidate_frames = [
+                frame for frames in extracted_candidate_frames for frame in frames
+            ]
 
         self._remove_clips(chunked_videos)
-
         image_selector = ImageSelector(self.pool_selector)
         top_frames = image_selector.select_best_frames(
             extracted_candidate_frames, no_of_frames
         )
 
         return top_frames
+
+    @FileDecorators.validate_file_path
+    def compress_video(
+        self,
+        file_path,
+        force_overwrite=False,
+        crf_parameter=config.Video.video_compression_crf_parameter,
+        output_video_codec=config.Video.video_compression_codec,
+        out_dir_path="",
+        out_file_name="",
+    ):
+        """Function to compress given input file
+
+        :param file_path: Input file path
+        :type file_path: str        
+        :param force_overwrite: optional parameter if True then if there is \
+        already a file in output file location function will overwrite it, defaults to False
+        :type force_overwrite: bool, optional
+        :param crf_parameter: Constant Rate Factor Parameter for controlling \
+        amount of video compression to be applied, The range of the quantizer scale is 0-51:\
+        where 0 is lossless, 23 is default, and 51 is worst possible.\
+        It is recommend to keep this value between 20 to 30 \
+        A lower value is a higher quality, you can change default value by changing \
+        config.Video.video_compression_crf_parameter
+        :type crf_parameter: int, optional
+        :param output_video_codec: Type of video codec to choose, \
+        Currently supported options are libx264 and libx265, libx264 is default option.\
+        libx264 is more widely supported on different operating systems and platforms, \
+        libx265 uses more advanced x265 codec and results in better compression and even less \
+        output video sizes with same or better quality. Right now libx265 is not as widely compatible \
+        on older versions of MacOS and Widows by default. If wider video compatibility is your goal \
+        you should use libx264., you can change default value by changing \
+        Katna.config.Video.video_compression_codec
+        :type output_video_codec: str, optional
+        :param out_dir_path: output folder path where you want output video to be saved, defaults to ""
+        :type out_dir_path: str, optional
+        :param out_file_name: output filename, if not mentioned it will be same as input filename, defaults to ""
+        :type out_file_name: str, optional
+        :raises Exception: raises FileNotFoundError Exception if input video file not found, also exception is raised in case output video file path already exist and force_overwrite is not set to True.
+        :return: Status code Returns True if video compression was successfull else False
+        :rtype: bool
+        """
+        # TODO add docstring for exeception 
+        # Add details where libx265 will make sense
+        
+        if not helper._check_if_valid_video(file_path):
+            raise Exception("Invalid or corrupted video: " + file_path)
+        # Intialize video compression class
+        video_compressor = VideoCompressor()
+        # Run video compression
+        status = video_compressor.compress_video(
+            file_path,
+            force_overwrite,
+            crf_parameter,
+            output_video_codec,
+            out_dir_path,
+            out_file_name,
+        )
+        return status
+
+    @FileDecorators.validate_file_path
+    def compress_videos_from_dir(
+        self,
+        folder_path,
+        force_overwrite=False,
+        crf_parameter=config.Video.video_compression_crf_parameter,
+        output_video_codec=config.Video.video_compression_codec,
+        out_dir_path="",
+        out_file_name="",
+    ):
+        """Function to compress input video files in a folder
+
+        :param folder_path: Input folder path
+        :type folder_path: str
+        :param force_overwrite: optional parameter if True then if there is \
+        already a file in output file location function will overwrite it, defaults to False
+        :type force_overwrite: bool, optional
+        :param crf_parameter: Constant Rate Factor Parameter for controlling \
+        amount of video compression to be applied, The range of the quantizer scale is 0-51:\
+        where 0 is lossless, 23 is default, and 51 is worst possible.\
+        It is recommend to keep this value between 20 to 30 \
+        A lower value is a higher quality, you can change default value by changing \
+        config.Video.video_compression_crf_parameter
+        :type crf_parameter: int, optional
+        :param output_video_codec: Type of video codec to choose, \
+        Currently supported options are libx264 and libx265, libx264 is default option.\
+        libx264 is more widely supported on different operating systems and platforms, \
+        libx265 uses more advanced x265 codec and results in better compression and even less \
+        output video sizes with same or better quality. Right now libx265 is not as widely compatible \
+        on older versions of MacOS and Widows by default. If wider video compatibility is your goal \
+        you should use libx264., you can change default value by changing Katna.config.Video.video_compression_codec
+        :type output_video_codec: str, optional
+        :param out_dir_path: output folder path where you want output video to be saved, defaults to ""
+        :type out_dir_path: str, optional
+        :raises Exception: raises FileNotFoundError Exception if input video file not found, also exception is raised in case output video file path already exist and force_overwrite is not set to True.
+        :return: Status code Returns True if video compression was successfull else False
+        :rtype: bool
+        """
+        status = True
+        for path, subdirs, files in os.walk(folder_path):
+            for filename in files:
+                video_file_path = os.path.join(path, filename)
+                if helper._check_if_valid_video(video_file_path):
+                    statusI = self.compress_video(
+                        video_file_path,
+                        force_overwrite=force_overwrite,
+                        crf_parameter=crf_parameter,
+                        output_video_codec=output_video_codec,
+                        out_dir_path=out_dir_path,
+                    )
+                    status = bool(status and statusI)
+        return status
+
 
     @FileDecorators.validate_file_path
     def save_frame_to_disk(self, frame, file_path, file_name, file_ext):
@@ -207,9 +295,7 @@ class Video(object):
             if clip_end > duration or (clip_end + self.min_video_duration) > duration:
                 clip_end = duration
 
-            clipped_files.append(
-                self._write_videofile(file_path, clip_start, clip_end)
-            )
+            clipped_files.append(self._write_videofile(file_path, clip_start, clip_end))
 
             clip_start = clip_end
         return clipped_files
@@ -274,7 +360,6 @@ class Video(object):
         )
         ff.run()
 
-
     @FileDecorators.validate_file_path
     def _get_video_duration_with_ffmpeg(self, file_path):
         """Get video duration using ffmpeg binary.
@@ -283,16 +368,20 @@ class Video(object):
         The MIT License (MIT)
         Copyright (c) 2015 Zulko
         Returns a video duration in second
-        
+
         :param file_path: video file path
         :type file_path: string
-        :raises IOError: 
+        :raises IOError:
         :return: duration of video clip in seconds
         :rtype: float
         """
         FFMPEG_BINARY = os.getenv("FFMPEG_BINARY")
         # Open the file in a pipe, read output
-        ff = ffmpy.FFmpeg(executable=FFMPEG_BINARY, inputs={file_path: ""}, outputs={None: "-f null -"})
+        ff = ffmpy.FFmpeg(
+            executable=FFMPEG_BINARY,
+            inputs={file_path: ""},
+            outputs={None: "-f null -"},
+        )
         _, error = ff.run(
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -309,7 +398,7 @@ class Video(object):
                 % file_path
             )
 
-        # get duration (in seconds) by parsing ffmpeg file info returned by 
+        # get duration (in seconds) by parsing ffmpeg file info returned by
         # ffmpeg binary
         video_duration = None
         decode_file = False
@@ -319,115 +408,10 @@ class Video(object):
             else:
                 line = [line for line in lines if "Duration:" in line][-1]
             match = re.findall("([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9])", line)[0]
-            video_duration = self._convert_to_seconds(match)
+            video_duration = helper._convert_to_seconds(match)
         except Exception:
             raise IOError(
                 f"error: failed to read the duration of file {file_path}.\n"
                 f"Here are the file infos returned by ffmpeg:\n\n{infos}"
             )
         return video_duration
-
-    def _convert_to_seconds(self, time):
-        """ Will convert any time into seconds.
-        If the type of `time` is not valid,
-        it's returned as is.
-        Here are the accepted formats::
-        >>> convert_to_seconds(15.4)   # seconds
-        15.4
-        >>> convert_to_seconds((1, 21.5))   # (min,sec)
-        81.5
-        >>> convert_to_seconds((1, 1, 2))   # (hr, min, sec)
-        3662
-        >>> convert_to_seconds('01:01:33.045')
-        3693.045
-        >>> convert_to_seconds('01:01:33,5')    # coma works too
-        3693.5
-        >>> convert_to_seconds('1:33,5')    # only minutes and secs
-        99.5
-        >>> convert_to_seconds('33.5')      # only secs
-        33.5
-
-        :param time: time_string
-        :type time: string
-        :return: time in seconds
-        :rtype: float
-        """        
-
-        factors = (1, 60, 3600)
-
-        if isinstance(time, str):
-            time = [float(part.replace(",", ".")) for part in time.split(":")]
-
-        if not isinstance(time, (tuple, list)):
-            return time
-
-        return sum(mult * part for mult, part in zip(factors, reversed(time)))
-
-    def _set_ffmpeg_binary_path(self):
-        """ Function for getting path to ffmpeg binary on your system to be
-        used by ffmpy
-        # Derived from ffmpeg detection code borrowed from moviepy 
-        # https://github.com/Zulko/moviepy/moviepy/config.py
-        # The MIT License (MIT)
-        # Copyright (c) 2015 Zulko
-        #
-        :raises IOError: [description]
-        """
-        FFMPEG_BINARY = os.getenv("FFMPEG_BINARY", "ffmpeg-imageio")
-
-        if FFMPEG_BINARY == "ffmpeg-imageio":
-            FFMPEG_BINARY = get_ffmpeg_exe()
-        else:
-            success, err = self._try_cmd([FFMPEG_BINARY])
-            if not success:
-                raise IOError(
-                    f"{err} - The path specified for the ffmpeg binary might be wrong"
-                )
-        os.environ["FFMPEG_BINARY"] = FFMPEG_BINARY
-
-
-    def _try_cmd(self, cmd):
-        """
-        # Derived from ffmpeg detection code borrowed from moviepy 
-        # https://github.com/Zulko/moviepy/moviepy/config.py
-        # The MIT License (MIT)
-        # Copyright (c) 2015 Zulko
-        #
-        :param cmd: command to execute
-        :type cmd: string
-        :return: True/False with error
-        :rtype: Bool, Error
-        """
-        try:
-            popen_params = self._cross_platform_popen_params(
-                {"stdout": subprocess.PIPE, "stderr": subprocess.PIPE, "stdin": subprocess.DEVNULL}
-            )
-            proc = subprocess.Popen(cmd, **popen_params)
-            proc.communicate()
-        except Exception as err:
-            return False, err
-        else:
-            return True, None
-
-
-    def _cross_platform_popen_params(self, popen_params):
-        """ 
-        # Derived from ffmpeg detection code borrowed from moviepy 
-        # https://github.com/Zulko/moviepy/moviepy/config.py
-        # The MIT License (MIT)
-        # Copyright (c) 2015 Zulko
-        #
-        Wrap with this function a dictionary of ``subprocess.Popen`` kwargs and
-        will be ready to work without unexpected behaviours in any platform.
-        Currently, the implementation will add to them:
-        - ``creationflags=0x08000000``: no extra unwanted window opens on Windows
-        when the child process is created. Only added on Windows.
-
-        :param popen_params: original popen_parameters
-        :type popen_params: dict
-        :return: modified popen_parameters
-        :rtype: dict
-        """
-        if os.name == "nt":
-            popen_params["creationflags"] = 0x08000000
-        return popen_params

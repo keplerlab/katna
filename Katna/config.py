@@ -83,6 +83,13 @@ class Video:
     DEBUG = False
     min_video_duration = 5.0
 
+    # https://trac.ffmpeg.org/wiki/Encode/H.264
+
+    # Keep this between 20 to 30 value
+    video_compression_crf_parameter = 23
+    video_compression_codec = "libx264"  # Currently "libx264 and  is supported"
+    compression_output_file_extension = "mp4"
+
 
 class ImageSelector:
     # Setting for optimum Brightness values

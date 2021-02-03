@@ -5,13 +5,14 @@
 
 Katna documentation
 ===============================
-Katna automates the boring, error prone task of videos key/best frames extraction and manual time consuming task of image cropping.
+Katna automates the boring, error prone task of videos key/best frames extraction,
+video compression and manual time consuming task of image cropping.
 
 Katna is divided into two modules namely video and image.
 
 Video Module:
 -------------
-This module handles the task(s) for key frame(s) extraction.
+This module handles the task(s) for key frame(s) extraction and video compression.
 
 Key-frames are defined as the representative frames of a video stream, the frames that provide the most accurate and compact summary of the video content.
 
@@ -22,6 +23,9 @@ Key-frames are defined as the representative frames of a video stream, the frame
 3. Entropy/contrast score filtering of extracted frames
 4. K-Means Clustering of frames using image histogram
 5. Selection of best frame from clusters based on and variance of laplacian (image blur detection)
+
+Video compression is handled using ffmpeg library. Details about which could be 
+read in :ref:`Katna.video_compressor` section.
 
 Image Module:
 -------------
@@ -52,9 +56,9 @@ This ensures image resize without actually skewing output image.
 **Supported Video and image file formats**
 ##########################################
 
-All the major video formats like .mp4,.mov,.avi etc and image formats like .jpg, .png, .jpeg etc are supported. 
-
-Additional selection features and retention filters are in development pipeline.
+All the major video formats like .mp4,.mov,.avi etc and image formats like .jpg, .png, .jpeg etc are supported.
+Only constraint is that video should be readable by ffmpeg library and images should be readable
+by opencv library.
 
 .. toctree::
    :maxdepth: 1
