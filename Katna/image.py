@@ -333,10 +333,10 @@ class Image(object):
 
         :param file_path: Input file path
         :type file_path: str, required
-        :param crop_width: output image width
-        :type crop_width: int
-        :param crop_height: output image heigh
-        :type crop_height: int
+        :param target_width: output image width
+        :type target_width: int
+        :param target_height: output image height
+        :type target_height: int
         :param down_sample_factor: number by which you want to reduce image height & width (use it if image is large or to fasten the process)
         :type down_sample_factor: int [default=8]
         :return: resized image
