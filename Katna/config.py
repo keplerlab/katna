@@ -4,7 +4,6 @@
     :synopsis: This module defines some helpful configuration variables
 """
 
-
 # # Configuration parameters for Image class
 class Image:
     # default value by which image size to be reduces for processing
@@ -82,6 +81,12 @@ class Video:
     # Debug flag
     DEBUG = False
     min_video_duration = 5.0
+
+
+# Configuration parameters for mediapipe
+class MediapipeConfig:
+    CONFIG_FILE_PBTXT = "/Users/nitkatya/Kepler/katna/Katna/mediapipe_autoflip.pbtxt"
+    AUTOFLIP_BUILD_CMD = "run_autoflip"
 
 
 class ImageSelector:

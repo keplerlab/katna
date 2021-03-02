@@ -14,6 +14,7 @@ from Katna.decorators import FileDecorators
 
 from Katna.frame_extractor import FrameExtractor
 from Katna.image_selector import ImageSelector
+from Katna.mediapipe import MediaPipeAutoFlip
 import Katna.config as config
 
 from multiprocessing import Pool, Process, cpu_count
@@ -53,6 +54,30 @@ class Video(object):
         for clip in video_clips:
             os.remove(clip)
             # print(clip, " removed!")
+
+    @VideoDecorators.is_mediapipe_installed
+    @FileDecorators.validate_file_path
+    def resize_video(self, abs_path_to_autoflip_build,
+                     file_path,
+                     abs_file_path_output,
+                     output_aspect_ratio):
+        """
+        TODO: Call main method inside mediapipe.py for the file
+        """
+        autoflip = MediaPipeAutoFlip(abs_path_to_autoflip_build)
+        autoflip.run(file_path, abs_file_path_output, output_aspect_ratio)
+
+
+    @VideoDecorators.is_mediapipe_installed
+    @FileDecorators.validate_dir_path
+    def resize_video_from_dir(self, dir_path):
+        """
+        TODO: Call main method inside mediapipe.py for all the videos in the directory path
+        """
+        autoflip = MediaPipeAutoFlip()
+        for file_path in dir_path:
+            autoflip.run(file_path)
+            pass
 
     @FileDecorators.validate_dir_path
     def extract_frames_as_images_from_dir(self, no_of_frames, dir_path):

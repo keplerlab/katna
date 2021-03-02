@@ -10,6 +10,7 @@ import errno
 import functools
 import inspect
 import Katna.config as config
+from Katna.exceptions import MediapipeAutoflipBuildNotFound
 
 
 class VideoDecorators(object):
@@ -24,6 +25,45 @@ class VideoDecorators(object):
     Returns:
         [boolean] -- [if the file exists and is valid]
     """
+
+    @classmethod
+    def is_mediapipe_installed(cls, decorated):
+        """
+        Checks if mediapipe is installed by verifying the build location specified by user.
+        """
+
+        @functools.wraps(decorated)
+        def wrapper(*args, **kwargs):
+            """ wrapper for decorated function
+
+            Arguments:
+                cls {VideoDecorators} -- [Video decorators class]
+
+            Raises:
+                MediapipeAutoflipBuildNotFound: [If the dir is missing]
+
+            Returns:
+                [function] -- [Decorated function]
+            """
+            func_args = inspect.getcallargs(decorated, *args, **kwargs)
+
+            print(" args : ", func_args)
+
+            key = "abs_path_to_autoflip_build"
+
+            if key not in func_args["kwargs"]:
+                raise Exception("abs_path_to_autoflip_build parameter is missing. "
+                                "This is required to run mediapipe autoflip.")
+            else:
+                f_path = func_args["kwargs"].get(key)
+
+            if bool(f_path is None or os.path.exists(f_path) is False):
+                raise MediapipeAutoflipBuildNotFound()
+            else:
+                return decorated(*args, **kwargs)
+
+        return wrapper
+
 
     @classmethod
     def validate_video(cls, decorated):
