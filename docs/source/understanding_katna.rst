@@ -102,6 +102,25 @@ video to be saved, defaults to “”
 be same as input filename, defaults to “”
 
 
+.. _Katna.video_resize:
+
+Katna.video_resize module
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+As mentioned in home section since version 0.8.0 of Katna we are extending
+smart resize features to videos with the help of Google's Mediapipe project.
+In simple terms video resize functionality in Katna currently is a thin
+python wrapper around Google Mediapipe Autoflip solution. If you want to learn
+more about how it works under the hood Please refer to this blog post by 
+Google AI: https://ai.googleblog.com/2020/02/autoflip-open-source-framework-for.html .
+Please refer to :ref:`tutorials_video_smart_resize`
+for how to install and configure mediapipe to be used with katna. 
+Right now following parameters are configurable using Katna video module:
+
+1. **out_dir_path** (str, optional) – output folder path where you want output 
+video to be saved, defaults to “”
+
+2. **out_file_name** (str, optional) – output filename, if not mentioned it will 
+be same as input filename, defaults to “”
 
 
 Katna.image Module:

@@ -44,6 +44,15 @@ the frames that provide the most accurate and compact summary of the video conte
 Video compression is handled using ffmpeg library. Details about which could be 
 read in :ref:`Katna.video_compressor` section.
 
+Since version 0.8.0 of Katna we are extending smart resize features to videos
+with the help of Google's Mediapipe project.
+To know more about this please refer to documentation
+:ref:`Katna.video_resize`. Please note that this feature is an 
+experimental feature. And might be subject to removal/modifications at later versions.
+Also you also need to install Google's Mediapipe library, Specially autoflip binary for this to work.
+Please refer to :ref:`tutorials_video_smart_resize`
+for how to install and configure mediapipe to be used with katna. 
+
 Image Module:
 -------------
 This module handles the task(s) for smart cropping and smart image resizing.
@@ -84,6 +93,7 @@ by opencv library.
    Installation <installation>
    Quickstart video module <tutorials_video>
    Quickstart image module <tutorials_image>
+   Quickstart video smart resize module (Experimental) <tutorials_video_smart_resize>
    Understanding katna <understanding_katna>
    Troubleshooting <troubleshooting>
    API reference <modules>
