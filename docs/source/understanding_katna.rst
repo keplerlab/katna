@@ -116,11 +116,26 @@ Please refer to :ref:`tutorials_video_smart_resize`
 for how to install and configure mediapipe to be used with katna. 
 Right now following parameters are configurable using Katna video module:
 
-1. **out_dir_path** (str, optional) – output folder path where you want output 
-video to be saved, defaults to “”
+#. **CONFIG_FILE_PBTXT**  (str, optional) – defaults to "<Repo or Installation folder>/Katna/mediapipe_autoflip.pbtxt"
 
-2. **out_file_name** (str, optional) – output filename, if not mentioned it will 
-be same as input filename, defaults to “”
+#. **AUTOFLIP_BUILD_CMD**  (str, optional) – defaults to "run_autoflip"
+
+#. **SceneCroppingCalculator.conf.motion_stabilization_threshold_percent**  (int, optional) – defaults to “0.5”
+
+#. **SceneCroppingCalculator.conf.overlay_opacity**  (int, optional) – defaults to “0.6”
+
+#. **SignalFusingCalculator.conf.FACE_CORE_LANDMARKS.is_required**  (bool, optional) – defaults to **False**
+
+#. **SignalFusingCalculator.conf.FACE_FULL.is_required**  (bool, optional) – defaults to **False**
+
+#. **SignalFusingCalculator.conf.HUMAN.is_required**  (bool, optional) – defaults to **False**
+
+#. **SignalFusingCalculator.conf.PET.is_required**  (bool, optional) – defaults to **False**
+
+#. **SignalFusingCalculator.conf.CAR.is_required**  (bool, optional) – defaults to **False**
+
+#. **SignalFusingCalculator.conf.OBJECT.is_required**  (bool, optional) – defaults to **False**
+
 
 
 Katna.image Module:
