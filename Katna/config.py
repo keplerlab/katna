@@ -95,6 +95,43 @@ class MediapipeConfig:
     CONFIG_FILE_PBTXT = "/Users/nitkatya/Kepler/katna/Katna/mediapipe_autoflip.pbtxt"
     AUTOFLIP_BUILD_CMD = "run_autoflip"
 
+    GRAPH_CONFIG = {
+        "SignalFusingCalculator": {
+            "conf": [
+                {
+                "type": "FACE_CORE_LANDMARKS",
+                "is_required": False
+                },
+                {
+                    "type": "FACE_FULL",
+                    "is_required": False
+                },
+                {
+                    "type": "HUMAN",
+                    "is_required": False
+                },
+                {
+                    "type": "PET",
+                    "is_required": False
+                },
+                {
+                    "type": "CAR",
+                    "is_required": False
+                },
+                {
+                    "type": "OBJECT",
+                    "is_required": False
+                }
+            ]
+        },
+        "SceneCroppingCalculator": {
+            "conf": {
+                "motion_stabilization_threshold_percent": 0.5,
+                "overlay_opacity": 0.6
+            }
+        }
+    }
+
 
 class ImageSelector:
     # Setting for optimum Brightness values
