@@ -51,6 +51,8 @@ want to automate:
 #. You want to extract a crop of particular aspect ratio e.g. 4:3 from your input image/images.
    (e.g. Get a crop of aspect ratio 1:1 from image of resolution 1920x1080 (16:9 aspect ratio image))
 
+#. You want to resize a video into particular aspect ratio resize a 16:9 video to 4:3 asepct ratio video.
+   Please not this feature is currently **experimental**.
 
 
 Katna is divided into two modules namely video and image module.
@@ -58,7 +60,8 @@ In next sections we will learn more about them in more details.
 
 Video Module:
 -------------
-This module handles the task(s) for key frame(s) extraction and video compression.
+This module handles the task(s) for key frame(s) extraction, video compression and **experimental** feature 
+of video resize by aspect ratio. 
 
 Key-frames are defined as the representative frames of a video stream,
 the frames that provide the most accurate and compact summary of the video content.
