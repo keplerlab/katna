@@ -34,8 +34,20 @@ want to automate:
 #. You have video/videos you want to compress down to smaller size.
 #. You have image/images which you want to smartly resize to a target resolution.
    (e.g. 500x500, 1080p (1920x1080) etc.)
+
+   .. figure:: images/katna_image_resize.jpg
+         :width: 100%
+         :align: center
+         :alt: Katna Image resize
+
 #. You have image/images from which you want to intelligently extract a crop with a target resolution.
    (e.g. Get a crop of size 500x500 from image of size 1920x1080)
+
+   .. figure:: images/katna_image_crop.jpg
+      :width: 100%
+      :align: center
+      :alt: Katna Image resize
+
 #. You want to extract a crop of particular aspect ratio e.g. 4:3 from your input image/images.
    (e.g. Get a crop of aspect ratio 1:1 from image of resolution 1920x1080 (16:9 aspect ratio image))
 
