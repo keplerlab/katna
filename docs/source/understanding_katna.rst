@@ -116,26 +116,46 @@ Please refer to :ref:`tutorials_video_smart_resize`
 for how to install and configure mediapipe to be used with katna. 
 Right now following parameters are configurable using Katna video module:
 
-#. **CONFIG_FILE_PBTXT**  (str, optional) – defaults to "<Repo or Installation folder>/Katna/mediapipe_autoflip.pbtxt"
+#. **CONFIG_FILE_PBTXT**  (str, optional) – 
+   defaults to "<Repo or Installation folder>/Katna/mediapipe_autoflip.pbtxt"
+   Path for Mediapipe Autoflip Protobuf text file.
 
-#. **AUTOFLIP_BUILD_CMD**  (str, optional) – defaults to "run_autoflip"
+#. **AUTOFLIP_BUILD_CMD**  (str, optional) – defaults to "run_autoflip" name of
+   executable built using mediapipe autoflip solution.
 
-#. **SceneCroppingCalculator.conf.motion_stabilization_threshold_percent**  (int, optional) – defaults to “0.5”
+#. **SceneCroppingCalculator.conf.motion_stabilization_threshold_percent**  (int, optional) – 
+   defaults to "0.5" : This parameter controls extent of motion stabilization is applied
+   while tracking an object or face across the frames for video resizing. Higher value Means
+   more aggressive motion stabilization and vice versa.
 
 #. **SceneCroppingCalculator.conf.overlay_opacity**  (int, optional) – defaults to “0.6”
+   In some cases e.g. while compulsorily including all faces across frames, it is not possible to do
+   without rendering padding in video. In case overlay of same video content is used as padding.
+   This parameter controls how much opacity to add to padded content. 
 
 #. **SignalFusingCalculator.conf.FACE_CORE_LANDMARKS.is_required**  (bool, optional) – defaults to **False**
+   In case of this parameter set as true, It is ensured that all face present in video are compulsorily
+   included in final resized video.
 
 #. **SignalFusingCalculator.conf.FACE_FULL.is_required**  (bool, optional) – defaults to **False**
+   In case of this parameter set as true, It is ensured that all full faces present in video are compulsorily
+   included in final resized video.
 
 #. **SignalFusingCalculator.conf.HUMAN.is_required**  (bool, optional) – defaults to **False**
+   In case of this parameter set as true, It is ensured that all persons/humans present/detected 
+   in video are compulsorily included in final resized video.
 
 #. **SignalFusingCalculator.conf.PET.is_required**  (bool, optional) – defaults to **False**
+   In case of this parameter set as true, It is ensured that all PET's like dogs and cats
+   present/detected in video are compulsorily included in final resized video.
 
 #. **SignalFusingCalculator.conf.CAR.is_required**  (bool, optional) – defaults to **False**
+   In case of this parameter set as true, It is ensured that all CARs present/detected 
+   in video are compulsorily included in final resized video.
 
 #. **SignalFusingCalculator.conf.OBJECT.is_required**  (bool, optional) – defaults to **False**
-
+   In case of this parameter set as true, It is ensured that all objects detected 
+   in video are compulsorily included in final resized video.
 
 
 Katna.image Module:
