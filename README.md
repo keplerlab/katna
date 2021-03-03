@@ -1,21 +1,42 @@
 
-## **Katna**: Tool for automating common vide keyframe extraction and Image Autocrop tasks
+## **Katna**: Tool for automating video keyframe extraction, video compression, Image Autocrop and Smart image resize tasks
 
 ### Resources 
 * Homepage and Reference: <https://katna.readthedocs.io/>
 
 ### Description
-Katna automates the boring, error prone task of videos key/best frames extraction and manual time consuming task of image cropping.
 
-Katna is divided into two modules namely video and image.
+Katna automates the boring, error prone task of videos key/best frames extraction,
+video compression and manual time consuming task of image cropping and resizing using ML.
+
+In short, you may want to consider using Katna library if you have following tasks:
+
+1. You have video/videos from who you want to extract keyframe/keyframes. 
+   Please note Key-frames are defined as the representative frames of a video stream,
+   the frames that provide the most accurate and compact summary of the video content.
+ 
+2. You have video/videos you want to compress down to smaller size. (e.g. You have video with let's say 1 GB Size but you want to compress it down as small as possible.)
+
+3. You have image/images which you want to smartly resize to a target resolution.
+   (e.g. 500x500, 1080p (1920x1080) etc.)
+
+4. You have image/images from which you want to intelligently extract a crop with a target resolution.
+   (e.g. Get a crop of size 500x500 from image of size 1920x1080)
+
+5. You want to extract a crop of particular aspect ratio e.g. 4:3 from your input image/images.
+   (e.g. Get a crop of aspect ratio 1:1 from image of resolution 1920x1080 (16:9 aspect ratio image))
+
+Katna is divided into two modules
+* Video module.
+* Image module.
 
 Video Module:
 -------------
-This module handles the task(s) related to key frame extraction.
+This module handles the task(s) for key frame(s) extraction and video compression.
 
 Key-frames are defined as the representative frames of a video stream, the frames that provide the most accurate and compact summary of the video content.
 
-**Frame extraction and selection criteria**
+**Frame extraction and selection criteria for key-frame extraction**
 
 1. Frame that are sufficiently different from previous ones using absolute differences in LUV colorspace
 2. Brightness score filtering of extracted frames
@@ -23,9 +44,11 @@ Key-frames are defined as the representative frames of a video stream, the frame
 4. K-Means Clustering of frames using image histogram
 5. Selection of best frame from clusters based on and variance of laplacian (image blur detection)
 
+Video compression is handled using ffmpeg library. Details about which could be read in [Katna.video_compressor module](https://katna.readthedocs.io/en/latest/understanding_katna.html#katna-video-compressor) section.
+
 Image Module:
 -------------
-This module handles the task(s) related to smart cropping.
+This module handles the task(s) related to smart cropping and image resizing.
 
 The Smart image cropping is happening in way that the module identifies the best part or the area where someone focus more
 and interprets this information while cropping the image.
@@ -35,6 +58,8 @@ and interprets this information while cropping the image.
 1. Edge, saliency and Face detection features are detected in the input image
 2. All the crops with specified dimensions are extracted with calculation of score for each crop wrt to extracted features
 3. The crops will be passes through filters specified which will remove the crops which filter rejects
+
+Similar to Smart crop Katna image module supports **Smart image resizing** feature. Given an input image it can resize image to target resolution with simple resizing if aspect ratio is same for input and target image. If aspect ratio is different than smart image resize will first crops biggest good quality crop in target resolution and then resizes image in target resolution. This ensures image resize without actually skewing input image. *Please not that if aspect ratio of input and output image are not same katna image_resize can lead to some loss of image content*
 
 **Supported Video and image file formats**
 ##########################################
@@ -101,18 +126,25 @@ by running command "python -m pip uninstall opencv-contrib-python" and then agai
 5) On windows, ensure that anaconda has admin rights if installing with anaconda as it fails with 
 the write permission while installing some modules.
 
-6) Python version 3.8 not supported due to the numpy and moviepy errors with this python version.
+6) If you get "RuntimeError: No ffmpeg exe could be found". Install ffmpeg on your system, and/or set the IMAGEIO_FFMPEG_EXE or FFMPEG_EXE environment variable to path of your ffmpeg binary.
+Usually ffmpeg is installed using imageio-ffmpeg package, Check **imageio_ffmpeg-*.egg** folder inside your
+**site-packages** folder, there should be a ffmpeg file inside binaries folder, check if this file has proper read/executable permission set and additionally set it's path to environment variable.
 
-7) If you get "RuntimeError: No ffmpeg exe could be found. Install ffmpeg on your system, or 
-set the IMAGEIO_FFMPEG_EXE environment variable". Go to the **imageio_ffmpeg-*.egg** folder inside your
-**site-packages** folder, there's ffmpeg file inside binaries folder set it's path to environment variable.
-
- 
 ### How to use Library
 
 1) Refer to quickstart section in Katna Reference 
    from https://katna.readthedocs.io/
 
+
+### Update: katna version 0.7.0
+Added support for video compression in Katna.video module.
+### Update: katna version 0.6.0
+Added support for smart image resize in Katna.image module.
+### Update: katna version 0.5.0
+In version 0.5.0 we have changed name of some of the public functions inside
+for Katna.video module used for keyframe extraction,
+1) extract_frames_as_images method is changed to extract_video_keyframes.
+2) extract_frames_as_images_from_dir method is changed to extract_keyframes_from_videos_dir
 ### Attributions
 1) We have used the SAD (Sum of absolute difference) code from https://github.com/amanwalia92/KeyFramesExtraction  
 2) We have used project Smartcrop https://github.com/jwagner/smartcrop.js/ for Smart crop feature in Katna Image module

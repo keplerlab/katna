@@ -44,14 +44,14 @@ class ImageSelector(object):
         self.max_entropy_value = config.ImageSelector.max_entropy_value
         self.entropy_step = config.ImageSelector.entropy_step 
 
-    def __get_brighness_score__(self, image):
+    def __get_brightness_score__(self, image):
         """Internal function to compute the brightness of input image , returns brightness score between 0 to 100.0 , 
 
         :param object: base class inheritance
         :type object: class:`Object`
         :param image: input image
         :type image: Opencv Numpy Image   
-        :return: result of Brighness measurment 
+        :return: result of Brightness measurment 
         :rtype: float value between 0.0 to 100.0    
         """
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -109,7 +109,7 @@ class ImageSelector(object):
 
         # -------- calculating the brightness and entropy score by multiprocessing ------
         brightness_score = np.array(
-            self.pool_obj.map(self.__get_brighness_score__, input_img_files)
+            self.pool_obj.map(self.__get_brightness_score__, input_img_files)
         )
 
         entropy_score = np.array(
@@ -177,7 +177,7 @@ class ImageSelector(object):
         return files_clusters_index_array
 
     def __get_laplacian_scores(self, files, n_images):
-        """Function to iteratre over each image in the cluster and calculates the laplacian/blurryness 
+        """Function to iteratee over each image in the cluster and calculates the laplacian/blurryness 
            score and adds the score to a list
 
         :param files: list of input filenames 

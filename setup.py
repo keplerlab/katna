@@ -9,8 +9,8 @@ from distutils.core import Command
 with open("README.md", "r", encoding='utf-8') as fh:
     long_description = fh.read()
 
-if sys.version_info >= (3,8):
-    sys.exit("Python version greater than 3.7 not supported because of numpy and moviepy compatibility issues with python version 3.8")
+if sys.version_info >= (3,10):
+   sys.exit("Python version greater than 3.9 not supported because of potentail compatibility issues")
 
 # This will store the models
 network_folder_path = os.path.join(os.path.expanduser("~"), ".katna")
@@ -34,6 +34,19 @@ def to_list(buffer):
 #   pip install -e .
 #
 # IMPORTANT: when updating these, please make sure to sync conda/meta.yaml
+# 
+# Important dependencies and their use:
+# opencv-contrib-python: opencv library with contrib extension for image
+#                        processing tasks
+# image_ffmpeg: This module automatically installs ffmpeg binaries for use
+#               in frames extraction from video
+# ffmpy: Thin wrapper on top of ffmpeg binary for calling ffmpeg executables
+#        using python, used in video duration calculation and frame extraction
+#        from video
+# requests: python requests library is used for downloading text detection model
+#           if needed.
+# scipy, scikit-learn, numpy, imutils are used for general io for images and
+# and utilities
 dep_groups = {
     "core": to_list(
         """
@@ -42,13 +55,15 @@ dep_groups = {
         scikit-image
         opencv-contrib-python>=3.4.7
         numpy>=1.15
+        imageio_ffmpeg>=0.2.0
         imutils
         requests
-        moviepy >=1.0.1, <=1.0.3
+        ffmpy
 """
     )
 }
 
+# Get version info from Katna/version.py location
 __version__ = None # Explicitly set version.
 exec(open('Katna/version.py').read()) # loads __version__
 

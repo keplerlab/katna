@@ -1,6 +1,7 @@
 Main modules
 ============
 
+
 Katna.video module
 -------------------
 
@@ -10,6 +11,10 @@ Katna.video module
    :show-inheritance:
    :noindex:
 
+
+
+
+
 Katna.image module
 -------------------
 
@@ -18,6 +23,22 @@ Katna.image module
    :undoc-members:
    :show-inheritance:
    :noindex:
+
+
+
+
+Config module
+==============
+
+.. automodule:: Katna.config
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :noindex:
+
+
+
+
 
 Helper modules
 ==============
@@ -31,8 +52,13 @@ Katna.decorators module
    :show-inheritance:
    :noindex:
 
+
+
+
+
 Internal modules for Video
 ==========================
+
 Katna.frame\_extractor module
 ------------------------------
 
@@ -42,6 +68,8 @@ Katna.frame\_extractor module
    :show-inheritance:
    :noindex:
 
+
+
 Katna.image\_selector module
 -----------------------------
 
@@ -50,6 +78,19 @@ Katna.image\_selector module
    :undoc-members:
    :show-inheritance:
    :noindex:
+
+
+Katna.video\_compressor module
+---------------------------------
+
+.. automodule:: Katna.video_compressor
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :noindex:
+
+
+
 
 Internal modules for Image
 ==========================
