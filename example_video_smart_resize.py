@@ -9,7 +9,7 @@ def main():
 
     vd = Video()
 
-    # folder to save extracted images
+    # folder to save resized video
     output_folder_resized_video = "resized_video"
     out_dir_path = os.path.join(".", output_folder_resized_video)
 
@@ -27,11 +27,7 @@ def main():
                      abs_file_path_output,
                      output_aspect_ratio)
 
-    imgs = vd.extract_video_keyframes(
-        no_of_frames=no_of_frames_to_returned, file_path=video_file_path
-    )
-
-    print(f"Exracted key frames file path = {out_dir_path}")
+    print(f"output resized video file path = {abs_file_path_output}")
 
 
 if __name__ == "__main__":
