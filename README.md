@@ -46,7 +46,8 @@ Key-frames are defined as the representative frames of a video stream, the frame
 
 Video compression is handled using ffmpeg library. Details about which could be read in [Katna.video_compressor module](https://katna.readthedocs.io/en/latest/understanding_katna.html#katna-video-compressor) section.
 
-Since version 0.8.0 of Katna we are extending smart resize features to videos with the help of Google's Mediapipe project. To know more about this please refer to documentation [Video Smart Resize using Katna](https://katna.readthedocs.io/en/latest/video_smart_resize.html). Please note that this feature is an optional experimental feature. And might be subject to removal/modifications at later versions. Also you also need to install Google's Mediapipe library, Specially autoflip binary for this to work. Please refer to [Link](https://katna.readthedocs.io/en/latest/video_smart_resize.html) for how to install and configure mediapipe to be used with katna. 
+Since version 0.8.0 of Katna we are extending smart resize features to videos with the help of Google's Mediapipe project. To know more about this please refer to documentation [Video Smart Resize using Katna]
+(https://katna.readthedocs.io/en/latest/understanding_katna.html#katna-video-resize). Please note that this feature is an optional experimental feature. And might be subject to removal/modifications at later versions. Also you also need to install Google's Mediapipe library, Specially autoflip binary for this to work. Please refer to [Link](https://katna.readthedocs.io/en/latest/tutorials_video_smart_resize.html#tutorials-video-smart-resize) for how to install and configure mediapipe to be used with katna. 
 
 Image Module:
 -------------
