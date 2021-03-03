@@ -13,6 +13,24 @@ want to automate:
 #. You have video/videos from who you want to extract keyframe/keyframes. 
    Please note Key-frames are defined as the representative frames of a video stream,
    the frames that provide the most accurate and compact summary of the video content.
+   Take an example of this video and some of the top keyframes extracted using Katna. 
+   
+   .. raw:: html
+
+         <iframe width="560" height="315" src="https://www.youtube.com/embed/zpaLHwwYxE8" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+      
+
+   .. figure:: images/arrow_down.jpeg
+         :width: 3%
+         :align: center
+         :alt: arrow down
+
+   .. figure:: images/keyframe_extraction.jpg
+         :width: 100%
+         :align: center
+         :alt: Image of keyframe extracted using Katna
+
+      
 #. You have video/videos you want to compress down to smaller size.
 #. You have image/images which you want to smartly resize to a target resolution.
    (e.g. 500x500, 1080p (1920x1080) etc.)
