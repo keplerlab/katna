@@ -46,6 +46,8 @@ Key-frames are defined as the representative frames of a video stream, the frame
 
 Video compression is handled using ffmpeg library. Details about which could be read in [Katna.video_compressor module](https://katna.readthedocs.io/en/latest/understanding_katna.html#katna-video-compressor) section.
 
+Since version 0.8.0 of Katna we are extending smart resize features to videos as well using help of Mediapipe project. To know more about this please refer to documentation [Video Smart Resize using Katna](https://katna.readthedocs.io/en/latest/video_smart_resize.html). Please note that this feature is an optional experimental feature. And might be subject to removal/modifications at later versions. Also you also need to install Google's Mediapipe library, Specially autoflip binary for this to work. Please refer to [Link](https://katna.readthedocs.io/en/latest/video_smart_resize.html) for how to install and configure mediapipe to be used with katna. 
+
 Image Module:
 -------------
 This module handles the task(s) related to smart cropping and image resizing.
@@ -135,7 +137,9 @@ Usually ffmpeg is installed using imageio-ffmpeg package, Check **imageio_ffmpeg
 1) Refer to quickstart section in Katna Reference 
    from https://katna.readthedocs.io/
 
-
+### Update: katna version 0.8.0
+Added experimental support for autocrop/resize videos using Google's mediapipe
+Autoflip code example.
 ### Update: katna version 0.7.0
 Added support for video compression in Katna.video module.
 ### Update: katna version 0.6.0
@@ -148,3 +152,4 @@ for Katna.video module used for keyframe extraction,
 ### Attributions
 1) We have used the SAD (Sum of absolute difference) code from https://github.com/amanwalia92/KeyFramesExtraction  
 2) We have used project Smartcrop https://github.com/jwagner/smartcrop.js/ for Smart crop feature in Katna Image module
+3) For Experimental feature of Smartcrop/Resize in videos we are using help of https://github.com/google/mediapipe Autoflip project.
