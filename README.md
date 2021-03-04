@@ -16,14 +16,31 @@ In short, you may want to consider using Katna library if you have following tas
 1. You have video/videos from who you want to extract keyframe/keyframes. 
    Please note Key-frames are defined as the representative frames of a video stream,
    the frames that provide the most accurate and compact summary of the video content.
- 
+   Take an example of this video and some of the top keyframes extracted using Katna. 
+   
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/zpaLHwwYxE8/0.jpg)](https://www.youtube.com/watch?v=zpaLHwwYxE8)
+
+<div style="text-align:center">
+<img src="docs/source/images/arrow_down.jpeg" alt="arrow down" width="20"/>
+</div>
+
+<div style="text-align:center">
+<img src="docs/source/images/keyframe_extraction.jpg" alt="Image of keyframe extracted using Katna" width="400"/>
+</div>
+
+
 2. You have video/videos you want to compress down to smaller size. (e.g. You have video with let's say 1 GB Size but you want to compress it down as small as possible.)
 
 3. You have image/images which you want to smartly resize to a target resolution.
    (e.g. 500x500, 1080p (1920x1080) etc.)
 
+![Katna Image resize](docs/source/images/katna_image_resize.jpg "Katna Image resize")
+
 4. You have image/images from which you want to intelligently extract a crop with a target resolution.
    (e.g. Get a crop of size 500x500 from image of size 1920x1080)
+
+![Katna Image crop](docs/source/images/katna_image_crop.jpg "Katna Image crop")
+
 
 5. You want to extract a crop of particular aspect ratio e.g. 4:3 from your input image/images.
    (e.g. Get a crop of aspect ratio 1:1 from image of resolution 1920x1080 (16:9 aspect ratio image))

@@ -46,7 +46,7 @@ want to automate:
    .. figure:: images/katna_image_crop.jpg
       :width: 100%
       :align: center
-      :alt: Katna Image resize
+      :alt: Katna Image crop
 
 #. You want to extract a crop of particular aspect ratio e.g. 4:3 from your input image/images.
    (e.g. Get a crop of aspect ratio 1:1 from image of resolution 1920x1080 (16:9 aspect ratio image))
