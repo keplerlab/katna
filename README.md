@@ -1,7 +1,7 @@
 
 ## **Katna**: Tool for automating video keyframe extraction, video compression, Image Autocrop and Smart image resize tasks
 
-![](docs/source/logo.png)
+<img src="docs/source/logo.png" alt="logo" width="200"/>
 
 ### Resources 
 * Homepage and Reference: <https://katna.readthedocs.io/>
