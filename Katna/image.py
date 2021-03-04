@@ -301,8 +301,9 @@ class Image(object):
         sorted_list = sorted(crop_list, key=lambda x: float(x.score), reverse=True)
         return sorted_list[:num_of_crops]
 
+    # 
     @FileDecorators.validate_file_path
-    def save_crop_to_disk(self, crop_rect, frame, file_path, file_name, file_ext):
+    def save_crop_to_disk(self, crop_rect, frame, file_path, file_name, file_ext, rescale=False):
         """saves an in-memory crop on drive.
 
         :param crop_rect: In-memory crop_rect.
