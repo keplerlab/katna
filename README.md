@@ -1,6 +1,8 @@
 
 ## **Katna**: Tool for automating video keyframe extraction, video compression, Image Autocrop and Smart image resize tasks
 
+![](docs/source/logo.png)
+
 ### Resources 
 * Homepage and Reference: <https://katna.readthedocs.io/>
 
@@ -154,3 +156,4 @@ for Katna.video module used for keyframe extraction,
 1) We have used the SAD (Sum of absolute difference) code from https://github.com/amanwalia92/KeyFramesExtraction  
 2) We have used project Smartcrop https://github.com/jwagner/smartcrop.js/ for Smart crop feature in Katna Image module
 3) For Experimental feature of Smartcrop/Resize in videos we are using help of https://github.com/google/mediapipe Autoflip project.
+4) Katna icon generated at https://thenounproject.com/term/chef-knife/2082763/  by ProSymbols, US , In the Viking Elements Glyph Icons Collection licensed as Creative Commons CCBY.
