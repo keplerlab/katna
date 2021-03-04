@@ -9,6 +9,7 @@ import sys
 import numpy as np
 import cv2
 import errno
+import ntpath
 from Katna.decorators import VideoDecorators
 from Katna.decorators import FileDecorators
 
@@ -26,6 +27,7 @@ import ffmpy
 from imageio_ffmpeg import get_ffmpeg_exe
 from multiprocessing import Pool, Process, cpu_count
 
+
 class Video(object):
     """Class for all video frames operations
 
@@ -33,7 +35,7 @@ class Video(object):
     :type object: class:`Object`
     """
 
-    def __init__(self):
+    def __init__(self, autoflip_build_path=None):
         # Find out location of ffmpeg binary on system
         helper._set_ffmpeg_binary_path()
         # If the duration of the clipped video is less than **min_video_duration**
@@ -43,6 +45,12 @@ class Video(object):
         self.n_processes = cpu_count() // 2 - 1
         if self.n_processes < 1:
             self.n_processes = None
+
+
+        if autoflip_build_path is None:
+            self.mediapipe_autoflip = None
+        else:
+            self.mediapipe_autoflip = MediaPipeAutoFlip(autoflip_build_path)
 
         # Folder to save the videos after clipping
         self.temp_folder = os.path.abspath(os.path.join("clipped"))
@@ -62,29 +70,68 @@ class Video(object):
                 print("Error in removing clip: " + clip)
             # print(clip, " removed!")
 
-    @VideoDecorators.is_mediapipe_installed
     @FileDecorators.validate_file_path
-    def resize_video(self, abs_path_to_autoflip_build,
+    def resize_video(self,
                      file_path,
                      abs_file_path_output,
-                     output_aspect_ratio):
+                     aspect_ratio):
         """
         TODO: Call main method inside mediapipe.py for the file
         """
-        autoflip = MediaPipeAutoFlip(abs_path_to_autoflip_build)
-        autoflip.run(file_path, abs_file_path_output, output_aspect_ratio)
+
+        if self.mediapipe_autoflip is not None:
+            self.mediapipe_autoflip.validate_autorun_build_path()
+            self.mediapipe_autoflip.run(file_path, abs_file_path_output, aspect_ratio)
+        else:
+            raise Exception("Mediapipe build path not found.")
 
 
-    @VideoDecorators.is_mediapipe_installed
     @FileDecorators.validate_dir_path
-    def resize_video_from_dir(self, dir_path):
+    def resize_video_from_dir(self,
+                     dir_path,
+                     abs_dir_path_output,
+                     aspect_ratio):
         """
         TODO: Call main method inside mediapipe.py for all the videos in the directory path
         """
-        autoflip = MediaPipeAutoFlip()
-        for file_path in dir_path:
-            autoflip.run(file_path)
-            pass
+        if self.mediapipe_autoflip is None:
+            raise Exception("Mediapipe build path not found.")
+
+        #validate build path for mediapipe autorun
+        self.mediapipe_autoflip.validate_autorun_build_path()
+
+        # make the output dir if it doesn't exist
+        if not os.path.isdir(abs_dir_path_output):
+            os.mkdir(abs_dir_path_output)
+
+        list_of_videos_to_process = []
+        # Collect all the valid video files inside folder
+        for path, _, files in os.walk(dir_path):
+            for filename in files:
+                video_file_path = os.path.join(path, filename)
+                if helper._check_if_valid_video(video_file_path):
+                    list_of_videos_to_process.append(video_file_path)
+
+        print(" List of videos to be processed : ", list_of_videos_to_process)
+        print(" main process id : ", os.getpid())
+
+        autoflip = self.mediapipe_autoflip
+
+        # generates a pool based on cores
+        pool = Pool(processes=self.n_processes)
+        print(" This might take a while ... ")
+
+        # TODO use run method here
+        results = pool.starmap(autoflip.launch_mediapipe_autoflip_process,
+                               [(input_file_path,
+                                 os.path.join(abs_dir_path_output, ntpath.basename(input_file_path)),
+                                 aspect_ratio) for input_file_path in list_of_videos_to_process])
+
+        pool.close()
+        pool.join()
+
+        for result in results:
+            print("Finished processing for file: ", result[0])
 
     @FileDecorators.validate_dir_path
     def extract_keyframes_from_videos_dir(self, no_of_frames, dir_path):

@@ -92,45 +92,65 @@ class Video:
 
 # Configuration parameters for mediapipe
 class MediapipeConfig:
-    CONFIG_FILE_PBTXT = "/Users/nitkatya/Kepler/katna/Katna/mediapipe_autoflip.pbtxt"
-    AUTOFLIP_BUILD_CMD = "run_autoflip"
+    
+    class AutoFlip:
 
-    GRAPH_CONFIG = {
-        "SignalFusingCalculator": {
-            "conf": [
-                {
-                "type": "FACE_CORE_LANDMARKS",
-                "is_required": False
-                },
-                {
-                    "type": "FACE_FULL",
-                    "is_required": False
-                },
-                {
-                    "type": "HUMAN",
-                    "is_required": False
-                },
-                {
-                    "type": "PET",
-                    "is_required": False
-                },
-                {
-                    "type": "CAR",
-                    "is_required": False
-                },
-                {
-                    "type": "OBJECT",
-                    "is_required": False
-                }
-            ]
-        },
-        "SceneCroppingCalculator": {
-            "conf": {
-                "motion_stabilization_threshold_percent": 0.5,
-                "overlay_opacity": 0.6
-            }
+        CONFIG_FILE_PBTXT = "/Users/nitkatya/Kepler/katna/Katna/mediapipe_autoflip.pbtxt"
+        BUILD_CMD = "run_autoflip"
+
+        _FACE_CORE_LANDMARKS = "FACE_CORE_LANDMARKS"
+        _FACE_FULL = "FACE_FULL"
+        _HUMAN = "HUMAN"
+        _PET = "PET"
+        _CAR = "CAR"
+        _OBJECT = "OBJECT"
+
+        _motion_stabilization_threshold_percent = "motion_stabilization_threshold_percent"
+        _overlay_opacity = "overlay_opacity"
+
+        SignalFusingCalculator = {
+            _FACE_CORE_LANDMARKS: False,
+            _FACE_FULL: False,
+            _HUMAN: False,
+            _PET: False,
+            _CAR: False,
+            _OBJECT: False
         }
-    }
+
+        SceneCroppingCalculator = {
+            _motion_stabilization_threshold_percent: 0.5,
+            _overlay_opacity: 0.6
+        }
+
+        @classmethod
+        def get_conf(cls):
+            """Gets the current config
+
+            :return: dictionary containing the current config
+            :rtype: dict
+            """
+            return {
+                "SignalFusingCalculator" : cls.SignalFusingCalculator,
+                "SceneCroppingCalculator": cls.SceneCroppingCalculator
+            }
+
+        @classmethod
+        def set_conf(cls, config):
+            """Sets the config passed
+
+            :param config: The configuration to set.
+            :type config: dict
+            """
+            for attr in config.keys():
+                current_conf = cls.get_conf()
+                if attr in current_conf.keys():
+                    updated_attr_dict = {**current_conf[attr], **config[attr]}
+                    setattr(cls, attr, updated_attr_dict)
+                else:
+                    raise Exception(" Invalid configuration. Use get_conf method to see existing configuration or refer documentation.")
+            
+
+        
 
 
 class ImageSelector:
