@@ -93,7 +93,7 @@ class CropExtractor(object):
                         break
                     all_possible_crops_rects.append(
                         CropRect(
-                            x, y, crop_width * scale, crop_height * scale, scale, scale
+                            x, y, crop_width * scale, crop_height * scale
                         )
                     )
         if not all_possible_crops_rects:
@@ -339,34 +339,16 @@ class CropExtractor(object):
         )
 
         for crop_rect in extracted_candidate_crops:
-            print("crop_rect", crop_rect)
             crop_rect.x = int(crop_rect.x * self.down_sample_factor)
             crop_rect.y = int(crop_rect.y * self.down_sample_factor)
             crop_rect.w = int(crop_rect.w * self.down_sample_factor)
             crop_rect.h = int(crop_rect.h * self.down_sample_factor)
-            crop_rect.scale_factor_width = (
-                crop_rect.scale_factor_width
-                * (1.0 * crop_width_small * self.down_sample_factor)
-                / (crop_width)
-            )
-            crop_rect.scale_factor_height = (
-                crop_rect.scale_factor_height
-                * (1.0 * crop_height_small * self.down_sample_factor)
-                / (crop_height)
-            )
-
-            print(
-                "scale_width_crop",
-                (1.0 * crop_width_small * self.down_sample_factor) / (crop_width),
-            )
-            print(
-                "scale_height_crop",
-                (1.0 * crop_height_small * self.down_sample_factor) / (crop_height),
-            )
-           
+            # Save target Crop width and height into crop rectangle 
+            # Data structure for fixing bug where returned crop is of 
+            # slightly different resolution. 
+            # target_crop_width and height parameter is later used by
+            # get_image_crop function for returning corrrect image crop
             crop_rect.target_crop_width = crop_width
             crop_rect.target_crop_height = crop_height
-            print("crop_rect_final", crop_rect)
 
-        # print("extracted_candidate_crops", extracted_candidate_crops)
         return extracted_candidate_crops

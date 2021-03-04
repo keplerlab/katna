@@ -16,13 +16,11 @@ class CropRect(object):
     :type object: class:`Object`
     """
 
-    def __init__(self, x, y, w, h, scale_factor_width, scale_factor_height):
+    def __init__(self, x, y, w, h):
         self.x = x
         self.y = y
         self.w = w
         self.h = h
-        self.scale_factor_width = scale_factor_width
-        self.scale_factor_height = scale_factor_height
         self.target_crop_width = None
         self.target_crop_height = None
         self.score = 0.0
@@ -43,10 +41,6 @@ class CropRect(object):
             + str(self.w)
             + " height: "
             + str(self.h)
-            + " scale_factor_width: "
-            + str(self.scale_factor_width)
-            + " scale_factor_height: "
-            + str(self.scale_factor_height)
             + " target_crop_width: "
             + str(self.target_crop_width)
             + " target_crop_height: "
@@ -66,16 +60,11 @@ class CropRect(object):
         :rtype: Opencv Numpy Image
         """
         crop_img = input_image[self.y : self.y + self.h, self.x : self.x + self.w]
+        # In case of image crop by specification to ensure cropped images are always 
+        # up to specification resize images to target crop specfication before return
+        # of cropped image
         if self.target_crop_height is None or self.target_crop_width is None:
             return crop_img
         else:
-            print("Resizing image")
-            print(self.w / self.scale_factor_width)
-            print(self.h / self.scale_factor_height)
-            calculated_crop_width = int(math.ceil(self.w / self.scale_factor_width))
-            calculated_crop_height = int(math.ceil(self.h / self.scale_factor_height))
-            print("calculated_crop_width", calculated_crop_width)
-            print("calculated_crop_height", calculated_crop_height)
-
             resized_crop_img = cv2.resize(crop_img, (self.target_crop_width, self.target_crop_height))
             return resized_crop_img
