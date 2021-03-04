@@ -135,7 +135,8 @@ Usually ffmpeg is installed using imageio-ffmpeg package, Check **imageio_ffmpeg
 1) Refer to quickstart section in Katna Reference 
    from https://katna.readthedocs.io/
 
-
+### Update: katna version 0.7.1
+Fixed bug where incorrect specification crops were returned by image_module crop_image and crop_image_from_dir method. 
 ### Update: katna version 0.7.0
 Added support for video compression in Katna.video module.
 ### Update: katna version 0.6.0

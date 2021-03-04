@@ -61,7 +61,7 @@ class CropRect(object):
         """
         crop_img = input_image[self.y : self.y + self.h, self.x : self.x + self.w]
         # In case of image crop by specification to ensure cropped images are always 
-        # up to specification resize images to target crop specfication before return
+        # up to specification resize images to target crop specification before return
         # of cropped image
         if self.target_crop_height is None or self.target_crop_width is None:
             return crop_img
