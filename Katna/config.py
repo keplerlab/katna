@@ -3,6 +3,7 @@
     :platform: Platfrom Independent
     :synopsis: This module defines some helpful configuration variables
 """
+import os
 
 # # Configuration parameters for Image class
 class Image:
@@ -91,13 +92,32 @@ class Video:
 
 
 # Configuration parameters for mediapipe
-class MediapipeConfig:
+class MediaPipe:
     
     class AutoFlip:
 
-        CONFIG_FILE_PBTXT = "/Users/nitkatya/Kepler/katna/Katna/mediapipe_autoflip.pbtxt"
+        # Models folder location
+        MODELS_FOLDER_LOCATION = os.path.join(os.getcwd(), "mediapipe", "models")
+
+        # pbtxt temp folder name
+        TMP_PBTXT_FOLDER_NAME = "temp_pbtxt"
+        TMP_PBTXT_FOLDER_PATH = os.path.join(os.getcwd(), TMP_PBTXT_FOLDER_NAME)
+
+        # Default pbtxt and build cmd
+        CONFIG_FILE_PBTXT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mediapipe_autoflip.pbtxt")
         BUILD_CMD = "run_autoflip"
 
+        # user friendly conf keys
+        ENFORCE_FEATURES_KEYNAME = "ENFORCE_FEATURES"
+        STABALIZATION_THRESHOLD_KEYNAME = "STABALIZATION_THRESHOLD"
+        BLUR_AREA_OPACITY_KEYNAME = "BLUR_AREA_OPACITY"
+
+        # DEFAULT VALUES IN PBTXT
+        DEFAULT_BLUR_AREA_OPACITY = 0.6
+        DEFAULT_MOTION_STABALIZATION_THRESHOLD = 0.5
+        DEFAULT_FEATURE_SIGNAL_VALUE = "false"
+
+        # ENFORCE_FEATURES Keys
         _FACE_CORE_LANDMARKS = "FACE_CORE_LANDMARKS"
         _FACE_FULL = "FACE_FULL"
         _HUMAN = "HUMAN"
@@ -105,10 +125,11 @@ class MediapipeConfig:
         _CAR = "CAR"
         _OBJECT = "OBJECT"
 
-        _motion_stabilization_threshold_percent = "motion_stabilization_threshold_percent"
-        _overlay_opacity = "overlay_opacity"
 
-        SignalFusingCalculator = {
+        # the variables names below should match the keyname for set_conf to work
+        # smoothly
+        # ENFORCE_FEATURES list
+        ENFORCE_FEATURES = {
             _FACE_CORE_LANDMARKS: False,
             _FACE_FULL: False,
             _HUMAN: False,
@@ -117,10 +138,20 @@ class MediapipeConfig:
             _OBJECT: False
         }
 
-        SceneCroppingCalculator = {
-            _motion_stabilization_threshold_percent: 0.5,
-            _overlay_opacity: 0.6
-        }
+        # % AREA from center where most of the content is
+        # usually applied when content is focused near center 
+        STABALIZATION_THRESHOLD = DEFAULT_MOTION_STABALIZATION_THRESHOLD
+
+        # opacity of blur area
+        BLUR_AREA_OPACITY = DEFAULT_BLUR_AREA_OPACITY
+
+        @classmethod
+        def get_pbtxt_mapping(cls):
+            return {
+                cls.ENFORCE_FEATURES_KEYNAME: "signal_settings",
+                cls.STABALIZATION_THRESHOLD_KEYNAME: "motion_stabilization_threshold_percent",
+                cls.BLUR_AREA_OPACITY_KEYNAME: "overlay_opacity"
+            }
 
         @classmethod
         def get_conf(cls):
@@ -130,8 +161,9 @@ class MediapipeConfig:
             :rtype: dict
             """
             return {
-                "SignalFusingCalculator" : cls.SignalFusingCalculator,
-                "SceneCroppingCalculator": cls.SceneCroppingCalculator
+                cls.ENFORCE_FEATURES_KEYNAME : cls.ENFORCE_FEATURES,
+                cls.STABALIZATION_THRESHOLD_KEYNAME: cls.STABALIZATION_THRESHOLD,
+                cls.BLUR_AREA_OPACITY_KEYNAME: cls.BLUR_AREA_OPACITY
             }
 
         @classmethod
@@ -144,8 +176,13 @@ class MediapipeConfig:
             for attr in config.keys():
                 current_conf = cls.get_conf()
                 if attr in current_conf.keys():
-                    updated_attr_dict = {**current_conf[attr], **config[attr]}
-                    setattr(cls, attr, updated_attr_dict)
+
+                    if attr == cls.ENFORCE_FEATURES_KEYNAME:
+                        updated_attr_dict = {**current_conf[attr], **config[attr]}
+                        setattr(cls, attr, updated_attr_dict)
+                    else:
+                        setattr(cls, attr, config[attr])
+                    
                 else:
                     raise Exception(" Invalid configuration. Use get_conf method to see existing configuration or refer documentation.")
             

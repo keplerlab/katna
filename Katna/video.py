@@ -35,7 +35,7 @@ class Video(object):
     :type object: class:`Object`
     """
 
-    def __init__(self, autoflip_build_path=None):
+    def __init__(self, autoflip_build_path=None, autoflip_model_path = None):
         # Find out location of ffmpeg binary on system
         helper._set_ffmpeg_binary_path()
         # If the duration of the clipped video is less than **min_video_duration**
@@ -47,10 +47,10 @@ class Video(object):
             self.n_processes = None
 
 
-        if autoflip_build_path is None:
-            self.mediapipe_autoflip = None
+        if autoflip_build_path is not None and autoflip_model_path is not None:
+            self.mediapipe_autoflip = MediaPipeAutoFlip(autoflip_build_path, autoflip_model_path)
         else:
-            self.mediapipe_autoflip = MediaPipeAutoFlip(autoflip_build_path)
+            self.mediapipe_autoflip = None
 
         # Folder to save the videos after clipping
         self.temp_folder = os.path.abspath(os.path.join("clipped"))
@@ -80,7 +80,7 @@ class Video(object):
         """
 
         if self.mediapipe_autoflip is not None:
-            self.mediapipe_autoflip.validate_autorun_build_path()
+            self.mediapipe_autoflip.validate_autoflip_build_path()
             self.mediapipe_autoflip.run(file_path, abs_file_path_output, aspect_ratio)
         else:
             raise Exception("Mediapipe build path not found.")
@@ -98,7 +98,7 @@ class Video(object):
             raise Exception("Mediapipe build path not found.")
 
         #validate build path for mediapipe autorun
-        self.mediapipe_autoflip.validate_autorun_build_path()
+        self.mediapipe_autoflip.validate_autoflip_build_path()
 
         # make the output dir if it doesn't exist
         if not os.path.isdir(abs_dir_path_output):
@@ -112,9 +112,6 @@ class Video(object):
                 if helper._check_if_valid_video(video_file_path):
                     list_of_videos_to_process.append(video_file_path)
 
-        print(" List of videos to be processed : ", list_of_videos_to_process)
-        print(" main process id : ", os.getpid())
-
         autoflip = self.mediapipe_autoflip
 
         # generates a pool based on cores
@@ -122,7 +119,7 @@ class Video(object):
         print(" This might take a while ... ")
 
         # TODO use run method here
-        results = pool.starmap(autoflip.launch_mediapipe_autoflip_process,
+        results = pool.starmap(autoflip.run,
                                [(input_file_path,
                                  os.path.join(abs_dir_path_output, ntpath.basename(input_file_path)),
                                  aspect_ratio) for input_file_path in list_of_videos_to_process])

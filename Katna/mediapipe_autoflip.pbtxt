@@ -118,13 +118,13 @@ node {
         type { standard: FACE_FULL }
         min_score: 0.8
         max_score: 0.85
-        is_required: true
+        is_required: false
       }
       signal_settings {
         type: { standard: HUMAN }
         min_score: 0.75
         max_score: 0.8
-        is_required: true
+        is_required: false
       }
       signal_settings {
         type: { standard: PET }
