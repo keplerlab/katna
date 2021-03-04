@@ -126,7 +126,6 @@ by opencv library.
    Installation <installation>
    Quickstart video module <tutorials_video>
    Quickstart image module <tutorials_image>
-   Quickstart video smart resize module (Experimental) <tutorials_video_smart_resize>
    Understanding katna <understanding_katna>
    Troubleshooting <troubleshooting>
    API reference <modules>
