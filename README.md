@@ -20,13 +20,9 @@ In short, you may want to consider using Katna library if you have following tas
    
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/zpaLHwwYxE8/0.jpg)](https://www.youtube.com/watch?v=zpaLHwwYxE8)
 
-<div style="text-align:center">
-<img src="docs/source/images/arrow_down.jpeg" alt="arrow down" width="20"/>
-</div>
+<p align="center"><img src="docs/source/images/arrow_down.jpeg" alt="arrow down" width="20"/></p>
 
-<div style="text-align:center">
-<img src="docs/source/images/keyframe_extraction.jpg" alt="Image of keyframe extracted using Katna" width="400"/>
-</div>
+<p align="center"><img src="docs/source/images/keyframe_extraction.jpg" alt="Image of keyframe extracted using Katna" width="400"/></p>
 
 
 2. You have video/videos you want to compress down to smaller size. (e.g. You have video with let's say 1 GB Size but you want to compress it down as small as possible.)
