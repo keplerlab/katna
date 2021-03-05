@@ -42,7 +42,6 @@ def main():
         down_sample_factor=8,
     )
     # im = cv2.imread(image_file_path)
-    # print(im.shape)
     # crop_list = img_module.crop_image(
     #     file_path=image_file_path,
     #     crop_width=crop_width,
@@ -51,7 +50,6 @@ def main():
     #     filters=filters,
     #     down_sample_factor=8
     # )
-    # print(crop_list)
     if len(crop_list) > 0:
         img = cv2.imread(image_file_path)
         for counter, crop in enumerate(crop_list):
