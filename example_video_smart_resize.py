@@ -28,14 +28,32 @@ conf["ENFORCE_FEATURES"] = {
 }
 
 # % stabalization threshold
-conf["STABALIZATION_THRESHOLD"] = 0.3
+conf["STABALIZATION_THRESHOLD"] = 0.5
 
 # opacity of blur area
-conf["BLUR_AREA_OPACITY"] = 0.1
+conf["BLUR_AREA_OPACITY"] = 0.6
 
 
+def main_folder():
+    dir_path = file_path = os.path.join(".", "tests", "data")
 
-def main():
+    # will create a resize_result dir inside data folder and dump videos there
+    abs_dir_path_output = os.path.join(".", "tests", "data", "resize_results")
+
+    vd = Video(autoflip_build_path, autoflip_model_path)
+
+    # update configuration
+    app_config.MediaPipe.AutoFlip.set_conf(conf)
+
+    try:
+        vd.resize_video_from_dir(dir_path = dir_path, abs_dir_path_output = abs_dir_path_output, aspect_ratio = aspect_ratio)
+    except Exception as e:
+        raise e
+    
+    print(f"output resized video dir path = {abs_dir_path_output}")
+
+
+def main_single_video():
 
     # resize the pos_video.mp4 in same directory with na,e pos_video_resize.mp4
     abs_file_path_output = os.path.join(".", "tests", "data", "pos_video_resize.mp4")
@@ -43,8 +61,9 @@ def main():
 
     vd = Video(autoflip_build_path, autoflip_model_path)
 
+    # update configuration
     app_config.MediaPipe.AutoFlip.set_conf(conf)
-    # conf = app_config.MediaPipe.AutoFlip.get_conf()
+    
     try:
         vd.resize_video(file_path = file_path, abs_file_path_output = abs_file_path_output, aspect_ratio = aspect_ratio)
     except Exception as e:
@@ -53,4 +72,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main_single_video()
+
+    # uncomment this to run on a folder
+    # main_folder()
