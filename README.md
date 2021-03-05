@@ -156,6 +156,8 @@ Usually ffmpeg is installed using imageio-ffmpeg package, Check **imageio_ffmpeg
 ### Update: katna version 0.8.0
 Added experimental support for autocrop/resize videos using Google's mediapipe
 Autoflip code example.
+### Update: katna version 0.7.1
+Fixed bug where incorrect specification crops were returned by image_module crop_image and crop_image_from_dir method. 
 ### Update: katna version 0.7.0
 Added support for video compression in Katna.video module.
 ### Update: katna version 0.6.0

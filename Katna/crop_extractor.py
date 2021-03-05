@@ -67,13 +67,13 @@ class CropExtractor(object):
         :return: all_possible_crops_rect
         :rtype: list of CropRect
         """
-        # This function takes a sliding window approach for getting all possible crop 
-        # with given crop specification. 
+        # This function takes a sliding window approach for getting all possible crop
+        # with given crop specification.
         image_width, image_height = image.shape[1], image.shape[0]
         # print("Width,height", image_width, image_height)
         # get all possible crops using sliding window
 
-        # Variable to collect all possible crops 
+        # Variable to collect all possible crops
         all_possible_crops_rects = []
 
         # Start sliding window from from range 0 to max_scale
@@ -92,7 +92,9 @@ class CropExtractor(object):
                     if not (x + crop_width * scale) <= image_width:
                         break
                     all_possible_crops_rects.append(
-                        CropRect(x, y, crop_width * scale, crop_height * scale)
+                        CropRect(
+                            x, y, crop_width * scale, crop_height * scale
+                        )
                     )
         if not all_possible_crops_rects:
             raise ValueError(locals())
@@ -107,7 +109,7 @@ class CropExtractor(object):
         :return: weight of rule of thirds [0, 1]
         :rtype: int
         """
-        # Rule 
+        # Rule
         x = ((x + 2 / 3) % 2 * 0.5 - 0.5) * 16
         return np.maximum(1 - x * x, 0)
 
@@ -124,7 +126,7 @@ class CropExtractor(object):
         :return: modified importance array
         :rtype: numpy array
         """
-        # Select image around a grid size of crop width and crop height around 
+        # Select image around a grid size of crop width and crop height around
         # crop center
         y, x = np.ogrid[
             int(crop_rect.y) : int(crop_rect.y + crop_rect.h),
@@ -135,7 +137,7 @@ class CropExtractor(object):
         # Values far from center of grid would have hight amplitude
         x, y = (x - crop_rect.x) / crop_rect.w, (y - crop_rect.y) / crop_rect.h
 
-        # Apply abs operation around center of grid 
+        # Apply abs operation around center of grid
         px, py = abs(0.5 - x) * 2, abs(0.5 - y) * 2
         px1 = px - 1 + self.edge_radius
         py1 = py - 1 + self.edge_radius
@@ -246,29 +248,29 @@ class CropExtractor(object):
     ):
         """Internal function to get all crop rects and score each crop retangle given input feature maps for image
 
-            :param object: base class inheritance
-            :type object: class:`Object`
-            :param image: image file
-            :type image: OpenCV numpy Image file
-            :param extracted_feature_maps: feature maps
-            :type extracted_feature_maps: OpenCV numpy Image file
-            :param feature_names: names of features used
-            :type feature_names: list
-            :param crop_width: width
-            :type crop_width: int (pixels)
-            :param crop_height: height
-            :type crop_height: int (pixels)
-            :param max_scale: maximum scale factor
-            :type max_scale: int, default=1
-            :param min_scale: minimum scale factor
-            :type min_scale: int, default=0.9
-            :param scale_step: scaling step
-            :type scale_step: int, default=0.1
-            :param step: step
-            :type step: int, default=8
-            :return: all_possible_crops_rect
-            :rtype: list of CropRect
-            """
+        :param object: base class inheritance
+        :type object: class:`Object`
+        :param image: image file
+        :type image: OpenCV numpy Image file
+        :param extracted_feature_maps: feature maps
+        :type extracted_feature_maps: OpenCV numpy Image file
+        :param feature_names: names of features used
+        :type feature_names: list
+        :param crop_width: width
+        :type crop_width: int (pixels)
+        :param crop_height: height
+        :type crop_height: int (pixels)
+        :param max_scale: maximum scale factor
+        :type max_scale: int, default=1
+        :param min_scale: minimum scale factor
+        :type min_scale: int, default=0.9
+        :param scale_step: scaling step
+        :type scale_step: int, default=0.1
+        :param step: step
+        :type step: int, default=8
+        :return: all_possible_crops_rect
+        :rtype: list of CropRect
+        """
 
         all_possible_crops_rects = self._get_all_possible_crops(
             image,
@@ -341,5 +343,12 @@ class CropExtractor(object):
             crop_rect.y = int(crop_rect.y * self.down_sample_factor)
             crop_rect.w = int(crop_rect.w * self.down_sample_factor)
             crop_rect.h = int(crop_rect.h * self.down_sample_factor)
+            # Save target Crop width and height into crop rectangle 
+            # Data structure for fixing bug where returned crop is of 
+            # slightly different resolution. 
+            # target_crop_width and height parameter is later used by
+            # get_image_crop function for returning corrrect image crop
+            crop_rect.target_crop_width = crop_width
+            crop_rect.target_crop_height = crop_height
 
         return extracted_candidate_crops
