@@ -116,46 +116,74 @@ Please refer to :ref:`tutorials_video_smart_resize`
 for how to install and configure mediapipe to be used with katna. 
 Right now following parameters are configurable using Katna video module:
 
-#. **CONFIG_FILE_PBTXT**  (str, optional) – 
-   defaults to "<Repo or Installation folder>/Katna/mediapipe_autoflip.pbtxt"
-   Path for Mediapipe Autoflip Protobuf text file.
 
-#. **AUTOFLIP_BUILD_CMD**  (str, optional) – defaults to "run_autoflip" name of
-   executable built using mediapipe autoflip solution.
-
-#. **SceneCroppingCalculator.conf.motion_stabilization_threshold_percent**  (int, optional) – 
+#. **STABALIZATION_THRESHOLD**  (float, optional) – 
    defaults to "0.5" : This parameter controls extent of motion stabilization is applied
    while tracking an object or face across the frames for video resizing. Higher value Means
    more aggressive motion stabilization and vice versa.
 
-#. **SceneCroppingCalculator.conf.overlay_opacity**  (int, optional) – defaults to “0.6”
+#. **BLUR_AREA_OPACITY**  (int, optional) – defaults to “0.6”
    In some cases e.g. while compulsorily including all faces across frames, it is not possible to do
    without rendering padding in video. In case overlay of same video content is used as padding.
    This parameter controls how much opacity to add to padded content. 
 
-#. **SignalFusingCalculator.conf.FACE_CORE_LANDMARKS.is_required**  (bool, optional) – defaults to **False**
+#. **ENFORCE_FEATURES.FACE_CORE_LANDMARKS**  (bool, optional) – defaults to **False**
    In case of this parameter set as true, It is ensured that all face present in video are compulsorily
    included in final resized video.
 
-#. **SignalFusingCalculator.conf.FACE_FULL.is_required**  (bool, optional) – defaults to **False**
+#. **ENFORCE_FEATURES.FACE_FULL**  (bool, optional) – defaults to **False**
    In case of this parameter set as true, It is ensured that all full faces present in video are compulsorily
    included in final resized video.
 
-#. **SignalFusingCalculator.conf.HUMAN.is_required**  (bool, optional) – defaults to **False**
+#. **ENFORCE_FEATURES.HUMAN**  (bool, optional) – defaults to **False**
    In case of this parameter set as true, It is ensured that all persons/humans present/detected 
    in video are compulsorily included in final resized video.
 
-#. **SignalFusingCalculator.conf.PET.is_required**  (bool, optional) – defaults to **False**
+#. **ENFORCE_FEATURES.PET**  (bool, optional) – defaults to **False**
    In case of this parameter set as true, It is ensured that all PET's like dogs and cats
    present/detected in video are compulsorily included in final resized video.
 
-#. **SignalFusingCalculator.conf.CAR.is_required**  (bool, optional) – defaults to **False**
+#. **ENFORCE_FEATURES.CAR**  (bool, optional) – defaults to **False**
    In case of this parameter set as true, It is ensured that all CARs present/detected 
    in video are compulsorily included in final resized video.
 
-#. **SignalFusingCalculator.conf.OBJECT.is_required**  (bool, optional) – defaults to **False**
+#. **ENFORCE_FEATURES.OBJECT**  (bool, optional) – defaults to **False**
    In case of this parameter set as true, It is ensured that all objects detected 
    in video are compulsorily included in final resized video.
+
+
+.. _Katna.mediapipe_integration:
+
+Mediapipe Autoflip Integration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Katna uses python multiprocessing to create a pool of processes based on the number of cpu cores on machine, 
+and launch processes to resize video on these cores. For example on a 12 core machine, if 4 videos needs
+to be resized in parallel, Katna will launch mediapipe autoflip pipeline for 4 videos on 4 cores.
+
+Since mediapipe is installed outside of Katna, mediaipie autoflip pipeline is launched using the 
+python subprocess module. To ensure smooth run, Katna needs build autorun directory path (where binaries are build)
+and also the mediapipe models directory which containe tflite (tensorflow lite models for CPU). Internally, Katna creates
+a simlink to the models folder directory during its instance of execution. This allow
+Katna to access the models file required to run autoflip pipeline.
+
+Below you can see a simple architecture describing the integration:
+
+.. figure:: images/mediapipe_autoflip_integration.jpeg
+         :width: 100%
+         :align: center
+         :alt: Katna Mediapipe Autoflip Integration
+
+
+Katna provides an interface to configure autoflip. This enables Katna to hide the complexity
+of autoflip graphs configuration (.pbtxt file) and provide users will relevant configurations
+in the form of python friendly dictionary. Behind the scenes, Katna will create a temporary graph (.pbtxt)
+file based on the configuration provided and use it to run the autoflip pipeline.
+
+Katna users can check **temp_pbtxt** directory when the pipeline is running to look at 
+the mediapipe autoflip graph file. The folders gets deleted automatically when the pipeline
+finishes its execution.
+
+To check the list of configurable options, check :ref:`Katna.video_resize`. 
 
 
 Katna.image Module:
@@ -194,3 +222,5 @@ This score is then combined with rule of third and crop distance from edge featu
 calculated in crop_extractor module.
 Configurations related to these scoring rules could be edited in
 Katna.config.CropScorer, Katna.config.EdgeFeature, Katna.config.FaceFeature modules.
+
+

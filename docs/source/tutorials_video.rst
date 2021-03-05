@@ -414,13 +414,45 @@ Instantiate the video class inside your main module (necessary for multiprocessi
 
 .. code-block:: python
 
-autoflip_build_path = "/absolute/path/to/autoflip/build/folder
-autoflip_model_path = "/absolute/path/to/autoflip/model/folder
+     autoflip_build_path = "/absolute/path/to/autoflip/build/folder
+     autoflip_model_path = "/absolute/path/to/autoflip/model/folder
 
      if __name__ == "__main__":
           vd = Video(autoflip_build_path, autoflip_model_path)
+
+**Step 3 (Optional)**
+
+Configure the mediapipe autoflip properties. To check the list of configurable options, check :ref:`Katna.video_resize`. 
+
+.. code-block:: python
+
+     import Katna.config as app_config
+
+     # get the current configuration
+     conf = app_config.MediaPipe.AutoFlip.get_conf()
+
+     # set True for features which are required in output video
+     conf["ENFORCE_FEATURES"] = {
+          "FACE_CORE_LANDMARKS": False,
+          "FACE_ALL_LANDMARKS": False,
+          "FACE_FULL": False,
+          "HUMAN": False,
+          "PET": False,
+          "CAR": False,
+          "OBJECT": False
+     }
+
+     # % stabalization threshold
+     conf["STABALIZATION_THRESHOLD"] = 0.5
+
+     # opacity of blur area
+     conf["BLUR_AREA_OPACITY"] = 0.6
+
+     # update configuration
+     app_config.MediaPipe.AutoFlip.set_conf(conf)
+
      
-**Step 3**
+**Step 4**
 
 Call the **resize_video** method.
 The method accepts three parameters and returns a status whether video resize is

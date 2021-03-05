@@ -59,4 +59,13 @@ version.
 set the IMAGEIO_FFMPEG_EXE environment variable". Go to the **imageio-ffmpeg-*.egg** folder inside your
 **site-packages** folder, there's ffmpeg file inside binaries folder set it's path to environment variable.
 
-   
+
+**Mediapipe Build Issues**
+
+1) If you are unable to run the "hello-world" example for MacOS, refer to the issue reported here: https://github.com/bazelbuild/bazel/issues/8053#issuecomment-490793705 . 
+Sometimes the build doesnt work due to openCV version or dependencies on glog.
+
+2) Mediaipie build can also give c++ compilations errors when building using Bazel.
+In some situations, this happens due to prtotbuf installation on system wherein Bazel accidentally picks up header files from the system 
+when compiling Bazel's checked in Protobuf C++ sources on macOS. The solution is to uninstall protobuf and is 
+mentioned over here: https://github.com/bazelbuild/bazel/issues/8053#issuecomment-490793705
