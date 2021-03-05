@@ -18,7 +18,7 @@ In short, you may want to consider using Katna library if you have following tas
    the frames that provide the most accurate and compact summary of the video content.
    Take an example of this video and some of the top keyframes extracted using Katna. 
    
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/zpaLHwwYxE8/0.jpg)](https://www.youtube.com/watch?v=zpaLHwwYxE8)
+[![IMAGE ALT TEXT HERE](docs/source/images/tide_video_thumnail.jpg)](https://www.youtube.com/watch?v=zpaLHwwYxE8)
 
 <p align="center"><img src="docs/source/images/arrow_down.jpeg" alt="arrow down" width="20"/></p>
 
