@@ -7,8 +7,10 @@ import Katna.config as app_config
 
 
 # change these paths
-autoflip_build_path = "/Users/nitkatya/Kepler/mediapipe/autoflip"
-autoflip_model_path = "/Users/nitkatya/Kepler/mediapipe/mediapipe/models"
+# usually autoflip build is located here : /mediapipe/repo/bazel-build/mediapipe/examples/desktop/autoflip
+# usually mediapipe model is located here : /mediapipe/repo/mediapipe/models
+autoflip_build_path = "/path/to/autoflip/build"
+autoflip_model_path = "/path/to/mediapipe/models"
 
 # output aspect ratio
 aspect_ratio = "9:16"
