@@ -75,8 +75,15 @@ class Video(object):
                      file_path,
                      abs_file_path_output,
                      aspect_ratio):
-        """
-        TODO: Call main method inside mediapipe.py for the file
+        """Resize a single video file
+
+        :param file_path: file path of the video to be resized
+        :type file_path: str
+        :param abs_file_path_output: absolute path to output video file
+        :type abs_file_path_output: str
+        :param aspect_ratio: aspect ratio of the final video
+        :type aspect_ratio: [type]
+        :raises Exception: [description]
         """
 
         if self.mediapipe_autoflip is not None:

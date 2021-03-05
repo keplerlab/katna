@@ -120,6 +120,7 @@ class MediaPipe:
         # ENFORCE_FEATURES Keys
         _FACE_CORE_LANDMARKS = "FACE_CORE_LANDMARKS"
         _FACE_FULL = "FACE_FULL"
+        _FACE_ALL_LANDMARKS = "FACE_ALL_LANDMARKS"
         _HUMAN = "HUMAN"
         _PET = "PET"
         _CAR = "CAR"
@@ -131,6 +132,7 @@ class MediaPipe:
         # ENFORCE_FEATURES list
         ENFORCE_FEATURES = {
             _FACE_CORE_LANDMARKS: False,
+            _FACE_ALL_LANDMARKS: False,
             _FACE_FULL: False,
             _HUMAN: False,
             _PET: False,

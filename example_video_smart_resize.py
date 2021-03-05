@@ -3,33 +3,54 @@ import os.path
 import cv2
 from Katna.video import Video
 import multiprocessing
+import Katna.config as app_config
+
+
+# change these paths
+autoflip_build_path = "/Users/nitkatya/Kepler/mediapipe/autoflip"
+autoflip_model_path = "/Users/nitkatya/Kepler/mediapipe/mediapipe/models"
+
+# output aspect ratio
+aspect_ratio = "9:16"
+
+# get the current configuration
+conf = app_config.MediaPipe.AutoFlip.get_conf()
+
+# set True for features which are required in output
+conf["ENFORCE_FEATURES"] = {
+    "FACE_CORE_LANDMARKS": False,
+    "FACE_ALL_LANDMARKS": False,
+    "FACE_FULL": False,
+    "HUMAN": False,
+    "PET": False,
+    "CAR": False,
+    "OBJECT": False
+}
+
+# % stabalization threshold
+conf["STABALIZATION_THRESHOLD"] = 0.3
+
+# opacity of blur area
+conf["BLUR_AREA_OPACITY"] = 0.1
+
 
 
 def main():
 
-    vd = Video()
+    # resize the pos_video.mp4 in same directory with na,e pos_video_resize.mp4
+    abs_file_path_output = os.path.join(".", "tests", "data", "pos_video_resize.mp4")
+    file_path = os.path.join(".", "tests", "data", "pos_video.mp4")
 
-    # folder to save resized video
-    output_folder_resized_video = "resized_video"
-    out_dir_path = os.path.join(".", output_folder_resized_video)
+    vd = Video(autoflip_build_path, autoflip_model_path)
 
-    if not os.path.isdir(out_dir_path):
-        os.mkdir(out_dir_path)
-
-    # number of images to be returned
-    no_of_frames_to_returned = 20
-    # VIdeo file path
-    video_file_path = os.path.join(".", "tests", "data", "pos_video.mp4")
-    print(f"Input video file path = {video_file_path}")
-
-    vd.resize_video(abs_path_to_autoflip_build,
-                     file_path,
-                     abs_file_path_output,
-                     output_aspect_ratio)
-
+    app_config.MediaPipe.AutoFlip.set_conf(conf)
+    # conf = app_config.MediaPipe.AutoFlip.get_conf()
+    try:
+        vd.resize_video(file_path = file_path, abs_file_path_output = abs_file_path_output, aspect_ratio = aspect_ratio)
+    except Exception as e:
+        raise e
     print(f"output resized video file path = {abs_file_path_output}")
 
 
 if __name__ == "__main__":
-    multiprocessing.set_start_method("spawn")
     main()
