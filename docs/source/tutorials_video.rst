@@ -509,6 +509,9 @@ Code below is a complete example for a single video file.
           print(f"output resized video file path = {abs_file_path_output}")
 
 
+**NOTE : In case of subprocess.CalledProcessError, try running the resize_video method again.**
+
+
 Resize multiple videos in a directory using Katna (Using Experimental Mediapipe Autoflip bridge)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
