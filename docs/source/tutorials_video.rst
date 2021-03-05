@@ -414,28 +414,30 @@ Instantiate the video class inside your main module (necessary for multiprocessi
 
 .. code-block:: python
 
+autoflip_build_path = "/absolute/path/to/autoflip/build/folder
+autoflip_model_path = "/absolute/path/to/autoflip/model/folder
+
      if __name__ == "__main__":
-          vd = Video()
+          vd = Video(autoflip_build_path, autoflip_model_path)
      
 **Step 3**
 
 Call the **resize_video** method.
-The method accepts four parameters and returns a status whether video resize is
+The method accepts three parameters and returns a status whether video resize is
 performed successfully or not. 
 Refer to API reference for further details. Below are the four parameters required by the method
 
-1. **abs_path_to_autoflip_build**: Number of key frames to be extracted
 
-2. **file_path**: Video file path.
+1. **file_path**: Video file path.
 
-3. **abs_file_path_output**: absolute path for saving final output file.
+2. **abs_file_path_output**: absolute path for saving final output file.
 
-4. **output_aspect_ratio**: required aspect ratio for output video. e.g. "4:3"
+3. **aspect_ratio**: required aspect ratio for output video. e.g. "4:3"
 
 
 .. code-block:: python
 
-     status = vd.resize_video(abs_path_to_autoflip_build ,file_path ,abs_file_path_output, output_aspect_ratio)
+     vd.resize_video(file_path = file_path, abs_file_path_output = abs_file_path_output, aspect_ratio = aspect_ratio)
 
 
 Code below is a complete example for a single video file.
@@ -450,49 +452,50 @@ Code below is a complete example for a single video file.
      # For windows, the below if condition is must.
      if __name__ == "__main__":
 
-     #instantiate the video class
-     vd = Video()
+          # set the autoflip build and model path directory based on your installation
+          # usually autoflip build is located here : /mediapipe/repo/bazel-build/mediapipe/examples/desktop/autoflip
+          # usually mediapipe model is located here : /mediapipe/repo/mediapipe/models
+          autoflip_build_path = "/absolute/path/to/autoflip/build/folder
+          autoflip_model_path = "/absolute/path/to/autoflip/model/folder
 
-     # folder to save resized video
-     output_folder_resized_video = "resized_video"
-     out_dir_path = os.path.join(".", output_folder_resized_video)
+          # desired aspect ratio (e.g potrait mode - 9:16)
+          aspect_ratio = 9:16
 
-     if not os.path.isdir(out_dir_path):
-          os.mkdir(out_dir_path)
+          # input video file path
+          file_path = os.path.join(".", "tests", "data", "pos_video.mp4")
 
-     # number of images to be returned
-     # VIdeo file path
-     video_file_path = os.path.join(".", "tests", "data", "pos_video.mp4")
-     print(f"Input video file path = {video_file_path}")
+          # output file to save resized video
+          abs_file_path_output = os.path.join(".", "tests", "data", "pos_video_resize.mp4")
 
-     vd.resize_video(abs_path_to_autoflip_build,
-                         file_path,
-                         abs_file_path_output,
-                         output_aspect_ratio)
+          #instantiate the video class
+          vd = Video(autoflip_build_path, autoflip_model_path)
+          
+          print(f"Input video file path = {file_path}")
 
-     print(f"output resized video file path = {abs_file_path_output}")
+          vd.resize_video(file_path = file_path, abs_file_path_output = abs_file_path_output, aspect_ratio = aspect_ratio)
+
+          print(f"output resized video file path = {abs_file_path_output}")
 
 
 Resize multiple videos in a directory using Katna (Using Experimental Mediapipe Autoflip bridge)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Call the **resize_video_from_dir** method.
-The method accepts four parameters and returns a status whether video resize is
+The method accepts three parameters and returns a status whether video resize is
 performed successfully or not. 
 Refer to API reference for further details. Below are the four parameters required by the method
 
-1. **abs_path_to_autoflip_build**: Number of key frames to be extracted
 
-2. **file_path**: Video file path.
+1. **dir_path**: Directory path where videos are stored.
 
-3. **abs_file_path_output**: absolute path for saving final output file.
+2. **abs_dir_path_output**: absolute path to directory where resized videos will be dumped.
 
-4. **output_aspect_ratio**: required aspect ratio for output video. e.g. "4:3"
+3. **aspect_ratio**: required aspect ratio for output video. e.g. "4:3"
 
 
 .. code-block:: python
 
-     status = vd.resize_video_from_dir(abs_path_to_autoflip_build ,file_path ,abs_file_path_output, output_aspect_ratio)
+     vd.resize_video_from_dir(dir_path = dir_path, abs_dir_path_output = abs_dir_path_output, aspect_ratio = aspect_ratio)
 
 
 Code below is a complete example for a folder full of video file.
@@ -507,23 +510,20 @@ Code below is a complete example for a folder full of video file.
      # For windows, the below if condition is must.
      if __name__ == "__main__":
 
-     #instantiate the video class
-     vd = Video()
+          # folder where videos are located
+          dir_path = file_path = os.path.join(".", "tests", "data")
 
-     # folder to save resized video
-     output_folder_resized_video = "resized_videos"
-     out_dir_path = os.path.join(".", output_folder_resized_video)
+          # output folder to dump videos after resizing
+          abs_dir_path_output = os.path.join(".", "tests", "data", "resize_results")
 
-     if not os.path.isdir(out_dir_path):
-          os.mkdir(out_dir_path)
+          # intialize video class
+          vd = Video(autoflip_build_path, autoflip_model_path)
 
-     # Video file path
-     video_folder_path = os.path.join(".", "tests", "data")
-     print(f"Input video folder path = {video_folder_path}")
+          # invoke resize for directory
+          try:
+               vd.resize_video_from_dir(dir_path = dir_path, abs_dir_path_output = abs_dir_path_output, aspect_ratio = aspect_ratio)
+          except Exception as e:
+               raise e
+          
+          print(f"output resized video dir path = {abs_dir_path_output}")
 
-     vd.resize_video_from_dir(abs_path_to_autoflip_build,
-                         video_folder_path,
-                         out_dir_path,
-                         output_aspect_ratio)
-
-     print(f"output resized videos folder path = {out_dir_path}")
