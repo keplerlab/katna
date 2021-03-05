@@ -98,8 +98,15 @@ class Video(object):
                      dir_path,
                      abs_dir_path_output,
                      aspect_ratio):
-        """
-        TODO: Call main method inside mediapipe.py for all the videos in the directory path
+        """Resize all videos inside the directory
+
+        :param dir_path: Directory path where videos are located
+        :type dir_path: str
+        :param abs_dir_path_output: Absolute path to directory where output videos should to be dumped
+        :type abs_dir_path_output: str
+        :param aspect_ratio: desirable aspect ratio for the videos
+        :type aspect_ratio: [type]
+        :raises Exception: [description]
         """
         if self.mediapipe_autoflip is None:
             raise Exception("Mediapipe build path not found.")
@@ -134,8 +141,8 @@ class Video(object):
         pool.close()
         pool.join()
 
-        for result in results:
-            print("Finished processing for file: ", result[0])
+        
+        print("Finished processing for files")
 
     @FileDecorators.validate_dir_path
     def extract_keyframes_from_videos_dir(self, no_of_frames, dir_path):
