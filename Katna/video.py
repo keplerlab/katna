@@ -35,7 +35,7 @@ class Video(object):
     :type object: class:`Object`
     """
 
-    def __init__(self, autoflip_build_path=None, autoflip_model_path = None):
+    def __init__(self, autoflip_build_path=None, autoflip_model_path=None):
         # Find out location of ffmpeg binary on system
         helper._set_ffmpeg_binary_path()
         # If the duration of the clipped video is less than **min_video_duration**
@@ -46,9 +46,10 @@ class Video(object):
         if self.n_processes < 1:
             self.n_processes = None
 
-
         if autoflip_build_path is not None and autoflip_model_path is not None:
-            self.mediapipe_autoflip = MediaPipeAutoFlip(autoflip_build_path, autoflip_model_path)
+            self.mediapipe_autoflip = MediaPipeAutoFlip(
+                autoflip_build_path, autoflip_model_path
+            )
         else:
             self.mediapipe_autoflip = None
 
@@ -71,10 +72,7 @@ class Video(object):
             # print(clip, " removed!")
 
     @FileDecorators.validate_file_path
-    def resize_video(self,
-                     file_path,
-                     abs_file_path_output,
-                     aspect_ratio):
+    def resize_video(self, file_path, abs_file_path_output, aspect_ratio):
         """Resize a single video file
 
         :param file_path: file path of the video to be resized
@@ -92,12 +90,8 @@ class Video(object):
         else:
             raise Exception("Mediapipe build path not found.")
 
-
     @FileDecorators.validate_dir_path
-    def resize_video_from_dir(self,
-                     dir_path,
-                     abs_dir_path_output,
-                     aspect_ratio):
+    def resize_video_from_dir(self, dir_path, abs_dir_path_output, aspect_ratio):
         """Resize all videos inside the directory
 
         :param dir_path: Directory path where videos are located
@@ -111,7 +105,7 @@ class Video(object):
         if self.mediapipe_autoflip is None:
             raise Exception("Mediapipe build path not found.")
 
-        #validate build path for mediapipe autorun
+        # validate build path for mediapipe autorun
         self.mediapipe_autoflip.validate_autoflip_build_path()
 
         # make the output dir if it doesn't exist
@@ -133,15 +127,21 @@ class Video(object):
         print(" This might take a while ... ")
 
         # TODO use run method here
-        results = pool.starmap(autoflip.run,
-                               [(input_file_path,
-                                 os.path.join(abs_dir_path_output, ntpath.basename(input_file_path)),
-                                 aspect_ratio) for input_file_path in list_of_videos_to_process])
+        results = pool.starmap(
+            autoflip.run,
+            [
+                (
+                    input_file_path,
+                    os.path.join(abs_dir_path_output, ntpath.basename(input_file_path)),
+                    aspect_ratio,
+                )
+                for input_file_path in list_of_videos_to_process
+            ],
+        )
 
         pool.close()
         pool.join()
 
-        
         print("Finished processing for files")
 
     @FileDecorators.validate_dir_path
@@ -194,7 +194,8 @@ class Video(object):
         if not helper._check_if_valid_video(file_path):
             raise Exception("Invalid or corrupted video: " + file_path)
 
-        chunked_videos = self._split(file_path)
+        # split videos in chunks in smaller chunks for parallel processing.
+        chunked_videos = self._split_videos_with_checks(file_path)
 
         frame_extractor = FrameExtractor()
 
@@ -216,6 +217,35 @@ class Video(object):
         )
 
         return top_frames
+
+    def _split_videos_with_checks(self, file_path):
+        """Split videos using ffmpeg library first by copying audio and
+        video codecs from input files, it leads to faster splitting, But if
+        resulting splitted videos are unreadable try again splitting by using
+        ffmpeg default codecs. If splitteed videos are still unreadable throw an
+        exception.
+
+        :param file_path: path of video file
+        :type file_path: str, required
+        :return: List of path of splitted video clips
+        :rtype: list
+        """
+        chunked_videos = self._split(file_path)
+        corruption_in_chunked_videos = False
+        for chunked_video in chunked_videos:
+            if not helper._check_if_valid_video(chunked_video):
+                corruption_in_chunked_videos = True
+
+        if corruption_in_chunked_videos:
+            chunked_videos = self._split(file_path, override_codec=True)
+            for chunked_video in chunked_videos:
+                if not helper._check_if_valid_video(chunked_video):
+                    raise Exception(
+                        "Error in splitting videos in multiple chunks, corrupted video chunk: "
+                        + chunked_video
+                    )
+
+        return chunked_videos
 
     @FileDecorators.validate_file_path
     def compress_video(
@@ -258,9 +288,9 @@ class Video(object):
         :return: Status code Returns True if video compression was successfull else False
         :rtype: bool
         """
-        # TODO add docstring for exeception 
+        # TODO add docstring for exeception
         # Add details where libx265 will make sense
-        
+
         if not helper._check_if_valid_video(file_path):
             raise Exception("Invalid or corrupted video: " + file_path)
         # Intialize video compression class
@@ -323,7 +353,7 @@ class Video(object):
                 if helper._check_if_valid_video(video_file_path):
                     list_of_videos_to_process.append(video_file_path)
 
-        # Need to run in two sepearte loops to prevent recursion            
+        # Need to run in two sepearte loops to prevent recursion
         for video_file_path in list_of_videos_to_process:
             statusI = self.compress_video(
                 video_file_path,
@@ -334,7 +364,6 @@ class Video(object):
             )
             status = bool(status and statusI)
         return status
-
 
     @FileDecorators.validate_file_path
     def save_frame_to_disk(self, frame, file_path, file_name, file_ext):
@@ -355,11 +384,13 @@ class Video(object):
         cv2.imwrite(file_full_path, frame)
 
     @FileDecorators.validate_file_path
-    def _split(self, file_path):
+    def _split(self, file_path, override_codec=False):
         """Function to split the videos and persist the chunks
 
         :param file_path: path of video file
         :type file_path: str, required
+        :param override_codec: If true overrides input video codec to ffmpeg default codec else copy input video codec, defaults to False
+        :type override_codec: bool, optional
         :return: List of path of splitted video clips
         :rtype: list
         """
@@ -384,12 +415,14 @@ class Video(object):
             if clip_end > duration or (clip_end + self.min_video_duration) > duration:
                 clip_end = duration
 
-            clipped_files.append(self._write_videofile(file_path, clip_start, clip_end))
+            clipped_files.append(
+                self._write_videofile(file_path, clip_start, clip_end, override_codec)
+            )
 
             clip_start = clip_end
         return clipped_files
 
-    def _write_videofile(self, video_file_path, start, end):
+    def _write_videofile(self, video_file_path, start, end, override_codec=False):
         """Function to clip the video for given start and end points and save the video
 
         :param video_file_path: path of video file
@@ -398,6 +431,8 @@ class Video(object):
         :type start: float, required
         :param end: end time for clipping
         :type end: float, required
+        :param override_codec: If true overrides input video codec to ffmpeg default codec else copy input video codec, defaults to False
+        :type override_codec: bool, optional
         :return: path of splitted video clip
         :rtype: str
         """
@@ -414,11 +449,17 @@ class Video(object):
         )
 
         self._ffmpeg_extract_subclip(
-            video_file_path, start, end, targetname=_clipped_file_path
+            video_file_path,
+            start,
+            end,
+            targetname=_clipped_file_path,
+            override_codec=override_codec,
         )
         return _clipped_file_path
 
-    def _ffmpeg_extract_subclip(self, filename, t1, t2, targetname=None):
+    def _ffmpeg_extract_subclip(
+        self, filename, t1, t2, targetname=None, override_codec=False
+    ):
         """chops a new video clip from video file ``filename`` between
             the times ``t1`` and ``t2``, Uses ffmpy wrapper on top of ffmpeg
             library
@@ -428,6 +469,8 @@ class Video(object):
         :type t1: float, required
         :param t2: time to which video to clip
         :type t2: float, required
+        :param override_codec: If true overrides input video codec to ffmpeg default codec else copy input video codec, defaults to False
+        :type override_codec: bool, optional
         :param targetname: path where clipped file to be stored
         :type targetname: str, optional
         :return: None
@@ -440,12 +483,17 @@ class Video(object):
 
         timeParamter = "-ss " + "%0.2f" % t1 + " -t " + "%0.2f" % (t2 - t1)
 
+        if override_codec:
+            codecParameter = " "
+        else:
+            codecParameter = " -vcodec copy -acodec copy"
+
         # Uses ffmpeg binary for video clipping using ffmpy wrapper
         FFMPEG_BINARY = os.getenv("FFMPEG_BINARY")
         ff = ffmpy.FFmpeg(
             executable=FFMPEG_BINARY,
             inputs={filename: "-y -hide_banner -loglevel panic "},
-            outputs={targetname: timeParamter + " -vcodec copy -acodec copy"},
+            outputs={targetname: timeParamter + codecParameter},
         )
         ff.run()
 
