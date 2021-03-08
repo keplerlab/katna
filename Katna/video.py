@@ -40,7 +40,7 @@ class Video(object):
         helper._set_ffmpeg_binary_path()
         # If the duration of the clipped video is less than **min_video_duration**
         # then, the clip will be added with the previous clipped
-        self.min_video_duration = config.Video.min_video_duration
+        self._min_video_duration = config.Video.min_video_duration
         # Calculating optimum number of processes for multiprocessing
         self.n_processes = cpu_count() // 2 - 1
         if self.n_processes < 1:
@@ -195,7 +195,7 @@ class Video(object):
             raise Exception("Invalid or corrupted video: " + file_path)
 
         # split videos in chunks in smaller chunks for parallel processing.
-        chunked_videos = self._split_videos_with_checks(file_path)
+        chunked_videos = self._split(file_path)
 
         frame_extractor = FrameExtractor()
 
@@ -218,7 +218,7 @@ class Video(object):
 
         return top_frames
 
-    def _split_videos_with_checks(self, file_path):
+    def _split(self, file_path):
         """Split videos using ffmpeg library first by copying audio and
         video codecs from input files, it leads to faster splitting, But if
         resulting splitted videos are unreadable try again splitting by using
@@ -230,14 +230,14 @@ class Video(object):
         :return: List of path of splitted video clips
         :rtype: list
         """
-        chunked_videos = self._split(file_path)
+        chunked_videos = self._split_with_ffmpeg(file_path)
         corruption_in_chunked_videos = False
         for chunked_video in chunked_videos:
             if not helper._check_if_valid_video(chunked_video):
                 corruption_in_chunked_videos = True
-
+        
         if corruption_in_chunked_videos:
-            chunked_videos = self._split(file_path, override_codec=True)
+            chunked_videos = self._split_with_ffmpeg(file_path, override_video_codec=True)
             for chunked_video in chunked_videos:
                 if not helper._check_if_valid_video(chunked_video):
                     raise Exception(
@@ -384,13 +384,13 @@ class Video(object):
         cv2.imwrite(file_full_path, frame)
 
     @FileDecorators.validate_file_path
-    def _split(self, file_path, override_codec=False):
+    def _split_with_ffmpeg(self, file_path, override_video_codec=False):
         """Function to split the videos and persist the chunks
 
         :param file_path: path of video file
         :type file_path: str, required
-        :param override_codec: If true overrides input video codec to ffmpeg default codec else copy input video codec, defaults to False
-        :type override_codec: bool, optional
+        :param override_video_codec: If true overrides input video codec to ffmpeg default codec else copy input video codec, defaults to False
+        :type override_video_codec: bool, optional
         :return: List of path of splitted video clips
         :rtype: list
         """
@@ -399,6 +399,13 @@ class Video(object):
         # setting the start point to zero
         # Setting the breaking point for the clip to be 25 or if video is big
         # then relative to core available in the machine
+        # If video size is large it makes sense to split videos into chunks
+        # proportional to number of cpu cores. So each cpu core will get on 
+        # video to process.
+        # if video duration is divided by cpu_count() then result should be 
+        # 15 sec is thumb rule for threshold value it could be set to 25 or 
+        # any other value. Logic ensures for large enough videos we don't end
+        # up dividing video in too many clips.
         clip_start, break_point = (
             0,
             duration // cpu_count() if duration // cpu_count() > 15 else 25,
@@ -412,17 +419,17 @@ class Video(object):
             # Setting the end position of the particular clip equals to the end time of original clip,
             # if end position or end position added with the **min_video_duration** is greater than
             # the end time of original video
-            if clip_end > duration or (clip_end + self.min_video_duration) > duration:
+            if clip_end > duration or (clip_end + self._min_video_duration) > duration:
                 clip_end = duration
 
             clipped_files.append(
-                self._write_videofile(file_path, clip_start, clip_end, override_codec)
+                self._write_videofile(file_path, clip_start, clip_end, override_video_codec)
             )
 
             clip_start = clip_end
         return clipped_files
 
-    def _write_videofile(self, video_file_path, start, end, override_codec=False):
+    def _write_videofile(self, video_file_path, start, end, override_video_codec=False):
         """Function to clip the video for given start and end points and save the video
 
         :param video_file_path: path of video file
@@ -431,8 +438,8 @@ class Video(object):
         :type start: float, required
         :param end: end time for clipping
         :type end: float, required
-        :param override_codec: If true overrides input video codec to ffmpeg default codec else copy input video codec, defaults to False
-        :type override_codec: bool, optional
+        :param override_video_codec: If true overrides input video codec to ffmpeg default codec else copy input video codec, defaults to False
+        :type override_video_codec: bool, optional
         :return: path of splitted video clip
         :rtype: str
         """
@@ -453,12 +460,12 @@ class Video(object):
             start,
             end,
             targetname=_clipped_file_path,
-            override_codec=override_codec,
+            override_video_codec=override_video_codec,
         )
         return _clipped_file_path
 
     def _ffmpeg_extract_subclip(
-        self, filename, t1, t2, targetname=None, override_codec=False
+        self, filename, t1, t2, targetname=None, override_video_codec=False
     ):
         """chops a new video clip from video file ``filename`` between
             the times ``t1`` and ``t2``, Uses ffmpy wrapper on top of ffmpeg
@@ -469,8 +476,8 @@ class Video(object):
         :type t1: float, required
         :param t2: time to which video to clip
         :type t2: float, required
-        :param override_codec: If true overrides input video codec to ffmpeg default codec else copy input video codec, defaults to False
-        :type override_codec: bool, optional
+        :param override_video_codec: If true overrides input video codec to ffmpeg default codec else copy input video codec, defaults to False
+        :type override_video_codec: bool, optional
         :param targetname: path where clipped file to be stored
         :type targetname: str, optional
         :return: None
@@ -483,8 +490,8 @@ class Video(object):
 
         timeParamter = "-ss " + "%0.2f" % t1 + " -t " + "%0.2f" % (t2 - t1)
 
-        if override_codec:
-            codecParameter = " "
+        if override_video_codec:
+            codecParameter = " -vcodec libx264"
         else:
             codecParameter = " -vcodec copy -acodec copy"
 

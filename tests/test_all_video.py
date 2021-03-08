@@ -126,6 +126,18 @@ def test_video_splitting(video_object):
         assert len(n_clips_large) > 1
     assert len(n_clips_small) == 1
 
+def test_video_no_codec_video(video_object):
+    """Test case for splitting logic for videos.. Used tide ad video because of edge case
+    """
+    small_video_file_path = os.path.join("tests", "data", "codec_error_video.mp4")
+
+    imgs = video_object.extract_video_keyframes(
+        12, small_video_file_path
+    )
+    
+    #print(len(n_clips_small))
+    assert len(imgs) == 11
+
 
 @pytest.mark.skip(reason="no way of currently testing this")
 def test_extracted_frame_as_png(video_object):

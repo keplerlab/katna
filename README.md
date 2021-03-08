@@ -154,7 +154,7 @@ Usually ffmpeg is installed using imageio-ffmpeg package, Check **imageio_ffmpeg
    from https://katna.readthedocs.io/
 
 ### Update: katna version 0.8.1
-Fixed an issue where in rare case where videos split using ffmpeg not readable and throwing exception.[Link](https://github.com/keplerlab/katna/issues/9)
+Fixed an issue where in rare case where videos split using ffmpeg not readable and throwing exception [Link](https://github.com/keplerlab/katna/issues/9)
 ### Update: katna version 0.8.0
 Added experimental support for autocrop/resize videos using Google's mediapipe
 Autoflip code example.
