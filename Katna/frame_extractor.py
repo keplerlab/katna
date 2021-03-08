@@ -171,19 +171,16 @@ class FrameExtractor(object):
         """
         # This function takes 
         if x.ndim != 1:
-            raise (ValueError, "smooth only accepts 1 dimension arrays.")
+            raise ValueError("smooth only accepts 1 dimension arrays.")
 
         if x.size < window_len:
-            raise (ValueError, "Input vector needs to be bigger than window size.")
+            raise ValueError("Input vector needs to be bigger than window size.")
 
         if window_len < 3:
             return x
 
         if not window in ["flat", "hanning", "hamming", "bartlett", "blackman"]:
-            raise (
-                ValueError,
-                "Smoothing Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'",
-            )
+            raise ValueError("Smoothing Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'")
 
         # Doing row-wise merging of frame differences wrt window length. frame difference
         # by factor of two and subtracting the frame differences from index == window length in reverse direction
