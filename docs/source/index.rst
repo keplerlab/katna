@@ -78,13 +78,14 @@ Video compression is handled using ffmpeg library. Details about which could be
 read in :ref:`Katna.video_compressor` section.
 
 Since version 0.8.0 of Katna we are extending smart resize features to videos
-with the help of Google's Mediapipe project.
+with the help of Google's `Mediapipe <https://github.com/google/mediapipe>`_ project.
 To know more about this please refer to documentation
 :ref:`Katna.video_resize`. Please note that this feature is an 
 experimental feature. And might be subject to removal/modifications at later versions.
 Also you also need to install Google's Mediapipe library, Specially autoflip binary for this to work.
 Please refer to :ref:`tutorials_video_smart_resize`
-for how to install and configure mediapipe to be used with katna. 
+for how to `install <https://google.github.io/mediapipe/getting_started/install>`_ 
+and `configure <https://google.github.io/mediapipe/solutions/autoflip.html>`_ mediapipe to be used with katna. 
 
 Image Module:
 -------------

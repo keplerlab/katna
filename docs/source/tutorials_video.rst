@@ -391,9 +391,9 @@ resize (experimental) feature.
 Install Google Mediapipe library and Autoflip solution. 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-1. Install Mediapipe by following these instructions : https://google.github.io/mediapipe/getting_started/install
+1. Install Mediapipe by following these instructions `here <https://google.github.io/mediapipe/getting_started/install>`_.
      
-2. Build Autoflip c++ solution by following these instructions: https://google.github.io/mediapipe/solutions/autoflip
+2. Build Autoflip c++ solution by following these instructions `from here <https://google.github.io/mediapipe/solutions/autoflip>`_.
 
 
 
@@ -536,7 +536,7 @@ Refer to API reference for further details. Below are the four parameters requir
 Code below is a complete example for a folder full of video file.
 
 .. code-block:: python
-     :emphasize-lines: 1,8,11,18-19,21-24
+     :emphasize-lines: 1,8,11,18
      :linenos:
 
      from Katna.video import Video
