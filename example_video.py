@@ -16,7 +16,6 @@ def main():
         video_file_path = os.path.join(".", "tests", "data", "pos_video.mp4")
     else:
         video_file_path = sys.argv[1]
-        print("Extracting Keyword", sys.argv[1])     
        
     vd = Video()
 
