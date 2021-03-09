@@ -410,7 +410,7 @@ class Video(object):
             0,
             duration // cpu_count() if duration // cpu_count() > 15 else 25,
         )
-
+        
         # Loop over the video duration to get the clip stating point and end point to split the video
         while clip_start < duration:
 
@@ -488,20 +488,25 @@ class Video(object):
             T1, T2 = [int(1000 * t) for t in [t1, t2]]
             targetname = name + "{0}SUB{1}_{2}.{3}".format(name, T1, T2, ext)
 
-        timeParamter = "-ss " + "%0.2f" % t1 + " -t " + "%0.2f" % (t2 - t1)
-
+        #timeParamter = "-ss " + "%0.2f" % t1 + " -t " + "%0.2f" % (t2 - t1)
+        
+        ssParameter = "-ss " + "%0.2f" % t1 
+        timeParamter = " -t " + "%0.2f" % (t2 - t1)
+        hideBannerParameter = " -y -hide_banner -loglevel panic "
         if override_video_codec:
             codecParameter = " -vcodec libx264"
         else:
-            codecParameter = " -vcodec copy -acodec copy"
+            codecParameter = " -vcodec copy -avoid_negative_ts 1 "
 
         # Uses ffmpeg binary for video clipping using ffmpy wrapper
         FFMPEG_BINARY = os.getenv("FFMPEG_BINARY")
         ff = ffmpy.FFmpeg(
             executable=FFMPEG_BINARY,
-            inputs={filename: "-y -hide_banner -loglevel panic "},
+            inputs={filename: ssParameter + hideBannerParameter},
             outputs={targetname: timeParamter + codecParameter},
         )
+        # Uncomment next line for watching ffmpeg command line being executed
+        # print("ff.cmd", ff.cmd)
         ff.run()
 
     @FileDecorators.validate_file_path

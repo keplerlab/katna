@@ -1,6 +1,7 @@
 import os
 import os.path
 import cv2
+import sys, getopt
 from Katna.video import Video
 import multiprocessing
 
@@ -11,6 +12,12 @@ def main():
     # if os.name == 'nt':
     #     multiprocessing.freeze_support()
 
+    if len(sys.argv) ==1:
+        video_file_path = os.path.join(".", "tests", "data", "pos_video.mp4")
+    else:
+        video_file_path = sys.argv[1]
+        print("Extracting Keyword", sys.argv[1])     
+       
     vd = Video()
 
     # folder to save extracted images
@@ -23,7 +30,7 @@ def main():
     # number of images to be returned
     no_of_frames_to_returned = 20
     # VIdeo file path
-    video_file_path = os.path.join(".", "tests", "data", "pos_video.mp4")
+    #video_file_path = os.path.join(".", "tests", "data", "pos_video.mp4")
     print(f"Input video file path = {video_file_path}")
 
     imgs = vd.extract_video_keyframes(
