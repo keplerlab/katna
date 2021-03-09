@@ -28,7 +28,7 @@ def main():
         os.mkdir(out_dir_path)
 
     # number of images to be returned
-    no_of_frames_to_returned = 20
+    no_of_frames_to_returned = 12
     # VIdeo file path
     #video_file_path = os.path.join(".", "tests", "data", "pos_video.mp4")
     print(f"Input video file path = {video_file_path}")
