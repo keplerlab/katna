@@ -51,9 +51,24 @@ want to automate:
 #. You want to extract a crop of particular aspect ratio e.g. 4:3 from your input image/images.
    (e.g. Get a crop of aspect ratio 1:1 from image of resolution 1920x1080 (16:9 aspect ratio image))
 
-#. You want to resize a video into particular aspect ratio resize a 16:9 video to 4:3 asepct ratio video.
-   Please not this feature is currently **experimental**.
 
+#. You want to resize a video to particular aspect ratio e.g. 16:9 (Landscape), 
+   to lets say to 1:1 (square). Please note that this feature is currently **experimental**
+   and needs additional compiling and configuration of google `mediapipe library <https://github.com/google/mediapipe>`_. 
+
+
+   .. raw:: html
+
+         <iframe width="560" height="315" src="https://www.youtube.com/embed/-GFabrw3Csk" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>      
+
+   .. figure:: images/arrow_down.jpeg
+         :width: 3%
+         :align: center
+         :alt: arrow down
+   
+   .. raw:: html
+
+         <iframe width="560" height="315" src="https://www.youtube.com/embed/P0D5WPv63RY" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 Katna is divided into two modules namely video and image module.
 In next sections we will learn more about them in more details.

@@ -41,6 +41,16 @@ In short, you may want to consider using Katna library if you have following tas
 5. You want to extract a crop of particular aspect ratio e.g. 4:3 from your input image/images.
    (e.g. Get a crop of aspect ratio 1:1 from image of resolution 1920x1080 (16:9 aspect ratio image))
 
+6. You want to resize a video to particular aspect ratio e.g. 16:9 (Landscape), to lets say to 1:1 (square). Please note that this feature is currently **experimental** and needs additional compiling and configuration of google [mediapipe library](https://github.com/google/mediapipe). 
+
+
+[![ICEGov original video with 16:9 aspect ratio](docs/source/images/icegov_original.jpeg)](https://www.youtube.com/watch?v=-GFabrw3Csk)
+
+<p align="center"><img src="docs/source/images/arrow_down.jpeg" alt="arrow down" width="20"/></p>
+
+[![ICEGov resized video with 1:1 aspect ratio](docs/source/images/icegov_1_1_thumbnail.jpeg)](https://www.youtube.com/watch?v=P0D5WPv63RY)
+
+
 Katna is divided into two modules
 * Video module.
 * Image module.
