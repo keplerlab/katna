@@ -85,8 +85,9 @@ class Video(object):
         """
 
         if self.mediapipe_autoflip is not None:
-            self.mediapipe_autoflip.validate_autoflip_build_path()
+            self.mediapipe_autoflip.prepare_pipeline()
             self.mediapipe_autoflip.run(file_path, abs_file_path_output, aspect_ratio)
+            self.mediapipe_autoflip.exit_clean()
         else:
             raise Exception("Mediapipe build path not found.")
 
@@ -105,8 +106,8 @@ class Video(object):
         if self.mediapipe_autoflip is None:
             raise Exception("Mediapipe build path not found.")
 
-        # validate build path for mediapipe autorun
-        self.mediapipe_autoflip.validate_autoflip_build_path()
+        # prepare the mediapipe autoflip pipeline
+        self.mediapipe_autoflip.prepare_pipeline()
 
         # make the output dir if it doesn't exist
         if not os.path.isdir(abs_dir_path_output):
@@ -120,27 +121,33 @@ class Video(object):
                 if helper._check_if_valid_video(video_file_path):
                     list_of_videos_to_process.append(video_file_path)
 
-        autoflip = self.mediapipe_autoflip
+        # autoflip = self.mediapipe_autoflip
 
         # generates a pool based on cores
         pool = Pool(processes=self.n_processes)
-        print(" This might take a while ... ")
+        print("This might take a while ... ")
 
-        # TODO use run method here
-        results = pool.starmap(
-            autoflip.run,
-            [
-                (
-                    input_file_path,
-                    os.path.join(abs_dir_path_output, ntpath.basename(input_file_path)),
-                    aspect_ratio,
-                )
-                for input_file_path in list_of_videos_to_process
-            ],
-        )
+        try:
+            results = pool.starmap(
+                self.mediapipe_autoflip.run,
+                [
+                    (
+                        input_file_path,
+                        os.path.join(abs_dir_path_output, ntpath.basename(input_file_path)),
+                        aspect_ratio,
+                    )
+                    for input_file_path in list_of_videos_to_process
+                ],
+            )
 
-        pool.close()
-        pool.join()
+            pool.close()
+            pool.join()
+        except Exception as e:
+            self.mediapipe_autoflip.exit_clean()
+            raise e
+            
+
+        self.mediapipe_autoflip.exit_clean()
 
         print("Finished processing for files")
 
@@ -166,10 +173,9 @@ class Video(object):
             for filename in files:
                 filepath = os.path.join(path, filename)
 
-                if helper._check_if_valid_video(filename):
-                    video_file_path = os.path.join(path, filename)
+                if helper._check_if_valid_video(filepath):
                     video_top_frames = self.extract_video_keyframes(
-                        no_of_frames, video_file_path
+                        no_of_frames, filepath
                     )
                     all_videos_top_frames[filepath] = video_top_frames
 

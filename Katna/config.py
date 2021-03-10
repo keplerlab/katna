@@ -277,6 +277,10 @@ class Video:
 class MediaPipe:
     class AutoFlip:
 
+        # Rerun is required due to autoflip issue mentione here:
+        # https://github.com/google/mediapipe/issues/497
+        RERUN_LIMIT = 2
+
         # Models folder location
         MODELS_FOLDER_LOCATION = os.path.join(os.getcwd(), "mediapipe", "models")
 
