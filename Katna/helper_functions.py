@@ -68,6 +68,12 @@ def _check_if_valid_video(file_path):
     :rtype: bool
     """
     try:
+        # Check if file extension of video is in list of
+        # supported/valid videos according to ffmpeg
+        file_extension = os.path.splitext(file_path)[1]
+        if file_extension not in config.Video.video_extensions:
+            return False
+
         vid = cv2.VideoCapture(file_path)
         if vid.isOpened():
             # Making sure we can read at least two frames from video
@@ -81,10 +87,10 @@ def _check_if_valid_video(file_path):
         else:
             return False
     except cv2.error as e:
-        print("cv2.error:", e)
+        #print("cv2.error:", e)
         return False
     except Exception as e:
-        print("Exception:", e)
+        #print("Exception:", e)
         return False
 
 

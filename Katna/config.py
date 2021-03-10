@@ -89,11 +89,189 @@ class Video:
     video_compression_crf_parameter = 23
     video_compression_codec = "libx264"  # Currently "libx264 and  is supported"
     compression_output_file_extension = "mp4"
+    
+    # supported/valid video extensions supported by ffmpeg
+    video_extensions = [
+        ".str",
+        ".aa",
+        ".aac",
+        ".ac3",
+        ".acm",
+        ".adf",
+        ".adp",
+        ".dtk",
+        ".ads",
+        ".ss2",
+        ".adx",
+        ".aea",
+        ".afc",
+        ".aix",
+        ".al",
+        ".ape",
+        ".apl",
+        ".mac",
+        ".aptx",
+        ".aptxhd",
+        ".aqt",
+        ".ast",
+        ".avi",
+        ".avr",
+        ".bfstm",
+        ".bcstm",
+        ".bit",
+        ".bmv",
+        ".brstm",
+        ".cdg",
+        ".cdxl",
+        ".xl",
+        ".c2",
+        ".302",
+        ".daud",
+        ".str",
+        ".dss",
+        ".dts",
+        ".dtshd",
+        ".dv",
+        ".dif",
+        ".cdata",
+        ".eac3",
+        ".paf",
+        ".fap",
+        ".flm",
+        ".flac",
+        ".flv",
+        ".fsb",
+        ".g722",
+        ".722",
+        ".tco",
+        ".rco",
+        ".g723_1",
+        ".g729",
+        ".genh",
+        ".gsm",
+        ".h261",
+        ".h26l",
+        ".h264",
+        ".264",
+        ".avc",
+        ".hevc",
+        ".h265",
+        ".265",
+        ".idf",
+        ".cgi",
+        ".sf",
+        ".ircam",
+        ".ivr",
+        ".flv",
+        ".lvf",
+        ".m4v",
+        ".mkv",
+        ".mk3d",
+        ".mka",
+        ".mks",
+        ".mjpg",
+        ".mjpeg",
+        ".mpo",
+        ".j2k",
+        ".mlp",
+        ".mov",
+        ".mp4",
+        ".m4a",
+        ".3gp",
+        ".3g2",
+        ".mj2",
+        ".mp2",
+        ".mp3",
+        ".m2a",
+        ".mpa",
+        ".mpc",
+        ".mjpg",
+        ".txt",
+        ".mpl2",
+        ".sub",
+        ".msf",
+        ".mtaf",
+        ".ul",
+        ".musx",
+        ".mvi",
+        ".mxg",
+        ".v",
+        ".nist",
+        ".sph",
+        ".nsp",
+        ".nut",
+        ".ogg",
+        ".oma",
+        ".omg",
+        ".aa3",
+        ".pjs",
+        ".pvf",
+        ".yuv",
+        ".cif",
+        ".qcif",
+        ".rgb",
+        ".rt",
+        ".rsd",
+        ".rsd",
+        ".rso",
+        ".sw",
+        ".sb",
+        ".smi",
+        ".sami",
+        ".sbc",
+        ".msbc",
+        ".sbg",
+        ".scc",
+        ".sdr2",
+        ".sds",
+        ".sdx",
+        ".shn",
+        ".vb",
+        ".son",
+        ".sln",
+        ".mjpg",
+        ".stl",
+        ".sub",
+        ".sub",
+        ".sup",
+        ".svag",
+        ".tak",
+        ".thd",
+        ".tta",
+        ".ans",
+        ".art",
+        ".asc",
+        ".diz",
+        ".ice",
+        ".nfo",
+        ".txt",
+        ".vt",
+        ".ty",
+        ".ty+",
+        ".uw",
+        ".ub",
+        ".v210",
+        ".yuv10",
+        ".vag",
+        ".vc1",
+        ".viv",
+        ".idx",
+        ".vpk",
+        ".txt",
+        ".vqf",
+        ".vql",
+        ".vqe",
+        ".vtt",
+        ".wsd",
+        ".xmv",
+        ".xvag",
+        ".yop",
+        ".y4m",
+    ]
 
 
 # Configuration parameters for mediapipe
 class MediaPipe:
-    
     class AutoFlip:
 
         # Models folder location
@@ -104,7 +282,9 @@ class MediaPipe:
         TMP_PBTXT_FOLDER_PATH = os.path.join(os.getcwd(), TMP_PBTXT_FOLDER_NAME)
 
         # Default pbtxt and build cmd
-        CONFIG_FILE_PBTXT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mediapipe_autoflip.pbtxt")
+        CONFIG_FILE_PBTXT = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "mediapipe_autoflip.pbtxt"
+        )
         BUILD_CMD = "run_autoflip"
 
         # user friendly conf keys
@@ -126,7 +306,6 @@ class MediaPipe:
         _CAR = "CAR"
         _OBJECT = "OBJECT"
 
-
         # the variables names below should match the keyname for set_conf to work
         # smoothly
         # ENFORCE_FEATURES list
@@ -137,11 +316,11 @@ class MediaPipe:
             _HUMAN: False,
             _PET: False,
             _CAR: False,
-            _OBJECT: False
+            _OBJECT: False,
         }
 
         # % AREA from center where most of the content is
-        # usually applied when content is focused near center 
+        # usually applied when content is focused near center
         STABALIZATION_THRESHOLD = DEFAULT_MOTION_STABALIZATION_THRESHOLD
 
         # opacity of blur area
@@ -152,7 +331,7 @@ class MediaPipe:
             return {
                 cls.ENFORCE_FEATURES_KEYNAME: "signal_settings",
                 cls.STABALIZATION_THRESHOLD_KEYNAME: "motion_stabilization_threshold_percent",
-                cls.BLUR_AREA_OPACITY_KEYNAME: "overlay_opacity"
+                cls.BLUR_AREA_OPACITY_KEYNAME: "overlay_opacity",
             }
 
         @classmethod
@@ -163,9 +342,9 @@ class MediaPipe:
             :rtype: dict
             """
             return {
-                cls.ENFORCE_FEATURES_KEYNAME : cls.ENFORCE_FEATURES,
+                cls.ENFORCE_FEATURES_KEYNAME: cls.ENFORCE_FEATURES,
                 cls.STABALIZATION_THRESHOLD_KEYNAME: cls.STABALIZATION_THRESHOLD,
-                cls.BLUR_AREA_OPACITY_KEYNAME: cls.BLUR_AREA_OPACITY
+                cls.BLUR_AREA_OPACITY_KEYNAME: cls.BLUR_AREA_OPACITY,
             }
 
         @classmethod
@@ -184,12 +363,11 @@ class MediaPipe:
                         setattr(cls, attr, updated_attr_dict)
                     else:
                         setattr(cls, attr, config[attr])
-                    
-                else:
-                    raise Exception(" Invalid configuration. Use get_conf method to see existing configuration or refer documentation.")
-            
 
-        
+                else:
+                    raise Exception(
+                        " Invalid configuration. Use get_conf method to see existing configuration or refer documentation."
+                    )
 
 
 class ImageSelector:
