@@ -90,7 +90,10 @@ class Video:
     video_compression_codec = "libx264"  # Currently "libx264 and  is supported"
     compression_output_file_extension = "mp4"
     
-    # supported/valid video extensions supported by ffmpeg
+    # Supported/valid video extensions supported by ffmpeg
+    # You can generate updated list by using following shell script on MacOSX or Linux
+    # $ ffmpeg -demuxers -hide_banner | tail -n +5 | cut -d' ' -f4 | xargs -I{} ffmpeg -hide_banner -h demuxer={} | grep 'Common extensions' | cut -d' ' -f7 | tr ',' $'\n' | tr -d '.'
+    
     video_extensions = [
         ".str",
         ".aa",
