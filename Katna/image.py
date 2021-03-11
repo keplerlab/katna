@@ -204,10 +204,10 @@ class Image(object):
         for path, subdirs, files in os.walk(dir_path):
             for filename in files:
                 filepath = os.path.join(path, filename)
-                if self._check_if_valid_image(filename):
-                    image_file_path = os.path.join(path, filename)
+                if self._check_if_valid_image(filepath):
+                    print(" running for : ", filepath)
                     crop_list = self.crop_image(
-                        image_file_path,
+                        filepath,
                         crop_width,
                         crop_height,
                         num_of_crops,
