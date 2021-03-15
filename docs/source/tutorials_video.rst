@@ -174,24 +174,24 @@ on disk :
                print("Data for file: ", filepath, " is : ", data)
 
      
-     #instantiate the video class
-     vd = Video()
+   #instantiate the video class
+   vd = Video()
 
-     #number of key-frame images to be extracted
-     no_of_frames_to_return = 3
+   #number of key-frame images to be extracted
+   no_of_frames_to_return = 3
 
-     #Input Video directory path
-     #All .mp4 and .mov files inside this directory will be used for keyframe extraction)
-     videos_dir_path = os.path.join(".", "tests","data")
+   #Input Video directory path
+   #All .mp4 and .mov files inside this directory will be used for keyframe extraction)
+   videos_dir_path = os.path.join(".", "tests","data")
 
-     # initialize the print writer
-     printwriter = PrintDataWriter()
+   # initialize the print writer
+   printwriter = PrintDataWriter()
 
 
-     vd.extract_keyframes_from_videos_dir(
-          no_of_frames=no_of_frames_to_return, dir_path=videos_dir_path,
-          writer=printwriter
-     )
+   vd.extract_keyframes_from_videos_dir(
+        no_of_frames=no_of_frames_to_return, dir_path=videos_dir_path,
+        writer=printwriter
+   )
 
 
 Below is another example, where a custom disk writer is created to alter the filename of saved files:
