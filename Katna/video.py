@@ -151,8 +151,27 @@ class Video(object):
 
         print("Finished processing for files")
 
+    def _extract_keyframes_for_files_iterator(self, no_of_frames, list_of_filepaths):
+        """Extract desirable number of keyframes for files in the list of filepaths.
+
+        :param no_of_frames: [description]
+        :type no_of_frames: [type]
+        :param list_of_filepaths: [description]
+        :type list_of_filepaths: [type]
+        :raises Exception: [description]
+        :return: [description]
+        :rtype: [type]
+        """
+        for filepath in list_of_filepaths:
+            print("Running for : ", filepath)
+            try:
+                keyframes = self.extract_video_keyframes(no_of_frames, filepath)
+                yield {"keyframes": keyframes, "error": None,"filepath": filepath}
+            except Exception as e:
+                yield {"keyframes": [],"error": e,"filepath": filepath}
+
     @FileDecorators.validate_dir_path
-    def extract_keyframes_from_videos_dir(self, no_of_frames, dir_path):
+    def extract_keyframes_from_videos_dir(self, no_of_frames, dir_path, writer):
         """Returns best key images/frames from the videos in the given directory.
         you need to mention number of keyframes as well as directory path
         containing videos. Function returns python dictionary with key as filepath
@@ -163,23 +182,39 @@ class Video(object):
         :type no_of_frames: int, required
         :param dir_path: Directory location with videos
         :type dir_path: str, required
+        :param writer: Writer class obj to process keyframes
+        :type writer: Writer
         :return: Dictionary with key as filepath and numpy.2darray Image objects
         :rtype: dict
         """
 
-        all_videos_top_frames = {}
+        valid_files = []
 
         for path, subdirs, files in os.walk(dir_path):
             for filename in files:
                 filepath = os.path.join(path, filename)
-
                 if helper._check_if_valid_video(filepath):
-                    video_top_frames = self.extract_video_keyframes(
-                        no_of_frames, filepath
-                    )
-                    all_videos_top_frames[filepath] = video_top_frames
+                    valid_files.append(filepath)
 
-        return all_videos_top_frames
+
+        if len(valid_files) > 0:
+            generator = self._extract_keyframes_for_files_iterator(no_of_frames, valid_files)
+
+            for data in generator:
+
+                file_path = data["filepath"]
+                file_keyframes = data["keyframes"]
+                error = data["error"]
+
+                if error is None:
+                    writer.write(file_path, file_keyframes) 
+                    print("Complete processing for : ", file_path)
+                else:
+                    print("Error processing file : ", file_path)
+                    print(error)
+        else:
+            print("All the files in directory %s are invalid video files" % dir_path)
+
 
     @FileDecorators.validate_file_path
     def extract_video_keyframes(self, no_of_frames, file_path):
