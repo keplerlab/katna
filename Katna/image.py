@@ -172,6 +172,48 @@ class Image(object):
 
         return crops_list
 
+    def _extract_crop_for_files_iterator(
+        self, 
+        list_of_files,
+        crop_width,
+        crop_height,
+        num_of_crops,
+        filters,
+        down_sample_factor,
+    ):
+        """Generator which yields crop data / error for filepaths in a list
+
+        :param list_of_files: list of files to process for crop
+        :type list_of_files: list, required
+        :param crop_width: output crop width
+        :type crop_width: int
+        :param crop_height: output crop height
+        :type crop_height: int
+        :param num_of_crops: number of crops required
+        :type num_of_crops: int
+        :param filters: filters to be applied for cropping(checks if image contains english text and the crop rectangle doesn't cut the text)
+        :type filters: list (eg. ['text'])
+        :param down_sample_factor: number by which you want to reduce image height & width (use it if image is large or to fasten the process)
+        :type down_sample_factor: int [default=8]
+        :yield: dict containing error (if any), data ,and filepath of image processed
+        :rtype: dict
+        """
+
+        for filepath in list_of_files:
+            print("Running for : ", filepath)
+            try:
+                crop_list = self._crop_image(
+                    filepath,
+                    crop_width,
+                    crop_height,
+                    num_of_crops,
+                    filters,
+                    down_sample_factor,
+                )
+                yield {"crops": crop_list, "error": None,"filepath": filepath}
+            except Exception as e:
+                yield {"crops": crop_list, "error": e,"filepath": filepath}
+
     @FileDecorators.validate_dir_path
     def crop_image_from_dir(
         self,
@@ -179,6 +221,7 @@ class Image(object):
         crop_width,
         crop_height,
         num_of_crops,
+        writer,
         filters=[],
         down_sample_factor=config.Image.down_sample_factor,
     ):
@@ -192,6 +235,8 @@ class Image(object):
         :type crop_height: int
         :param num_of_crops: number of crops required
         :type num_of_crops: int
+        :param writer: number of crops required
+        :type writer: int
         :param filters: filters to be applied for cropping(checks if image contains english text and the crop rectangle doesn't cut the text)
         :type filters: list (eg. ['text'])
         :param down_sample_factor: number by which you want to reduce image height & width (use it if image is large or to fasten the process)
@@ -200,26 +245,39 @@ class Image(object):
         :rtype: dict
         """
 
+        valid_files = []
         all_crops = {}
         for path, subdirs, files in os.walk(dir_path):
             for filename in files:
                 filepath = os.path.join(path, filename)
                 if self._check_if_valid_image(filepath):
-                    print(" running for : ", filepath)
-                    crop_list = self.crop_image(
-                        filepath,
-                        crop_width,
-                        crop_height,
-                        num_of_crops,
-                        filters,
-                        down_sample_factor,
-                    )
-                    all_crops[filepath] = crop_list
+                    valid_files.append(filepath)
+        
+        if len(valid_files) > 0:
+            generator = self._extract_crop_for_files_iterator(
+                valid_files,
+                crop_width,
+                crop_height,
+                num_of_crops,
+                filters,
+                down_sample_factor
+            )
 
-        return all_crops
+            for data in generator:
+                file_path = data["filepath"]
+                file_crops = data["crops"]
+                error = data["error"]
 
-    @FileDecorators.validate_file_path
-    def crop_image(
+                if error is None:
+                    writer.write(file_path, file_crops) 
+                    print("Completed processing for : ", file_path)
+                else:
+                    print("Error processing file : ", file_path)
+                    print(error)
+        else:
+            print("All the files in directory %s are invalid video files" % dir_path)
+
+    def _crop_image(
         self,
         file_path,
         crop_width,
@@ -257,6 +315,48 @@ class Image(object):
             down_sample_factor=down_sample_factor,
         )
         return crop_list
+    
+
+    @FileDecorators.validate_file_path
+    def crop_image(
+        self,
+        file_path,
+        crop_width,
+        crop_height,
+        num_of_crops,
+        writer,
+        filters=[],
+        down_sample_factor=config.Image.down_sample_factor,
+    ):
+        """smartly crops the imaged based on the specification - width and height
+
+        :param file_path: Input file path
+        :type file_path: str, required
+        :param crop_width: output crop width
+        :type crop_width: int
+        :param crop_height: output crop heigh
+        :type crop_height: int
+        :param num_of_crops: number of crops required
+        :type num_of_crops: int
+        :param writer: writer object to process data
+        :type writer: Writer, required
+        :param filters: filters to be applied for cropping(checks if image contains english text and the crop rectangle doesn't cut the text)
+        :type filters: list (eg. ['text'])
+        :param down_sample_factor: number by which you want to reduce image height & width (use it if image is large or to fasten the process)
+        :type down_sample_factor: int [default=8]
+        :return: crop list
+        :rtype: list of structure crop_rect
+        """
+
+        crop_list = self._crop_image(
+            file_path,
+            crop_width,
+            crop_height,
+            num_of_crops,
+            filters=[],
+            down_sample_factor=config.Image.down_sample_factor
+        )
+        writer.write(file_path, crop_list)
 
     @FileDecorators.validate_file_path
     def crop_image_with_aspect(
@@ -264,8 +364,9 @@ class Image(object):
         file_path,
         crop_aspect_ratio,
         num_of_crops,
+        writer,
         filters=[],
-        down_sample_factor=8,
+        down_sample_factor=8
     ):
         """smartly crops the imaged based on the aspect ratio and returns number of specified crops for each crop spec found in the image with
         the specified aspect ratio
@@ -280,6 +381,8 @@ class Image(object):
         :type filters: list (eg. ['text'])
         :param down_sample_factor: number by which you want to reduce image height & width (use it if image is large or to fasten the process)
         :type down_sample_factor: int [default=8]
+        :param writer: writer to process the image
+        :type num_of_crops: Writer, required
         :return: crop list
         :rtype: list of structure crop_rect
         """
@@ -299,7 +402,8 @@ class Image(object):
         )
 
         sorted_list = sorted(crop_list, key=lambda x: float(x.score), reverse=True)
-        return sorted_list[:num_of_crops]
+        crop_list = sorted_list[:num_of_crops]
+        writer.write(file_path, crop_list)
 
     # 
     @FileDecorators.validate_file_path

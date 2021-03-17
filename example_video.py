@@ -3,12 +3,12 @@ import os.path
 import cv2
 import sys, getopt
 from Katna.video import Video
-from Katna.writer import DiskWriterKeyFrame
+from Katna.writer import KeyFrameDiskWriter
 import multiprocessing
 import ntpath
 
 
-class CustomDiskWriter(DiskWriterKeyFrame):
+class CustomDiskWriter(KeyFrameDiskWriter):
     """
 
     :param DiskWriterKeyFrame: Writer class to overwrite
@@ -38,7 +38,7 @@ def main_dir():
 
     no_of_frames_to_returned = 12
 
-    diskwriter = DiskWriterKeyFrame(location="selectedframes")
+    diskwriter = KeyFrameDiskWriter(location="selectedframes")
 
     vd.extract_keyframes_from_videos_dir(
         no_of_frames=no_of_frames_to_returned, dir_path=dir_path,
@@ -59,32 +59,19 @@ def main():
        
     vd = Video()
 
-    # folder to save extracted images
-    output_folder_video_image = "selectedframes"
-    out_dir_path = os.path.join(".", output_folder_video_image)
-
-    if not os.path.isdir(out_dir_path):
-        os.mkdir(out_dir_path)
-
     # number of images to be returned
     no_of_frames_to_returned = 12
+
+    diskwriter = DiskWriterKeyFrame(location="selectedframes")
+
     # VIdeo file path
     #video_file_path = os.path.join(".", "tests", "data", "pos_video.mp4")
     print(f"Input video file path = {video_file_path}")
 
-    imgs = vd.extract_video_keyframes(
-        no_of_frames=no_of_frames_to_returned, file_path=video_file_path
+    vd.extract_video_keyframes(
+        no_of_frames=no_of_frames_to_returned, file_path=video_file_path,
+        writer=diskwriter
     )
-
-    # Save it to disk
-    for counter, img in enumerate(imgs):
-        vd.save_frame_to_disk(
-            img,
-            file_path=out_dir_path,
-            file_name="test_" + str(counter),
-            file_ext=".jpeg",
-        )
-    print(f"Exracted key frames file path = {out_dir_path}")
 
 
 if __name__ == "__main__":
