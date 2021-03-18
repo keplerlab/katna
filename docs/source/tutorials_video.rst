@@ -54,6 +54,7 @@ Code below is a complete example for a single video file.
    :linenos:
 
    from Katna.video import Video
+   from Katna.writer import KeyFrameDiskWriter
    import os
    
    # For windows, the below if condition is must.
@@ -69,7 +70,7 @@ Code below is a complete example for a single video file.
      diskwriter = KeyFrameDiskWriter(location="selectedframes")
 
      # Video file path
-     video_file_pdath = os.path.join(".", "tests", "data", "pos_video.mp4")
+     video_file_path = os.path.join(".", "tests", "data", "pos_video.mp4")
 
      print(f"Input video file path = {video_file_path}")
 
@@ -108,7 +109,7 @@ Code below is a complete example for a directory containing videos.
    :linenos:
 
    from Katna.video import Video
-   from Katna.writer import DiskWriterKeyFrame
+   from Katna.writer import KeyFrameDiskWriter
    import os
    import ntpath
 

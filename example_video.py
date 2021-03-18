@@ -11,8 +11,8 @@ import ntpath
 class CustomDiskWriter(KeyFrameDiskWriter):
     """
 
-    :param DiskWriterKeyFrame: Writer class to overwrite
-    :type DiskWriterKeyFrame: Writer
+    :param KeyFrameDiskWriter: Writer class to overwrite
+    :type KeyFrameDiskWriter: Writer
     """
 
     def generate_output_filename(self, filepath, keyframe_number):
@@ -62,7 +62,7 @@ def main():
     # number of images to be returned
     no_of_frames_to_returned = 12
 
-    diskwriter = DiskWriterKeyFrame(location="selectedframes")
+    diskwriter = KeyFrameDiskWriter(location="selectedframes")
 
     # VIdeo file path
     #video_file_path = os.path.join(".", "tests", "data", "pos_video.mp4")
