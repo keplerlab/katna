@@ -337,8 +337,8 @@ expects you to specify the aspect ratio in string format eg. '4:3' or '16:9'.
 
 .. code-block:: python
 
-    from Katna.writer import KeyFrameDiskWriter
-    diskwriter = KeyFrameDiskWriter(location="selectedframes")
+    from Katna.writer import ImageCropDiskWriter
+    diskwriter = ImageCropDiskWriter(location="selectedcrops")
 
     image_file_path = <Path where the image is stored>
     crop_aspect_ratio = '4:3'
