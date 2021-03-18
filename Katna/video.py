@@ -42,6 +42,8 @@ class Video(object):
         # If the duration of the clipped video is less than **min_video_duration**
         # then, the clip will be added with the previous clipped
         self._min_video_duration = config.Video.min_video_duration
+
+        self.run_parallelly_frame_extractor = True
         # Calculating optimum number of processes for multiprocessing
         self.n_processes = cpu_count() // 2 - 1
         if self.n_processes < 1:
@@ -161,8 +163,9 @@ class Video(object):
         :type file_path: [type]
         """
         # Creating the multiprocessing pool
-        self.pool_extractor = Pool(processes=self.n_processes)
-        self.pool_selector = Pool(processes=self.n_processes)
+        if self.run_parallelly_frame_extractor:
+            self.pool_extractor = Pool(processes=self.n_processes)
+
         # Split the input video into chunks. Each split(video) will be stored
         # in a temp
         if not helper._check_if_valid_video(file_path):
@@ -175,16 +178,23 @@ class Video(object):
 
         # Passing all the clipped videos for  the frame extraction using map function of the
         # multiprocessing pool
-        with self.pool_extractor:
-            extracted_candidate_frames = self.pool_extractor.map(
-                frame_extractor.extract_candidate_frames, chunked_videos
-            )
+        if self.run_parallelly_frame_extractor:
+            with self.pool_extractor:
+                extracted_candidate_frames = self.pool_extractor.map(
+                    frame_extractor.extract_candidate_frames, chunked_videos
+                )
 
             # Converting the nested list of extracted frames into 1D list
-            extracted_candidate_frames = functools.reduce(operator.iconcat, extracted_candidate_frames, [])
+                extracted_candidate_frames = functools.reduce(operator.iconcat, extracted_candidate_frames, [])
+        else:
+            extracted_candidate_frames = []
+            for chunked_video in chunked_videos:
+                extracted_candidate_frame = frame_extractor.extract_candidate_frames(chunked_video)
+                extracted_candidate_frames.extend(extracted_candidate_frame)
 
         self._remove_clips(chunked_videos)
-        image_selector = ImageSelector(self.pool_selector)
+        image_selector = ImageSelector(self.n_processes)
+
         top_frames = image_selector.select_best_frames(
             extracted_candidate_frames, no_of_frames
         )

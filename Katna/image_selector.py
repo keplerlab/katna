@@ -17,7 +17,7 @@ from skimage.morphology import disk
 from skimage import img_as_float
 import itertools  
 import time
-
+from multiprocessing import Pool
 import Katna.config as config
 
 
@@ -30,9 +30,10 @@ class ImageSelector(object):
     :type object: class:`Object`
     """
 
-    def __init__(self, pool_obj):
+    def __init__(self, n_processes=1):
         # Setting for Multiprocessing Pool Object
-        self.pool_obj = pool_obj
+        self.run_parallelly_frame_selector = True
+        self.n_processes = n_processes
 
         # Setting for optimum Brightness values
         self.min_brightness_value = config.ImageSelector.min_brightness_value
@@ -108,13 +109,29 @@ class ImageSelector(object):
         n_files = len(input_img_files)
 
         # -------- calculating the brightness and entropy score by multiprocessing ------
-        brightness_score = np.array(
-            self.pool_obj.map(self.__get_brightness_score__, input_img_files)
-        )
+        if self.run_parallelly_frame_selector is True:
+            pool_obj = Pool(processes=self.n_processes)
+            #self.pool_obj_entropy = Pool(processes=self.n_processes)
+            with pool_obj:
+                brightness_score = np.array(
+                    pool_obj.map(self.__get_brightness_score__, input_img_files)
+                )
 
-        entropy_score = np.array(
-            self.pool_obj.map(self.__get_entropy_score__, input_img_files)
-        )
+                entropy_score = np.array(
+                    pool_obj.map(self.__get_entropy_score__, input_img_files)
+                )
+        # -------- calculating the brightness and entropy score by sequentially ------
+        else:
+            brightness_score_list = []
+            entropy_score_list = []
+            for img_file in input_img_files:
+                brightness_scr = self.__get_brightness_score__(img_file) 
+                entropy_scr = self.__get_entropy_score__(img_file)
+                brightness_score_list.append(brightness_scr)
+                entropy_score_list.append(entropy_scr)
+            brightness_score = np.asarray(brightness_score_list)
+            entropy_score = np.asarray(entropy_score_list)
+
 
         # -------- Check if brightness and contrast scores are in the min and max defined range ------
         brightness_ok = np.where(
@@ -231,17 +248,17 @@ class ImageSelector(object):
 
         return filtered_items
 
-    def __getstate__(self):
-        """Function to get the state of initialized class object and remove the pool object from it
-        """
-        self_dict = self.__dict__.copy()
-        del self_dict["pool_obj"]
-        return self_dict
+    # def __getstate__(self):
+    #     """Function to get the state of initialized class object and remove the pool object from it
+    #     """
+    #     self_dict = self.__dict__.copy()
+    #     del self_dict["pool_obj"]
+    #     return self_dict
 
-    def __setstate__(self, state):
-        """Function to update the state of initialized class object woth the pool object
-        """
-        self.__dict__.update(state)
+    # def __setstate__(self, state):
+    #     """Function to update the state of initialized class object woth the pool object
+    #     """
+    #     self.__dict__.update(state)
 
     def select_best_frames(self, input_key_frames, number_of_frames):
         """[summary] Public function for Image selector class: takes list of key-frames images and number of required
