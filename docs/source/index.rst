@@ -143,6 +143,7 @@ by opencv library.
    Quickstart video module <tutorials_video>
    Quickstart image module <tutorials_image>
    Understanding katna <understanding_katna>
+   How to guide <how_to_guide>
    Troubleshooting <troubleshooting>
    API reference <modules>
 
