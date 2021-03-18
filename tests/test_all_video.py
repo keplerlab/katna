@@ -31,6 +31,58 @@ def video_object():
     return Video()
 
 
+@pytest.fixture(scope="module")
+def writer_object():
+    """Writer for keyframe extraction
+
+    :return: Writer instance
+    :rtype: [type]
+    """
+    from writer import KeyFrameDiskWriter
+
+    class TestWriterVideo(KeyFrameDiskWriter):
+
+        def __init__(self, location, file_ext=".jpeg"):
+            """[summary]
+
+            :param location: [description]
+            :type location: [type]
+            """
+            super().__init__(location, file_ext)
+
+            # dict of formate { filepath: keyframes }
+            self.data = {}
+
+        def write(self, filepath, keyframes):
+            """Saves keyframes in a dict rather than saving it to disk.
+
+            :param filepath: [description]
+            :type filepath: [type]
+            :param keyframes: [description]
+            :type keyframes: [type]
+            :return: [description]
+            :rtype: [type]
+            """
+            self.data = {
+                filepath : keyframes
+            }
+
+        def get_data(self, filepath):
+            """Retreives keyframe data for filepath
+
+            :param filepath: [description]
+            :type filepath: [type]
+            :return: [description]
+            :rtype: [type]
+            """
+            if filepath in self.data.keys():
+                return self.data[filepath]
+            else:
+                raise Exception("File not found in writer data")
+    
+    return TestWriterVideo(location="selectedframes")
+
+
 @pytest.fixture
 def image_similarity_object():
     """fixture for video object
@@ -61,7 +113,7 @@ def test_validate_video_exception():
         assert FileDecorators.validate_file_path(dummy(file_path=video_file_path))
 
 
-def test_extracted_frame_numbers(video_object):
+def test_extracted_frame_numbers(video_object, writer_object):
     """
         Test case for extracted frame numbers.
         Must return 10 images
@@ -71,14 +123,16 @@ def test_extracted_frame_numbers(video_object):
     video_file_path = os.path.join("tests", "data", "pos_video.mp4")
     expected_number_of_images = 10
 
-    imgs = video_object.extract_video_keyframes(
-        expected_number_of_images, video_file_path
+    video_object.extract_video_keyframes(
+        expected_number_of_images, video_file_path, writer_object
     )
 
-    assert len(imgs) == expected_number_of_images
+    keyframes = writer_object.get_data(video_file_path)
+
+    assert len(keyframes) == expected_number_of_images
 
 
-def test_extracted_frame_quality(video_object, image_similarity_object):
+def test_extracted_frame_quality(video_object, image_similarity_object, writer_object):
     """
         Test case for extracted frame numbers.
         Must return similar 12 images as stored in test data 
@@ -88,11 +142,13 @@ def test_extracted_frame_quality(video_object, image_similarity_object):
     video_file_path = os.path.join("tests", "data", "pos_video.mp4")
     expected_number_of_images = 12
 
-    imgs = video_object.extract_video_keyframes(
-        expected_number_of_images, video_file_path
+    video_object.extract_video_keyframes(
+        expected_number_of_images, video_file_path, writer_object
     )
 
     print("Testing if extracted images are same as stored images inside data folder")
+
+    imgs = writer_object.get_data(video_file_path)
 
     for count in range(expected_number_of_images):
         test_img_path = os.path.join(
@@ -126,14 +182,16 @@ def test_video_splitting(video_object):
         assert len(n_clips_large) > 1
     assert len(n_clips_small) == 1
 
-def test_video_no_codec_video(video_object):
+def test_video_no_codec_video(video_object, writer_object):
     """Test case for splitting logic for videos.. Used tide ad video because of edge case
     """
     small_video_file_path = os.path.join("tests", "data", "codec_error_video.mp4")
 
-    imgs = video_object.extract_video_keyframes(
-        12, small_video_file_path
+    video_object.extract_video_keyframes(
+        12, small_video_file_path, writer_object
     )
+
+    imgs = writer_object.get_data(small_video_file_path)
     
     #print(len(n_clips_small))
     assert len(imgs) == 11

@@ -49,6 +49,57 @@ def image_object():
 
     return Image()
 
+@pytest.fixture(scope="module")
+def writer_object():
+    """Creates the writer object for validating the test
+
+    :return: [description]
+    :rtype: [type]
+    """
+    from writer import ImageCropDiskWriter
+
+    class TestWriterImage(ImageCropDiskWriter):
+
+        def __init__(self, location, file_ext=".jpeg"):
+            """[summary]
+
+            :param location: [description]
+            :type location: [type]
+            """
+            super().__init__(location, file_ext)
+
+            # dict of formate { filepath: keyframes }
+            self.data = {}
+
+        def write(self, filepath, crop_list):
+            """Saves crop list in a dict rather than saving it to disk.
+
+            :param filepath: [description]
+            :type filepath: [type]
+            :param keyframes: [description]
+            :type keyframes: [type]
+            :return: [description]
+            :rtype: [type]
+            """
+            self.data = {
+                filepath : crop_list
+            }
+
+        def get_data(self, filepath):
+            """Retreives keyframe data for filepath
+
+            :param filepath: [description]
+            :type filepath: [type]
+            :return: [description]
+            :rtype: [type]
+            """
+            if filepath in self.data.keys():
+                return self.data[filepath]
+            else:
+                raise Exception("File not found in writer data")
+    
+    return TestWriterImage(location="selectedcrops")
+
 
 @pytest.fixture(scope="module")
 def text_detector_object():
@@ -201,7 +252,7 @@ def test_image_resize(image_object):
     assert resized_image1_height == target_height1
     assert resized_image1_width == target_width1
 
-def test_crop_quality(tmpdir_factory, image_object, image_similarity_object):
+def test_crop_quality(tmpdir_factory, image_object, image_similarity_object, writer_object):
     import os.path
     import cv2
 
@@ -220,12 +271,14 @@ def test_crop_quality(tmpdir_factory, image_object, image_similarity_object):
     print(f"image_file_path = {image_file_path}")
 
     img = cv2.imread(image_file_path)
-    crop_list = image_object.crop_image(
+    image_object.crop_image(
         file_path=image_file_path,
         crop_width=crop_width,
         crop_height=crop_height,
         num_of_crops=no_of_crops_to_returned,
+        writer=writer_object
     )
+    crop_list = writer_object.get_data(image_file_path)
     print(crop_list)
     image_object.save_crop_to_disk(crop_list[0], img, temp_dir, "crop_img", ".jpg")
     similairty = image_similarity_object.pixel_sim(
@@ -253,7 +306,7 @@ def test_validate_image_exception():
         assert FileDecorators.validate_file_path(dummy(file_path=image_file_path))
 
 
-def test_aspect_ratio(tmpdir_factory, image_object):
+def test_aspect_ratio(tmpdir_factory, image_object, writer_object):
     import os.path
     import cv2
 
@@ -273,12 +326,14 @@ def test_aspect_ratio(tmpdir_factory, image_object):
     print(f"image_file_path = {image_file_path}")
 
     img = cv2.imread(image_file_path)
-    crop_list = image_object.crop_image_with_aspect(
+    image_object.crop_image_with_aspect(
         file_path=image_file_path,
         crop_aspect_ratio=crop_aspect_ratio,
         num_of_crops=no_of_crops_to_returned,
         filters=filters,
+        writer=writer_object
     )
+    crop_list = writer_object.get_data(image_file_path)
     ratio = str(aspect_ratio[0] / aspect_ratio[1])
     for crop in crop_list:
         cv2.imwrite(
