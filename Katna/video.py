@@ -26,7 +26,8 @@ import re
 import ffmpy
 from imageio_ffmpeg import get_ffmpeg_exe
 from multiprocessing import Pool, Process, cpu_count
-
+import functools
+import operator
 
 class Video(object):
     """Class for all video frames operations
@@ -178,10 +179,9 @@ class Video(object):
             extracted_candidate_frames = self.pool_extractor.map(
                 frame_extractor.extract_candidate_frames, chunked_videos
             )
+
             # Converting the nested list of extracted frames into 1D list
-            extracted_candidate_frames = [
-                frame for frames in extracted_candidate_frames for frame in frames
-            ]
+            extracted_candidate_frames = functools.reduce(operator.iconcat, extracted_candidate_frames, [])
 
         self._remove_clips(chunked_videos)
         image_selector = ImageSelector(self.pool_selector)

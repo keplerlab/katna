@@ -1,6 +1,6 @@
 .. _tutorials_image:
 
-How to Use Katna.image
+Using Katna.image
 ========================
 
 Crop a single image
@@ -24,8 +24,8 @@ Instantiate the image class.
    
 **Step 3**
 
-Call the **crop_image** method. This method accepts following parameters and returns a list of crop rectangles (in crop_rect data structure).
-Refer to API reference for further details. Below are the six parameters of the function
+Call the **crop_image** method. This method accepts following parameters (Refer to API reference for further details):
+
 
 **file_path**: image file path from which crop has to be extracted
 
@@ -34,6 +34,8 @@ Refer to API reference for further details. Below are the six parameters of the 
 **crop_height**: height of crop to extract
 
 **no_of_crops_to_return**: number of crops rectangles to be extracted
+
+**writer**: Writer class instance to process image crop data for a file (use ImageCropDiskWriter from Katna.writer module to save data at a location).
 
 **filters**: You can use this **optional** parameter to filter out unwanted crop rectangles according to some filtering criteria.
 At the moment only "text" detection filter is implemented and more filters will be added in future 
@@ -47,137 +49,65 @@ consider increasing this parameter for faster image cropping.  By default input 
 
 .. code-block:: python
 
-     image_file_path = <Path where the image is stored>
+    image_file_path = <Path where the image is stored>
 
-     crop_list = img_module.crop_image(
+    # diskwriter to save crop data
+    diskwriter = ImageCropDiskWriter(location=<Path to save crops>)
+
+    img_module.crop_image(
         file_path=image_file_path,
         crop_width=<crop_width>,
         crop_height=<crop_height>,
         num_of_crops=<no_of_crops_to_return>,
+        writer=diskwriter,
         filters=<filters>,
         down_sample_factor=<number_by_which_image_to_downsample>
-     )
-
-Or 
-
-You can use **crop_image_from_cvimage** function in case you want to crop in-memory images. This method accepts opencv image as
-image source. Rest of the parameters are same as **crop_images** method. This function helps in connecting smart image
-cropping to any existing workflow.
-
-.. code-block:: python
-
-    img = cv2.imread(image_file_path)
-
-    crop_list = img_module.crop_image_from_cvimage(
-    input_image=img,
-    #Other parameters
     )
 
-If you want to get the crops by a specified aspect ratio. You can use **crop_image_with_aspect** function. This method accepts
-**crop_aspect_ratio** as parameter instead of height & width and returns a list of crop rectangles wrt to each crop dimension it finds with the specified aspect ratio.
-
-**crop_aspect_ratio**: use this parameter to specify the aspect ratio by which crops need to be extracted.The parameter
-expects you to specify the aspect ratio in string format eg. '4:3' or '16:9'.
-
-.. code-block:: python
-
-     image_file_path = <Path where the image is stored>
-     crop_aspect_ratio = '4:3'
-
-     crop_list = img_module.crop_image_with_aspect(
-        file_path=image_file_path,
-        crop_aspect_ratio=<crop_aspect_ratio>,
-        num_of_crops=<no_of_crops_to_return>,
-        filters=<filters>,
-        down_sample_factor=<number_by_which_image_to_downsample>
-     )
-
-**Step 4**
-
-To save the extracted crop rectangles call **save_crop_to_disk** method.
-The method accepts following parameters and doesn't returns anything. 
-Refer to API reference for further details.
-
-1. **crop_rect**: crop rect object from the extracted crops
-
-2. **frame**: input image from which crops are extracted
-
-3. **file_path**: Folder location where files needs to be saved
-
-4. **file_name**:  File name for the crop image to be saved.
-
-5. **file_ext**: File extension indicating the file type for example - ‘.jpg’
-
-
-.. code-block:: python
-
-     img_module.save_crop_to_disk(crop_rect=<crop_rect>, frame=<image>, file_path=<output_folder_cropped_image>,
-            file_name=<file_name>, 
-            file_ext=<file_ext>,
-        )
 
 Code below is a complete example for a single image.
 
 .. code-block:: python
-   :emphasize-lines: 1-3,5,16-17,20-21,27-37,43-48
+   :emphasize-lines: 1-3,6,9,12,15-17,20,22-23,26,29-37
    :linenos:
 
     import os.path
     import cv2
     from Katna.image import Image
 
+    # Extract specific number of key frames from video
     img_module = Image()
 
     # folder to save extracted images
     output_folder_cropped_image = "selectedcrops"
 
-    if not os.path.isdir(os.path.join(".", \
-                output_folder_cropped_image)):
-        
-        os.mkdir(os.path.join(".",\
-            output_folder_cropped_image))
-
     # number of images to be returned
-    no_of_crops_to_return = 3
+    no_of_crops_to_returned = 3
 
-    # crop dimensions
-    crop_width = 1000
+    # crop dimentions
+    crop_width = 1100
     crop_height = 600
+    crop_aspect_ratio = "9:16"
 
     # Filters
     filters = ["text"]
-
     # Image file path
-    image_file_path = os.path.join(".", "tests", "data",\
-                                "image_for_text.png")
+    image_file_path = os.path.join(".", "tests", "data", "bird_img_for_crop.jpg")
+    print(f"image_file_path = {image_file_path}")
 
-    crop_list = img_module.crop_image(
+    # diskwriter to save crop data
+    diskwriter = ImageCropDiskWriter(location=output_folder_cropped_image)
+    
+    # crop the image and process data with diskwriter instance
+    img_module.crop_image(
         file_path=image_file_path,
         crop_width=crop_width,
         crop_height=crop_height,
-        num_of_crops=no_of_crops_to_return,
-        filters= filters,
+        num_of_crops=no_of_crops_to_returned,
+        writer=diskwriter,
+        filters=filters,
         down_sample_factor=8
     )
-
-    if len(crop_list) > 0:
-        top_crop = crop_list[0]
-        print("Top Crop", top_crop, " Score", top_crop.score)
-
-        img = cv2.imread(image_file_path)
-        img_module.save_crop_to_disk(top_crop, img, 
-            file_path=output_folder_cropped_image,
-            file_name="cropped_image", 
-            file_ext=".jpeg",
-        )
-
-        
-    else:
-        print(
-            "No Perfect crop found for {0}x{1} with for Image {2}".format(
-                        crop_width, crop_height ,image_file_path
-            )
-        )
 
 
 Crop all images in a directory
@@ -196,6 +126,8 @@ Below are the six parameters of the function
 
 **no_of_crops_to_return**: number of crops rectangles to be extracted
 
+**writer**: Writer class instance to process image crop data for a file (use ImageCropDiskWriter from Katna.writer module to save data at a location).
+
 **filters**: You can use this **optional** parameter to filter out unwanted crop rectangles according to some filtering criteria.
 At the moment only "text" detection filter is implemented and more filters will be added in future
 will be added in future. Passing on "text" detection filter ensures crop rectangle contains text, additionally it checks
@@ -208,13 +140,17 @@ consider increasing this parameter for faster image cropping.  By default input 
 
 .. code-block:: python
 
-     input_dir_path = <Path to directory where images are stored>
+    input_dir_path = <Path to directory where images are stored>
 
-     crop_list = img_module.crop_image_from_dir(
+    # diskwriter to save crop data
+    diskwriter = ImageCropDiskWriter(location=<Path to save crops>)
+
+    img_module.crop_image_from_dir(
         dir_path=input_dir_path,
         crop_width=<crop_width>,
         crop_height=<crop_height>,
         num_of_crops=<no_of_crops_to_return>,
+        writer=diskwriter,
         filters=<filters>,
         down_sample_factor=<number_by_which_image_to_downsample>
      )
@@ -223,7 +159,7 @@ consider increasing this parameter for faster image cropping.  By default input 
 Code below is a complete example for a directory containing images.
 
 .. code-block:: python
-   :emphasize-lines: 1-4,17-18,21-22,28,30-37,42-43,51-55
+   :emphasize-lines: 1-4,6,9,12,15-16,19,22,25,27-35
    :linenos:
 
     import os.path
@@ -235,12 +171,6 @@ Code below is a complete example for a directory containing images.
 
     # folder to save extracted images
     output_folder_cropped_image = "selectedcrops"
-
-    if not os.path.isdir(os.path.join(".", \
-                output_folder_cropped_image)):
-
-        os.mkdir(os.path.join(".",\
-            output_folder_cropped_image))
 
     # number of images to be returned
     no_of_crops_to_return = 3
@@ -255,39 +185,21 @@ Code below is a complete example for a directory containing images.
     # Directory containing images to be cropped
     input_dir_path = os.path.join(".", "tests", "data")
 
-    crop_data = img_module.crop_image_from_dir(
+    # diskwriter to save crop data
+    diskwriter = ImageCropDiskWriter(location=output_folder_cropped_image)
+
+    img_module.crop_image_from_dir(
         dir_path=input_dir_path,
         crop_width=crop_width,
         crop_height=crop_height,
         num_of_crops=no_of_crops_to_return,
+        writer=diskwriter,
         filters=filters,
         down_sample_factor=8
     )
 
-    for filepath, crops in crop_data.items():
 
-        # name of the image file
-        filename = ntpath.basename(filepath)
-        name = filename.split(".")[0]
-
-        # folder path where the images will be stored
-        output_file_parent_folder_path = os.path.join(".", output_folder_cropped_image, name)
-
-        if not os.path.exists(output_file_parent_folder_path):
-            os.makedirs(output_file_parent_folder_path)
-
-        if len(crops) > 0:
-            img = cv2.imread(filepath)
-            for count, crop in enumerate(crops):
-                img_module.save_crop_to_disk(crop, img, output_file_parent_folder_path,
-                                              name + "_cropped" + "_" + str(count), ".jpeg")
-
-        else:
-            print(
-               "No Perfect crop found for {0}x{1} with for Image {2}".format(
-                           crop_width, crop_height ,filepath
-               )
-            )
+**Note**: You can create custom writers to process the data in a different way. Check the :ref:`Katna.custom_writers` section for details.
 
 
 Resize a single image
@@ -406,7 +318,6 @@ Code below is a complete example for a single image.
     main()
 
 
-
 Resize all images in a directory
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -485,3 +396,10 @@ Code below is a complete example for a directory containing images.
 
 
     main()
+
+
+In addition, image module also has some additional features:
+
+1. Crop Image using cv: check :ref:`Katna.image_crop_cv`
+
+2. Crop Image maintaining asepct ratio: check :ref:`Katna.image_crop_aspect_ratio`
