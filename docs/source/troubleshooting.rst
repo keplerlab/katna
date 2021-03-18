@@ -57,6 +57,40 @@ the write permission while installing some modules.
 set the IMAGEIO_FFMPEG_EXE environment variable". Go to the **imageio-ffmpeg-*.egg** folder inside your
 **site-packages** folder, there's ffmpeg file inside binaries folder set it's path to environment variable.
 
+7) There is a known memory leak issue with running video keyframe extraction on Python version 3.6 and 3.7,
+This might be releated to some multiprocessing bug in Python 3.6 and 3.7 which is fixed in 3.8 and above. Take a look at 
+memory usage graph of python 3.6 and 3.7.
+
+   .. figure:: images/python_3.6_Keyframe_on_30_videos.png
+         :width: 100%
+         :align: center
+         :alt: 
+
+         Keyframe extraction on python 3.6
+
+   .. figure:: images/python_3.7_Keyframe_on_30_videos.png
+         :width: 100%
+         :align: center
+         :alt:     
+        
+         Keyframe extraction on python 3.7     
+   
+   .. figure:: images/python_3.8_Keyframe_on_30_videos.png
+         :width: 100%
+         :align: center
+         :alt: 
+
+         Keyframe extraction on python 3.8       
+   
+   .. figure:: images/python_3.9_Keyframe_on_30_videos.png
+         :width: 100%
+         :align: center
+         :alt:          
+
+         Keyframe extraction on python 3.9
+
+If you are runnning Keyframe extraction code on large number of videos and facing memory issue, request you to upgrade your python version
+to 3.8 and above. 
 
 **Mediapipe Build Issues**
 
