@@ -74,6 +74,7 @@ Code below is a complete example for a single image.
     import os.path
     import cv2
     from Katna.image import Image
+    from Katna.writer import ImageCropDiskWriter
 
     # Extract specific number of key frames from video
     img_module = Image()
@@ -87,7 +88,6 @@ Code below is a complete example for a single image.
     # crop dimentions
     crop_width = 1100
     crop_height = 600
-    crop_aspect_ratio = "9:16"
 
     # Filters
     filters = ["text"]
@@ -166,6 +166,7 @@ Code below is a complete example for a directory containing images.
     import cv2
     import ntpath
     from Katna.image import Image
+    from Katna.writer import ImageCropDiskWriter
 
     img_module = Image()
 
