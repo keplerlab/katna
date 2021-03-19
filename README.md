@@ -164,7 +164,9 @@ Usually ffmpeg is installed using imageio-ffmpeg package, Check **imageio_ffmpeg
    from https://katna.readthedocs.io/
 
 ### Update: katna version 0.9.0
-We have added writer framework to process data from Katna Video and Image module. The version will improve overall memory performance of the library.
+We have added writer framework to process data from Katna Video and Image module. This version
+also fixes memory leak issue reported by [this](https://github.com/keplerlab/katna/issues/11) and
+[this](https://github.com/keplerlab/katna/issues/12) issue.
 
 #### The version introduces following breaking changes in the library API: ####
 1. video.extract_video_keyframes and video.extract_video_keyframes_from_dir requires additional writer object. By default, KeyFrameDiskWriter is available to use from
