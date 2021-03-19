@@ -177,7 +177,7 @@ class ImageSelector(object):
             index_array = np.where(labels == i)
             files_clusters_index_array.append(index_array)
 
-        files_clusters_index_array = np.array(files_clusters_index_array)
+        files_clusters_index_array = np.array(files_clusters_index_array, dtype=object)
         return files_clusters_index_array
 
     def __get_laplacian_scores(self, files, n_images):
