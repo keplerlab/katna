@@ -158,6 +158,9 @@ the write permission while installing some modules.
 Usually ffmpeg is installed using imageio-ffmpeg package, Check **imageio_ffmpeg-*.egg** folder inside your
 **site-packages** folder, there should be a ffmpeg file inside binaries folder, check if this file has proper read/executable permission set and additionally set it's path to environment variable.
 
+7) There is a known memory leak issue in Katna version 0.8.2 and less,
+    when running bulk video keyframe extraction on Python version 3.6 and 3.7, 
+    This is an multiprocessing bug observed only in Python 3.6 and 3.7. And is fixed in katna version 0.9 and above. If you are running Keyframe extraction code on large number of videos and facing memory issue, request you to upgrade your katna version to version 0.9 or above. If you still want to use older version of katna consider upgrading your python version to 3.8 or above.
 ### How to use Library
 
 1) Refer to quickstart section in Katna Reference 
