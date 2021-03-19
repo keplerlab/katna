@@ -31,8 +31,7 @@ class ImageSelector(object):
     """
 
     def __init__(self, n_processes=1):
-        # Setting for Multiprocessing Pool Object
-        self.run_parallelly_frame_selector = True
+        # Setting number of processes for Multiprocessing Pool Object
         self.n_processes = n_processes
 
         # Setting for optimum Brightness values
@@ -109,29 +108,17 @@ class ImageSelector(object):
         n_files = len(input_img_files)
 
         # -------- calculating the brightness and entropy score by multiprocessing ------
-        if self.run_parallelly_frame_selector is True:
-            pool_obj = Pool(processes=self.n_processes)
-            #self.pool_obj_entropy = Pool(processes=self.n_processes)
-            with pool_obj:
-                brightness_score = np.array(
-                    pool_obj.map(self.__get_brightness_score__, input_img_files)
-                )
+        pool_obj = Pool(processes=self.n_processes)
 
-                entropy_score = np.array(
-                    pool_obj.map(self.__get_entropy_score__, input_img_files)
-                )
-        # -------- calculating the brightness and entropy score by sequentially ------
-        else:
-            brightness_score_list = []
-            entropy_score_list = []
-            for img_file in input_img_files:
-                brightness_scr = self.__get_brightness_score__(img_file) 
-                entropy_scr = self.__get_entropy_score__(img_file)
-                brightness_score_list.append(brightness_scr)
-                entropy_score_list.append(entropy_scr)
-            brightness_score = np.asarray(brightness_score_list)
-            entropy_score = np.asarray(entropy_score_list)
+        # self.pool_obj_entropy = Pool(processes=self.n_processes)
+        with pool_obj:
+            brightness_score = np.array(
+                pool_obj.map(self.__get_brightness_score__, input_img_files)
+            )
 
+            entropy_score = np.array(
+                pool_obj.map(self.__get_entropy_score__, input_img_files)
+            )
 
         # -------- Check if brightness and contrast scores are in the min and max defined range ------
         brightness_ok = np.where(
@@ -151,7 +138,7 @@ class ImageSelector(object):
             False,
         )
 
-        # Returning only thos images which are have good brightness and contrast
+        # Returning only those images which are have good brightness and contrast score
 
         return [
             input_img_files[i]
