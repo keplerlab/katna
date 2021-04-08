@@ -163,7 +163,7 @@ class Video(object):
         """
         # Creating the multiprocessing pool
         self.pool_extractor = Pool(processes=self.n_processes)
-
+        #ic("Before video split")
         # Split the input video into chunks. Each split(video) will be stored
         # in a temp
         if not helper._check_if_valid_video(file_path):
@@ -171,7 +171,7 @@ class Video(object):
 
         # split videos in chunks in smaller chunks for parallel processing.
         chunked_videos = self._split(file_path)
-
+        #ic("after video split")
         frame_extractor = FrameExtractor()
 
         # Passing all the clipped videos for  the frame extraction using map function of the
@@ -180,9 +180,10 @@ class Video(object):
             extracted_candidate_frames = self.pool_extractor.map(
                 frame_extractor.extract_candidate_frames, chunked_videos
             )
+        #ic("after frame extraction")
         # Converting the nested list of extracted frames into 1D list
         extracted_candidate_frames = functools.reduce(operator.iconcat, extracted_candidate_frames, [])
-
+        #ic("after frame extraftion and functools reduce")
         self._remove_clips(chunked_videos)
         image_selector = ImageSelector(self.n_processes)
 
@@ -464,6 +465,8 @@ class Video(object):
         # 15 sec is thumb rule for threshold value it could be set to 25 or 
         # any other value. Logic ensures for large enough videos we don't end
         # up dividing video in too many clips.
+        #ic(duration)
+        # TODO: Try max 5 minutes video
         clip_start, break_point = (
             0,
             duration // cpu_count() if duration // cpu_count() > 15 else 25,

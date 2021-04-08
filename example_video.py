@@ -6,6 +6,8 @@ from Katna.video import Video
 from Katna.writer import KeyFrameDiskWriter
 import multiprocessing
 import ntpath
+#from icecream import install
+#install()
 
 
 class CustomDiskWriter(KeyFrameDiskWriter):
@@ -76,5 +78,5 @@ def main():
 
 if __name__ == "__main__":
     multiprocessing.set_start_method("spawn")
-    # main()
-    main_dir()
+    main()
+    #main_dir()

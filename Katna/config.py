@@ -394,6 +394,6 @@ class FrameExtractor:
     # Lenght of sliding window taking difference
     len_window = 20
     # Chunk size of Images to be processed at a time in memory
-    max_frames_in_chunk = 2500
+    max_frames_in_chunk = 500
     # Type of smoothening window from 'flat', 'hanning', 'hamming', 'bartlett', 'blackman' flat window will produce a moving average smoothing.
     window_type = "hanning"

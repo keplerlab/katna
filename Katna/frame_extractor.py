@@ -11,15 +11,15 @@ from scipy.signal import argrelextrema
 
 import tempfile
 import Katna.config as config
+from icecream import ic
+# # Class to hold information about each frame
+# class Frame:
+#     """Class for storing frame ref
+#     """
 
-# Class to hold information about each frame
-class Frame:
-    """Class for storing frame ref
-    """
-
-    def __init__(self, frame, sum_abs_diff):
-        self.frame = frame
-        self.sum_abs_diff = sum_abs_diff
+#     def __init__(self, frame, sum_abs_diff):
+#         self.frame = frame
+#         self.sum_abs_diff = sum_abs_diff
 
 
 class FrameExtractor(object):
@@ -35,7 +35,7 @@ class FrameExtractor(object):
         # Chunk size of Images to be processed at a time in memory
         self.max_frames_in_chunk = config.FrameExtractor.max_frames_in_chunk
 
-    def __calculate_frame_difference(self, frame, curr_frame, prev_frame):
+    def __calculate_frame_difference(self, curr_frame, prev_frame):
         """Function to calculate the difference between current frame and previous frame
 
         :param frame: frame from the video
@@ -52,9 +52,7 @@ class FrameExtractor(object):
             # Calculating difference between current and previous frame
             diff = cv2.absdiff(curr_frame, prev_frame)
             count = np.sum(diff)
-            frame = Frame(frame, count)
-
-            return count, frame
+            return count
         return None
 
     def __process_frame(self, frame, prev_frame, frame_diffs, frames):
@@ -75,14 +73,15 @@ class FrameExtractor(object):
         luv = cv2.cvtColor(frame, cv2.COLOR_BGR2LUV)
         curr_frame = luv
         # Calculating the frame difference for previous and current frame
-        frame_diff = self.__calculate_frame_difference(frame, curr_frame, prev_frame)
+        frame_diff = self.__calculate_frame_difference(curr_frame, prev_frame)
         
         if frame_diff is not None:
-            count, frame = frame_diff
-            frame_diffs.append(count)
+            #count, frame = frame_diff
+            frame_diffs.append(frame_diff)
             frames.append(frame)
+        del prev_frame
         prev_frame = curr_frame
-
+        
         return prev_frame, curr_frame
 
     def __extract_all_frames_from_video__(self, videopath):
@@ -99,12 +98,14 @@ class FrameExtractor(object):
         ret, frame = cap.read()
         i = 1
         chunk_no = 0
+        
         while ret:
             curr_frame = None
             prev_frame = None
 
             frame_diffs = []
             frames = []
+            ic("extract_all_frame_before_loop")
             for _ in range(0, self.max_frames_in_chunk):
                 if ret:
                     # Calling process frame function to calculate the frame difference and adding the difference 
@@ -117,6 +118,7 @@ class FrameExtractor(object):
                     cap.release()
                     break
             chunk_no = chunk_no + 1
+            ic("extract_all_frame after_loop", chunk_no)
             yield frames, frame_diffs
         cap.release()
 
@@ -133,6 +135,7 @@ class FrameExtractor(object):
         :type frame_diffs: `list of images`
 
         """
+        ic("__get_frames_in_local_maxima__ start")
         extracted_key_frames = []
         diff_array = np.array(frame_diffs)
         # Normalizing the frame differences based on windows parameters
@@ -142,7 +145,12 @@ class FrameExtractor(object):
         frame_indexes = np.asarray(argrelextrema(sm_diff_array, np.greater))[0]
 
         for frame_index in frame_indexes:
-            extracted_key_frames.append(frames[frame_index - 1].frame)
+            extracted_key_frames.append(frames[frame_index - 1])
+        ic("__get_frames_in_local_maxima__ end")
+        del frames[:]
+        del sm_diff_array
+        del diff_array
+        del frame_diffs[:]
         return extracted_key_frames
 
     def __smooth__(self, x, window_len, window=config.FrameExtractor.window_type):
