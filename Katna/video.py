@@ -1,7 +1,7 @@
 """
 .. module:: Katna.video
     :platform: OS X
-    :synopsis: This module has functions related to key frame extraction 
+    :synopsis: This module has functions related to key frame extraction
 """
 import os.path
 import os
@@ -28,6 +28,7 @@ from imageio_ffmpeg import get_ffmpeg_exe
 from multiprocessing import Pool, Process, cpu_count
 import functools
 import operator
+
 
 class Video(object):
     """Class for all video frames operations
@@ -147,7 +148,6 @@ class Video(object):
         except Exception as e:
             self.mediapipe_autoflip.exit_clean()
             raise e
-            
 
         self.mediapipe_autoflip.exit_clean()
 
@@ -183,6 +183,7 @@ class Video(object):
         #ic("after frame extraction")
         # Converting the nested list of extracted frames into 1D list
         extracted_candidate_frames = functools.reduce(operator.iconcat, extracted_candidate_frames, [])
+
         #ic("after frame extraftion and functools reduce")
         self._remove_clips(chunked_videos)
         image_selector = ImageSelector(self.n_processes)
@@ -191,8 +192,9 @@ class Video(object):
             extracted_candidate_frames, no_of_frames
         )
 
-        return top_frames
+        del extracted_candidate_frames
 
+        return top_frames
 
     def _extract_keyframes_for_files_iterator(self, no_of_frames, list_of_filepaths):
         """Extract desirable number of keyframes for files in the list of filepaths.
@@ -239,7 +241,6 @@ class Video(object):
                 if helper._check_if_valid_video(filepath):
                     valid_files.append(filepath)
 
-
         if len(valid_files) > 0:
             generator = self._extract_keyframes_for_files_iterator(no_of_frames, valid_files)
 
@@ -250,7 +251,7 @@ class Video(object):
                 error = data["error"]
 
                 if error is None:
-                    writer.write(file_path, file_keyframes) 
+                    writer.write(file_path, file_keyframes)
                     print("Completed processing for : ", file_path)
                 else:
                     print("Error processing file : ", file_path)
@@ -258,6 +259,42 @@ class Video(object):
         else:
             print("All the files in directory %s are invalid video files" % dir_path)
 
+    def extract_video_keyframes_big_video(self, no_of_frames, file_path):
+        """
+
+        :param no_of_frames:
+        :type no_of_frames:
+        :param file_path:
+        :type file_path:
+        :return:
+        :rtype:
+        """
+
+        # split the videos with break point at 20 min
+        video_splits = self._split_large_video(file_path)
+        print("Video split complete.")
+
+        all_top_frames_split = []
+
+        # call _extract_keyframes_from_video
+        for split_video_file_path in video_splits:
+            print("Processing split : ", split_video_file_path)
+            top_frames_split = self._extract_keyframes_from_video(no_of_frames, split_video_file_path)
+            all_top_frames_split.append(top_frames_split)
+
+        # collect and merge keyframes to get no_of_frames
+        self._remove_clips(video_splits)
+        image_selector = ImageSelector(self.n_processes)
+
+        # list of list to 1d list
+        extracted_candidate_frames = functools.reduce(operator.iconcat, all_top_frames_split, [])
+
+        # top frames
+        top_frames = image_selector.select_best_frames(
+            extracted_candidate_frames, no_of_frames
+        )
+
+        return top_frames
 
     @FileDecorators.validate_file_path
     def extract_video_keyframes(self, no_of_frames, file_path, writer):
@@ -272,10 +309,52 @@ class Video(object):
         :return: List of numpy.2darray Image objects
         :rtype: list
         """
-        top_frames = self._extract_keyframes_from_video(no_of_frames, file_path)
+
+
+        # get the video duration
+        video_duration = self._get_video_duration_with_ffmpeg(file_path)
+
+        # duration is in seconds
+        if video_duration > (config.Video.video_split_threshold_in_minutes * 60):
+            print("Large Video (duration = %s min), will split into %s min videos " % (round(video_duration / 60), config.Video.video_split_threshold_in_minutes))
+            top_frames = self.extract_video_keyframes_big_video(no_of_frames, file_path)
+        else:
+            top_frames = self._extract_keyframes_from_video(no_of_frames, file_path)
+
         writer.write(file_path, top_frames)
         print("Completed processing for : ", file_path)
-        
+
+    def _split_large_video(self, file_path):
+        """
+        Splits large video file into smaller videos (based on conf) so they don't take up memory
+        :param file_path: path of video file
+        :type file_path: str, required
+        :return: List of path of splitted video clips
+        :rtype: list
+        """
+
+        break_duration_in_sec = config.Video.video_split_threshold_in_minutes * 60
+
+        video_splits = self._split_with_ffmpeg(file_path,
+                                               break_point_duration_in_sec=break_duration_in_sec)
+
+        corruption_in_chunked_videos = False
+        for chunked_video in video_splits:
+            if not helper._check_if_valid_video(chunked_video):
+                corruption_in_chunked_videos = True
+
+        if corruption_in_chunked_videos:
+            video_splits = self._split_with_ffmpeg(file_path,
+                                                   override_video_codec=True,
+                                                   break_point_duration_in_sec=break_duration_in_sec)
+            for chunked_video in video_splits:
+                if not helper._check_if_valid_video(chunked_video):
+                    raise Exception(
+                        "Error in splitting videos in multiple chunks, corrupted video chunk: "
+                        + chunked_video
+                    )
+
+        return video_splits
 
     def _split(self, file_path):
         """Split videos using ffmpeg library first by copying audio and
@@ -294,7 +373,7 @@ class Video(object):
         for chunked_video in chunked_videos:
             if not helper._check_if_valid_video(chunked_video):
                 corruption_in_chunked_videos = True
-        
+
         if corruption_in_chunked_videos:
             chunked_videos = self._split_with_ffmpeg(file_path, override_video_codec=True)
             for chunked_video in chunked_videos:
@@ -319,7 +398,7 @@ class Video(object):
         """Function to compress given input file
 
         :param file_path: Input file path
-        :type file_path: str        
+        :type file_path: str
         :param force_overwrite: optional parameter if True then if there is \
         already a file in output file location function will overwrite it, defaults to False
         :type force_overwrite: bool, optional
@@ -443,13 +522,15 @@ class Video(object):
         cv2.imwrite(file_full_path, frame)
 
     @FileDecorators.validate_file_path
-    def _split_with_ffmpeg(self, file_path, override_video_codec=False):
+    def _split_with_ffmpeg(self, file_path, override_video_codec=False, break_point_duration_in_sec=None):
         """Function to split the videos and persist the chunks
 
         :param file_path: path of video file
         :type file_path: str, required
         :param override_video_codec: If true overrides input video codec to ffmpeg default codec else copy input video codec, defaults to False
         :type override_video_codec: bool, optional
+        :param break_point_duration_in_sec: duration in sec for break point
+        :type break_point_duration_in_sec: int, optional
         :return: List of path of splitted video clips
         :rtype: list
         """
@@ -459,19 +540,26 @@ class Video(object):
         # Setting the breaking point for the clip to be 25 or if video is big
         # then relative to core available in the machine
         # If video size is large it makes sense to split videos into chunks
-        # proportional to number of cpu cores. So each cpu core will get on 
+        # proportional to number of cpu cores. So each cpu core will get on
         # video to process.
-        # if video duration is divided by cpu_count() then result should be 
-        # 15 sec is thumb rule for threshold value it could be set to 25 or 
+        # if video duration is divided by cpu_count() then result should be
+        # 15 sec is thumb rule for threshold value it could be set to 25 or
         # any other value. Logic ensures for large enough videos we don't end
         # up dividing video in too many clips.
         #ic(duration)
         # TODO: Try max 5 minutes video
-        clip_start, break_point = (
-            0,
-            duration // cpu_count() if duration // cpu_count() > 15 else 25,
-        )
-        
+
+        if break_point_duration_in_sec is None:
+            clip_start, break_point = (
+                0,
+                duration // cpu_count() if duration // cpu_count() > 15 else 25,
+            )
+        else:
+            clip_start, break_point = (
+                0,
+                break_point_duration_in_sec,
+            )
+
         # Loop over the video duration to get the clip stating point and end point to split the video
         while clip_start < duration:
 
@@ -550,8 +638,8 @@ class Video(object):
             targetname = name + "{0}SUB{1}_{2}.{3}".format(name, T1, T2, ext)
 
         #timeParamter = "-ss " + "%0.2f" % t1 + " -t " + "%0.2f" % (t2 - t1)
-        
-        ssParameter = "-ss " + "%0.2f" % t1 
+
+        ssParameter = "-ss " + "%0.2f" % t1
         timeParamter = " -t " + "%0.2f" % (t2 - t1)
         hideBannerParameter = " -y -hide_banner -loglevel panic "
         if override_video_codec:

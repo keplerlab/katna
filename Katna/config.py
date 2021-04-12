@@ -83,17 +83,20 @@ class Video:
     DEBUG = False
     min_video_duration = 5.0
 
+    # if video duration greater than this number video will be treated as a large video
+    video_split_threshold_in_minutes = 20
+
     # https://trac.ffmpeg.org/wiki/Encode/H.264
 
     # Keep this between 20 to 30 value
     video_compression_crf_parameter = 23
     video_compression_codec = "libx264"  # Currently "libx264 and  is supported"
     compression_output_file_extension = "mp4"
-    
+
     # Supported/valid video extensions supported by ffmpeg
     # You can generate updated list by using following shell script on MacOSX or Linux
     # $ ffmpeg -demuxers -hide_banner | tail -n +5 | cut -d' ' -f4 | xargs -I{} ffmpeg -hide_banner -h demuxer={} | grep 'Common extensions' | cut -d' ' -f7 | tr ',' $'\n' | tr -d '.'
-    
+
     video_extensions = [
         ".str",
         ".aa",
