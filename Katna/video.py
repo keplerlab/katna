@@ -5,7 +5,9 @@
 """
 import os.path
 import os
+import psutil
 import sys
+import math
 import numpy as np
 import cv2
 import errno
@@ -278,7 +280,7 @@ class Video(object):
 
         # call _extract_keyframes_from_video
         for split_video_file_path in video_splits:
-            print("Processing split : ", split_video_file_path)
+            # print("Processing split : ", split_video_file_path)
             top_frames_split = self._extract_keyframes_from_video(no_of_frames, split_video_file_path)
             all_top_frames_split.append(top_frames_split)
 
@@ -316,7 +318,7 @@ class Video(object):
 
         # duration is in seconds
         if video_duration > (config.Video.video_split_threshold_in_minutes * 60):
-            print("Large Video (duration = %s min), will split into %s min videos " % (round(video_duration / 60), config.Video.video_split_threshold_in_minutes))
+            print("Large Video (duration = %s min), will split into smaller videos " % round(video_duration / 60))
             top_frames = self.extract_video_keyframes_big_video(no_of_frames, file_path)
         else:
             top_frames = self._extract_keyframes_from_video(no_of_frames, file_path)
@@ -334,6 +336,26 @@ class Video(object):
         """
 
         break_duration_in_sec = config.Video.video_split_threshold_in_minutes * 60
+
+        # get the size of the frame
+        video_info = helper.get_video_info(file_path)
+        frame_size_in_bytes = video_info[0]
+        fps = video_info[1]
+
+        # get the available space
+        free_space_in_bytes = psutil.virtual_memory().available
+
+        # based on config calculate available memory
+        available_memory = config.Video.memory_consumption_threshold * free_space_in_bytes
+
+        # seconds to reach threshold if all frames are collected, but not all are candidate frames
+        # so we can easily multiple this number with a constant
+        no_of_sec_to_reach_threshold = (available_memory / (fps * frame_size_in_bytes)) * config.Video.assumed_no_of_frames_per_candidate_frame
+
+        if break_duration_in_sec > no_of_sec_to_reach_threshold:
+            break_duration_in_sec = math.floor(no_of_sec_to_reach_threshold)
+
+        # print("Split duration for video (in min) is : ", break_duration_in_sec / 60)
 
         video_splits = self._split_with_ffmpeg(file_path,
                                                break_point_duration_in_sec=break_duration_in_sec)
@@ -645,7 +667,7 @@ class Video(object):
         if override_video_codec:
             codecParameter = " -vcodec libx264"
         else:
-            codecParameter = " -vcodec copy -avoid_negative_ts 1 "
+            codecParameter = " -vcodec copy -avoid_negative_ts 1 -max_muxing_queue_size 9999"
 
         # Uses ffmpeg binary for video clipping using ffmpy wrapper
         FFMPEG_BINARY = os.getenv("FFMPEG_BINARY")
