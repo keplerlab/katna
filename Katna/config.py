@@ -83,6 +83,15 @@ class Video:
     DEBUG = False
     min_video_duration = 5.0
 
+    # consume % of memory during video keyframe extraction
+    # 80% of available memory will be consumed
+    memory_consumption_threshold = 0.80
+
+    # assumed numbers of frames within which 1 candidate frames which might be available
+    # seconds to reach threshold if all frames are collected, but not all are candidate frames
+    # currently we assume 1 in 5 frame for that
+    assumed_no_of_frames_per_candidate_frame = 5
+
     # if video duration greater than this number video will be treated as a large video
     video_split_threshold_in_minutes = 20
 

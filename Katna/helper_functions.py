@@ -94,6 +94,46 @@ def _check_if_valid_video(file_path):
         return False
 
 
+@FileDecorators.validate_file_path
+def get_video_info(file_path):
+    """
+    Function to get the video frame size in bytes.
+    :param file_path:
+    :type file_path:
+    :return:
+    :rtype:
+    """
+    try:
+        # Check if file extension of video is in list of
+        # supported/valid videos according to ffmpeg
+        file_extension = os.path.splitext(file_path)[1]
+        if file_extension not in config.Video.video_extensions:
+            return False
+
+        vid = cv2.VideoCapture(file_path)
+        if vid.isOpened():
+            # Making sure we can read at least two frames from video
+            ret, frame = vid.read()
+            ret, frame = vid.read()
+
+            size_in_bytes = frame.size
+
+            fps = vid.get(cv2.CAP_PROP_FPS)
+
+            # Making sure video frame is not empty
+            if frame is not None:
+                return size_in_bytes, fps
+            else:
+                raise Exception(" Could not read frame from Video.")
+        else:
+            raise Exception(" Could not read frame from Video.")
+    except cv2.error as e:
+        #print("cv2.error:", e)
+        raise Exception(" Could not read frame from Video.", e)
+    except Exception as e:
+        raise Exception(" Could not read frame from Video.", e)
+
+
 def _set_ffmpeg_binary_path():
     """Function for getting path to ffmpeg binary on your system to be
     used by ffmpy
