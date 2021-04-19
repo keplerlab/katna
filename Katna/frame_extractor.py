@@ -181,10 +181,14 @@ class FrameExtractor(object):
         if x.ndim != 1:
             raise ValueError("smooth only accepts 1 dimension arrays.")
 
-        if x.size < window_len:
-            raise ValueError("Input vector needs to be bigger than window size.")
+        ic(x.size)
+        ic(window_len)
+        #if x.size < window_len:
+        #    ic("error", x.size)
+        #    ic("window_len", window_len)
+        #    raise ValueError("Input vector needs to be bigger than window size.")
 
-        if window_len < 3:
+        if window_len < window_len:
             return x
 
         if not window in ["flat", "hanning", "hamming", "bartlett", "blackman"]:
