@@ -660,9 +660,9 @@ class Video(object):
         timeParamter = " -t " + "%0.2f" % (t2 - t1)
         hideBannerParameter = " -y -hide_banner -loglevel panic  "
         if override_video_codec:
-            codecParameter = " -vcodec libx264 "
+            codecParameter = " -vcodec libx264 -max_muxing_queue_size 9999"
         else:
-            codecParameter = " -vcodec copy -avoid_negative_ts 1 "
+            codecParameter = " -vcodec copy -avoid_negative_ts 1 -max_muxing_queue_size 9999"
 
         # Uses ffmpeg binary for video clipping using ffmpy wrapper
         FFMPEG_BINARY = os.getenv("FFMPEG_BINARY")
