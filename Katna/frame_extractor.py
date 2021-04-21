@@ -11,16 +11,6 @@ from scipy.signal import argrelextrema
 
 import tempfile
 import Katna.config as config
-from icecream import ic
-# # Class to hold information about each frame
-# class Frame:
-#     """Class for storing frame ref
-#     """
-
-#     def __init__(self, frame, sum_abs_diff):
-#         self.frame = frame
-#         self.sum_abs_diff = sum_abs_diff
-
 
 class FrameExtractor(object):
     """Class for extraction of key frames from video : based on sum of absolute differences in LUV colorspace from given video 
@@ -105,7 +95,6 @@ class FrameExtractor(object):
 
             frame_diffs = []
             frames = []
-            ic("extract_all_frame_before_loop")
             for _ in range(0, self.max_frames_in_chunk):
                 if ret:
                     # Calling process frame function to calculate the frame difference and adding the difference 
@@ -118,7 +107,6 @@ class FrameExtractor(object):
                     cap.release()
                     break
             chunk_no = chunk_no + 1
-            ic("extract_all_frame after_loop", chunk_no)
             yield frames, frame_diffs
         cap.release()
 
@@ -135,7 +123,6 @@ class FrameExtractor(object):
         :type frame_diffs: `list of images`
 
         """
-        ic("__get_frames_in_local_maxima__ start")
         extracted_key_frames = []
         diff_array = np.array(frame_diffs)
         # Normalizing the frame differences based on windows parameters
@@ -146,7 +133,6 @@ class FrameExtractor(object):
 
         for frame_index in frame_indexes:
             extracted_key_frames.append(frames[frame_index - 1])
-        ic("__get_frames_in_local_maxima__ end")
         del frames[:]
         del sm_diff_array
         del diff_array
@@ -181,14 +167,10 @@ class FrameExtractor(object):
         if x.ndim != 1:
             raise ValueError("smooth only accepts 1 dimension arrays.")
 
-        ic(x.size)
-        ic(window_len)
         #if x.size < window_len:
-        #    ic("error", x.size)
-        #    ic("window_len", window_len)
         #    raise ValueError("Input vector needs to be bigger than window size.")
 
-        if window_len < window_len:
+        if x.size < window_len:
             return x
 
         if not window in ["flat", "hanning", "hamming", "bartlett", "blackman"]:
