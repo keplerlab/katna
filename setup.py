@@ -58,6 +58,7 @@ dep_groups = {
         imageio_ffmpeg>=0.2.0
         imutils
         requests
+        psutil
         ffmpy
 """
     )
