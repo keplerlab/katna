@@ -116,13 +116,14 @@ def get_video_info(file_path):
             ret, frame = vid.read()
             ret, frame = vid.read()
 
-            size_in_bytes = frame.size
+            frame_size_in_bytes = frame.size
 
             fps = vid.get(cv2.CAP_PROP_FPS)
+            frame_count = vid.get(cv2.CAP_PROP_FRAME_COUNT)
 
             # Making sure video frame is not empty
             if frame is not None:
-                return size_in_bytes, fps
+                return frame_size_in_bytes, fps, frame_count
             else:
                 raise Exception(" Could not read frame from Video.")
         else:

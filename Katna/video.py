@@ -308,9 +308,8 @@ class Video(object):
         :rtype: list
         """
 
-
         # get the video duration
-        video_duration = self._get_video_duration_with_ffmpeg(file_path)
+        video_duration = self._get_video_duration_with_cv(file_path)
 
         # duration is in seconds
         if video_duration > (config.Video.video_split_threshold_in_minutes * 60):
@@ -553,7 +552,7 @@ class Video(object):
         :rtype: list
         """
         clipped_files = []
-        duration = self._get_video_duration_with_ffmpeg(file_path)
+        duration = self._get_video_duration_with_cv(file_path)
         # setting the start point to zero
         # Setting the breaking point for the clip to be 25 or if video is big
         # then relative to core available in the machine
@@ -674,6 +673,22 @@ class Video(object):
         # Uncomment next line for watching ffmpeg command line being executed
         # print("ff.cmd", ff.cmd)
         ff.run()
+
+    @FileDecorators.validate_file_path
+    def _get_video_duration_with_cv(self, file_path):
+        """
+        Computes video duration by getting frames count and fps info (using opencv)
+        :param file_path:
+        :type file_path:
+        :return:
+        :rtype:
+        """
+        video_info = helper.get_video_info(file_path)
+        video_frame_size = video_info[0]
+        video_fps = video_info[1]
+        video_frames = video_info[2]
+        video_duration = round((video_frames / video_fps), 2)
+        return video_duration
 
     @FileDecorators.validate_file_path
     def _get_video_duration_with_ffmpeg(self, file_path):
