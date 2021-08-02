@@ -478,6 +478,52 @@ class Image(object):
             target_image = cv2.resize(resized_image, (target_width, target_height))
             return target_image
 
+    def resize_from_cvimage(
+            self,
+            cv_image,
+            target_width,
+            target_height,
+            down_sample_factor=config.Image.down_sample_factor
+    ):
+        """smartly resizes a cv image based on the specification - width and height
+
+        :param cv_image: Input cv_image
+        :type cv_image: numpy.ndarray object , required
+        :param target_width: output image width
+        :type target_width: int
+        :param target_height: output image height
+        :type target_height: int
+        :param down_sample_factor: number by which you want to reduce image height & width (use it if image is large or to fasten the process)
+        :type down_sample_factor: int [default=8]
+        :return: resized image
+        :rtype: cv_image
+        """
+        input_image_height, input_image_width, _ = cv_image.shape
+
+        target_image_aspect_ratio = target_width / target_height
+        input_image_aspect_ratio = input_image_width / input_image_height
+
+        if input_image_aspect_ratio == target_image_aspect_ratio:
+            target_image = cv2.resize(cv_image, (target_width, target_height))
+            return target_image
+        else:
+            crop_list = self._generate_crop_options_given_for_given_aspect_ratio(
+                cv_image,
+                input_image_width,
+                input_image_height,
+                target_width,
+                target_height,
+                num_of_crops=1,
+                filters=[],
+                down_sample_factor=down_sample_factor,
+            )
+
+            sorted_list = sorted(crop_list, key=lambda x: float(x.score), reverse=True)
+            
+            resized_image = sorted_list[0].get_image_crop(cv_image)
+            target_image = cv2.resize(resized_image, (target_width, target_height))
+            return target_image
+
     def _generate_crop_options_given_for_given_aspect_ratio(
         self,
         imgFile,
