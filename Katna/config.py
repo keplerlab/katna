@@ -15,7 +15,11 @@ class Image:
     # will be reduced by this multiplier/factor and search for candidate crops
     # is resumed.
     # Decreasing the height and width for crops while checking it don't get small by 1/(min_image_to_crop_factor) of image height/width
-    min_image_to_crop_factor = 4
+    extreme_aspect_ratio = 2
+    default_min_image_height_to_crop_factor = 4 # Used for normal images
+    default_min_image_width_to_crop_factor = 4 # Used for normal images
+    extreme_min_image_height_to_crop_factor = 10 # Used for images with aspect ratio greater than 2
+    extreme_min_image_width_to_crop_factor = 10 # Used for images with aspect ratio greater than 2
     crop_height_reduction_factor_in_each_iteration = 0.05
 
 

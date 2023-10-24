@@ -5,6 +5,7 @@
 """
 import os
 import cv2
+import logging
 import numpy as np
 from Katna.decorators import FileDecorators
 from Katna.feature_list import FeatureList
@@ -63,22 +64,31 @@ class Image(object):
 
         # Calculating the height and width ratio wrt aspect ratio
         hr, wr = image_height / ratio_height, image_width / ratio_width
-
+        original_image_aspect_ratio = image_width / image_height
         # print("hr, wr",hr, wr)
         # Check if height is smaller than the width.If yes, interchange height and width.
         if not is_height_small:
             image_height, image_width = image_width, image_height
             hr, wr = wr, hr
         crop_height, crop_width = image_height, hr * ratio_width
+        
+        if original_image_aspect_ratio > config.Image.extreme_aspect_ratio:
+            crop_width_factor = config.Image.extreme_min_image_width_to_crop_factor
+            crop_height_factor = config.Image.extreme_min_image_height_to_crop_factor
+        else:
+            crop_width_factor = config.Image.min_image_width_to_crop_factor
+            crop_height_factor = config.Image.min_image_height_to_crop_factor
 
         # Decreasing the height and width for crops while checking it don't get small by 1/(min) of image height/width
         while True:
             if not (
-                (crop_height >= (image_height // config.Image.min_image_to_crop_factor))
+                (crop_height >= (image_height // crop_height_factor))
                 and (
-                    crop_width >= (image_width // config.Image.min_image_to_crop_factor)
+                    crop_width >= (image_width // crop_width_factor)
                 )
             ):
+                if len(crop_list_tuple) == 0:
+                    logging.warning(f"Image aspect ratio is considered extreme with aspect ratio {original_image_aspect_ratio} and image size {image_height}x{image_width}. With the desired aspect ratio {ratio_height}:{ratio_width} the crop will be too small. Consider using a different aspect ratio or a different image.")
                 break
 
             crop_height, crop_width = (
