@@ -39,12 +39,24 @@ class Video(object):
     :type object: class:`Object`
     """
 
-    def __init__(self, autoflip_build_path=None, autoflip_model_path=None):
+    def __init__(self, autoflip_build_path=None, autoflip_model_path=None, parallel: bool=True, ordered: bool=False):
+        """
+        :param autoflip_build_path: path to the mediapipe autoflip build
+        :type autoflip_build_path: str
+        :param autoflip_model_path: path to the mediapipe autoflip model
+        :type autoflip_model_path: str
+        :param parallel: if True, then parallel processing will be used for keyframe extraction, defaults to True
+        :type parallel: bool, optional
+        :param ordered: if True, then keyframes will be extracted in order, defaults to False
+        :type ordered: bool, optional
+        """
         # Find out location of ffmpeg binary on system
         helper._set_ffmpeg_binary_path()
         # If the duration of the clipped video is less than **min_video_duration**
         # then, the clip will be added with the previous clipped
         self._min_video_duration = config.Video.min_video_duration
+        self.parallel = parallel
+        self.ordered = ordered
 
         # Calculating optimum number of processes for multiprocessing
         self.n_processes = cpu_count() // 2 - 1
@@ -176,15 +188,20 @@ class Video(object):
 
         # Passing all the clipped videos for  the frame extraction using map function of the
         # multiprocessing pool
-        with self.pool_extractor:
-            extracted_candidate_frames = self.pool_extractor.map(
-                frame_extractor.extract_candidate_frames, chunked_videos
-            )
+        if self.parallel:
+            with self.pool_extractor:
+                extracted_candidate_frames = self.pool_extractor.map(
+                    frame_extractor.extract_candidate_frames, chunked_videos
+                )
+        else:
+            extracted_candidate_frames = []
+            for chunked_video in chunked_videos:
+                extracted_candidate_frames.append(frame_extractor.extract_candidate_frames(chunked_video))
         # Converting the nested list of extracted frames into 1D list
         extracted_candidate_frames = functools.reduce(operator.iconcat, extracted_candidate_frames, [])
 
         self._remove_clips(chunked_videos)
-        image_selector = ImageSelector(self.n_processes)
+        image_selector = ImageSelector(self.n_processes, self.ordered)
 
         top_frames = image_selector.select_best_frames(
             extracted_candidate_frames, no_of_frames

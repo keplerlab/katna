@@ -30,9 +30,10 @@ class ImageSelector(object):
     :type object: class:`Object`
     """
 
-    def __init__(self, n_processes=1):
+    def __init__(self, n_processes=1, ordered=False):
         # Setting number of processes for Multiprocessing Pool Object
         self.n_processes = n_processes
+        self.ordered = ordered
 
         # Setting for optimum Brightness values
         self.min_brightness_value = config.ImageSelector.min_brightness_value
@@ -297,7 +298,8 @@ class ImageSelector(object):
             selected_images_index = self.__get_best_images_index_from_each_cluster__(
                 filtered_key_frames, files_clusters_index_array
             )
-
+            if self.ordered:
+                selected_images_index = sorted(selected_images_index)
             for index in selected_images_index:
                 img = filtered_key_frames[index]
                 filtered_images_list.append(img)
