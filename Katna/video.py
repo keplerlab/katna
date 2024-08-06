@@ -4,7 +4,8 @@
     :synopsis: This module has functions related to key frame extraction
 """
 import os.path
-import os
+import
+import hashlib
 import psutil
 import sys
 import math
@@ -177,11 +178,13 @@ class Video(object):
         # Passing all the clipped videos for  the frame extraction using map function of the
         # multiprocessing pool
         with self.pool_extractor:
-            extracted_candidate_frames = self.pool_extractor.map(
+            extracted_candidate_result = self.pool_extractor.map(
                 frame_extractor.extract_candidate_frames, chunked_videos
             )
-        # Converting the nested list of extracted frames into 1D list
-        extracted_candidate_frames = functools.reduce(operator.iconcat, extracted_candidate_frames, [])
+
+        extracted_candidate_frames, extracted_candidate_frame_indexes = (
+            extracted_candidate_result[0]
+        )
 
         self._remove_clips(chunked_videos)
         image_selector = ImageSelector(self.n_processes)
@@ -190,9 +193,30 @@ class Video(object):
             extracted_candidate_frames, no_of_frames
         )
 
+        top_frames_indexes = self._get_frame_indexes(
+            extracted_candidate_frames, extracted_candidate_frame_indexes, top_frames
+        )
+
         del extracted_candidate_frames
 
-        return top_frames
+        return top_frames, top_frames_indexes
+
+    def _get_frame_indexes(
+        self, extracted_candidate_frames, extracted_candidate_frame_indexes, top_frames
+    ):
+        hash_res = {}
+        for v, index in zip(
+            extracted_candidate_frames, extracted_candidate_frame_indexes
+        ):
+            key = hashlib.sha256(v).hexdigest()
+            hash_res[key] = index
+
+        top_frames_indexes = []
+        for v in top_frames:
+            t = hashlib.sha256(v).hexdigest()
+            top_index = hash_res.get(t)
+            top_frames_indexes.append(top_index)
+        return top_frames_indexes
 
     def _extract_keyframes_for_files_iterator(self, no_of_frames, list_of_filepaths):
         """Extract desirable number of keyframes for files in the list of filepaths.
@@ -272,27 +296,31 @@ class Video(object):
         video_splits = self._split_large_video(file_path)
         print("Video split complete.")
 
-        all_top_frames_split = []
+        extracted_candidate_frames = []
+        extracted_candidate_frame_indexes = []
 
         # call _extract_keyframes_from_video
         for split_video_file_path in video_splits:
             # print("Processing split : ", split_video_file_path)
-            top_frames_split = self._extract_keyframes_from_video(no_of_frames, split_video_file_path)
-            all_top_frames_split.append(top_frames_split)
+            top_frames_split, top_frames_split_index = (
+                self._extract_keyframes_from_video(no_of_frames, split_video_file_path)
+            )
+            extracted_candidate_frames.extend(top_frames_split)
+            extracted_candidate_frame_indexes.extend(top_frames_split_index)
 
         # collect and merge keyframes to get no_of_frames
         self._remove_clips(video_splits)
         image_selector = ImageSelector(self.n_processes)
-
-        # list of list to 1d list
-        extracted_candidate_frames = functools.reduce(operator.iconcat, all_top_frames_split, [])
 
         # top frames
         top_frames = image_selector.select_best_frames(
             extracted_candidate_frames, no_of_frames
         )
 
-        return top_frames
+        top_frames_indexes = self._get_frame_indexes(
+            extracted_candidate_frames, extracted_candidate_frame_indexes, top_frames
+        )
+        return top_frames, top_frames_indexes
 
     @FileDecorators.validate_file_path
     def extract_video_keyframes(self, no_of_frames, file_path, writer):
@@ -313,13 +341,20 @@ class Video(object):
 
         # duration is in seconds
         if video_duration > (config.Video.video_split_threshold_in_minutes * 60):
-            print("Large Video (duration = %s min), will split into smaller videos " % round(video_duration / 60))
-            top_frames = self.extract_video_keyframes_big_video(no_of_frames, file_path)
+            print(
+                f"Large Video (duration = {round(video_duration / 60)} min), will split into smaller videos "
+            )
+            top_frames, top_indexes = self.extract_video_keyframes_big_video(
+                no_of_frames, file_path
+            )
         else:
-            top_frames = self._extract_keyframes_from_video(no_of_frames, file_path)
+            top_frames, top_indexes = self._extract_keyframes_from_video(
+                no_of_frames, file_path
+            )
 
         writer.write(file_path, top_frames)
         print("Completed processing for : ", file_path)
+        return top_frames, top_indexes
 
     def _split_large_video(self, file_path):
         """

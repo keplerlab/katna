@@ -1,7 +1,7 @@
 """
 .. module:: Katna.frame_extractor
     :platform: OS X
-    :synopsis: This module has functions related to key frame extraction 
+    :synopsis: This module has functions related to key frame extraction
 """
 
 import cv2
@@ -13,7 +13,7 @@ import tempfile
 import Katna.config as config
 
 class FrameExtractor(object):
-    """Class for extraction of key frames from video : based on sum of absolute differences in LUV colorspace from given video 
+    """Class for extraction of key frames from video : based on sum of absolute differences in LUV colorspace from given video
     """
 
     def __init__(self):
@@ -64,31 +64,31 @@ class FrameExtractor(object):
         curr_frame = luv
         # Calculating the frame difference for previous and current frame
         frame_diff = self.__calculate_frame_difference(curr_frame, prev_frame)
-        
+
         if frame_diff is not None:
             #count, frame = frame_diff
             frame_diffs.append(frame_diff)
             frames.append(frame)
         del prev_frame
         prev_frame = curr_frame
-        
+
         return prev_frame, curr_frame
 
     def __extract_all_frames_from_video__(self, videopath):
-        """Generator function for extracting frames from a input video which are sufficiently different from each other, 
+        """Generator function for extracting frames from a input video which are sufficiently different from each other,
         and return result back as list of opencv images in memory
 
         :param videopath: inputvideo path
         :type videopath: `str`
         :return: Generator with extracted frames in max_process_frames chunks and difference between frames
-        :rtype: generator object with content of type [numpy.ndarray, numpy.ndarray] 
+        :rtype: generator object with content of type [numpy.ndarray, numpy.ndarray]
         """
         cap = cv2.VideoCapture(str(videopath))
 
         ret, frame = cap.read()
         i = 1
         chunk_no = 0
-        
+
         while ret:
             curr_frame = None
             prev_frame = None
@@ -97,7 +97,7 @@ class FrameExtractor(object):
             frames = []
             for _ in range(0, self.max_frames_in_chunk):
                 if ret:
-                    # Calling process frame function to calculate the frame difference and adding the difference 
+                    # Calling process frame function to calculate the frame difference and adding the difference
                     # in **frame_diffs** list and frame to **frames** list
                     prev_frame, curr_frame = self.__process_frame(frame, prev_frame, frame_diffs, frames)
                     i = i + 1
@@ -111,15 +111,15 @@ class FrameExtractor(object):
         cap.release()
 
     def __get_frames_in_local_maxima__(self, frames, frame_diffs):
-        """ Internal function for getting local maxima of key frames 
-        This functions Returns one single image with strongest change from its vicinity of frames 
-        ( vicinity defined using window length ) 
+        """ Internal function for getting local maxima of key frames
+        This functions Returns one single image with strongest change from its vicinity of frames
+        ( vicinity defined using window length )
 
         :param object: base class inheritance
         :type object: class:`Object`
         :param frames: list of frames to do local maxima on
         :type frames: `list of images`
-        :param frame_diffs: list of frame difference values 
+        :param frame_diffs: list of frame difference values
         :type frame_diffs: `list of images`
 
         """
@@ -137,7 +137,7 @@ class FrameExtractor(object):
         del sm_diff_array
         del diff_array
         del frame_diffs[:]
-        return extracted_key_frames
+        return extracted_key_frames, frame_indexes
 
     def __smooth__(self, x, window_len, window=config.FrameExtractor.window_type):
         """smooth the data using a window with requested size.
@@ -153,7 +153,7 @@ class FrameExtractor(object):
         see also:
         numpy.hanning, numpy.hamming, numpy.bartlett, numpy.blackman, numpy.convolve
         scipy.signal.lfilter
-        
+
         :param x: the frame difference list
         :type x: numpy.ndarray
         :param window_len: the dimension of the smoothing window
@@ -163,7 +163,7 @@ class FrameExtractor(object):
         :return: the smoothed signal
         :rtype: ndarray
         """
-        # This function takes 
+        # This function takes
         if x.ndim != 1:
             raise ValueError("smooth only accepts 1 dimension arrays.")
 
@@ -189,7 +189,7 @@ class FrameExtractor(object):
 
     def extract_candidate_frames(self, videopath):
         """ Pubic function for this module , Given and input video path
-        This functions Returns one list of all candidate key-frames  
+        This functions Returns one list of all candidate key-frames
 
         :param object: base class inheritance
         :type object: class:`Object`
@@ -207,7 +207,7 @@ class FrameExtractor(object):
         )
 
         # Loop over every frame in the frame extractor generator object and calculate the
-        # local maxima of frames 
+        # local maxima of frames
         for frames, frame_diffs in frame_extractor_from_video_generator:
             extracted_candidate_key_frames_chunk = []
             if self.USE_LOCAL_MAXIMA:
