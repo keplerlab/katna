@@ -54,6 +54,8 @@ class ImageSelector(object):
         :return: result of Brightness measurment 
         :rtype: float value between 0.0 to 100.0    
         """
+        if len(image.shape) == 2:  # If image is grayscale
+            image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         _, _, v = cv2.split(hsv)
         sum = np.sum(v, dtype=np.float32)
@@ -229,9 +231,14 @@ class ImageSelector(object):
             n_images = np.arange(len(curr_row))
             variance_laplacians = self.__get_laplacian_scores(files, n_images)
 
-            # Selecting image with low burr(high laplacian) score
-            selected_frame_of_current_cluster = curr_row[np.argmax(variance_laplacians)]
-            filtered_items.append(selected_frame_of_current_cluster)
+            if len(variance_laplacians) > 0:
+                # Selecting image with low burr(high laplacian) score
+                selected_frame_of_current_cluster = curr_row[np.argmax(variance_laplacians)]
+                filtered_items.append(selected_frame_of_current_cluster)
+            
+            else:
+                # temporary catch for situation where there are no variance laplacians
+                print("NO VARIANCE LAPLACIANS, downstream issue, ignore for now")
 
         return filtered_items
 
@@ -246,6 +253,73 @@ class ImageSelector(object):
     #     """Function to update the state of initialized class object woth the pool object
     #     """
     #     self.__dict__.update(state)
+
+    def select_best_frames_with_time(self, input_key_frames, number_of_frames, input_timestamps):
+        """[summary] Public function for Image selector class: takes list of key-frames images and number of required
+        frames as input, returns list of filtered keyframes
+
+        :param object: base class inheritance
+        :type object: class:`Object`
+        :param input_key_frames: list of input keyframes in list of opencv image format 
+        :type input_key_frames: python list opencv images
+        :param number_of_frames: Required number of images 
+        :type: int   
+        :param input_timestamps: list of timestamps for each keyframe
+        :type: python list of timestamps
+        :return: Returns list of filtered image files 
+        :rtype: python list of images
+        """
+
+        self.nb_clusters = number_of_frames
+
+        filtered_key_frames = []
+        filtered_images_list = []   
+        filtered_timestamps = []
+        # Repeat until number of frames 
+        min_brightness_values = np.arange(config.ImageSelector.min_brightness_value, -0.01, -self.brightness_step)
+        max_brightness_values = np.arange(config.ImageSelector.max_brightness_value, 100.01, self.brightness_step)
+        min_entropy_values = np.arange(config.ImageSelector.min_entropy_value, -0.01, -self.entropy_step)
+        max_entropy_values = np.arange(config.ImageSelector.max_entropy_value, 10.01, self.entropy_step)
+        
+        for (min_brightness_value, max_brightness_value, min_entropy_value, max_entropy_value) in itertools.zip_longest(min_brightness_values, max_brightness_values, min_entropy_values, max_entropy_values): 
+            if min_brightness_value is None:
+                min_brightness_value = 0.0
+            if max_brightness_value is None:
+                max_brightness_value = 100.0
+            if min_entropy_value is None:
+                min_entropy_value = 0.0
+            if max_entropy_value is None:
+                max_entropy_value = 10.0
+            self.min_brightness_value = min_brightness_value
+            self.max_brightness_value = max_brightness_value
+            self.min_entropy_value = min_entropy_value
+            self.max_entropy_value = max_entropy_value
+            filtered_key_frames = self.__filter_optimum_brightness_and_contrast_images__(
+                input_key_frames, 
+            )
+            if len(filtered_key_frames) >= number_of_frames:
+                break
+
+        # Selecting the best images from each cluster by first preparing the clusters on basis of histograms 
+        # and then selecting the best images from every cluster
+        if len(filtered_key_frames) >= self.nb_clusters:
+            files_clusters_index_array = self.__prepare_cluster_sets__(filtered_key_frames)
+            selected_images_index = self.__get_best_images_index_from_each_cluster__(
+                filtered_key_frames, files_clusters_index_array
+            )
+
+            for index in selected_images_index:
+                img = filtered_key_frames[index]
+                filtered_images_list.append(img)
+                filtered_timestamps.append(input_timestamps[index])
+        else:
+            # if number of required files are less than requested key-frames return all the files
+            for i, img in enumerate(filtered_key_frames):
+                filtered_images_list.append(img)
+                filtered_timestamps.append(input_timestamps[i])
+        return filtered_images_list, filtered_timestamps
+
+
 
     def select_best_frames(self, input_key_frames, number_of_frames):
         """[summary] Public function for Image selector class: takes list of key-frames images and number of required

@@ -73,6 +73,7 @@ class KeyFrameDiskWriter(Writer):
         self.output_dir_path = location
         self.file_ext = file_ext
         self._create_dir(location)
+        self.filepaths = []
 
     def generate_output_filename(self, filepath, keyframe_number):
         """Generates the filename of output data file.
@@ -125,7 +126,7 @@ class KeyFrameDiskWriter(Writer):
         for counter, img in enumerate(data):
             output_filename = self.generate_output_filename(filepath, keyframe_number=counter)
             self.save_frame_data_to_disk(img, file_name=output_filename)
-
+            self.filepaths.append(output_filename)
 
 class  ImageCropDiskWriter(Writer):
     """DiskWriter for Image Crop

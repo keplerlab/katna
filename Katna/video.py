@@ -31,7 +31,6 @@ from multiprocessing import Pool, Process, cpu_count
 import functools
 import operator
 
-
 class Video(object):
     """Class for all video frames operations
 
@@ -158,29 +157,26 @@ class Video(object):
     def _extract_keyframes_from_video(self, no_of_frames, file_path):
         """Core method to extract keyframe for a video
 
-        :param no_of_frames: [description]
-        :type no_of_frames: [type]
-        :param file_path: [description]
-        :type file_path: [type]
+        :param no_of_frames: number of keyframes to extract
+        :type no_of_frames: int
+        :param file_path: path to video file
+        :type file_path: str
+        :return: list of keyframes
+        :rtype: list
         """
-        # Creating the multiprocessing pool
         self.pool_extractor = Pool(processes=self.n_processes)
-        # Split the input video into chunks. Each split(video) will be stored
-        # in a temp
+        
         if not helper._check_if_valid_video(file_path):
             raise Exception("Invalid or corrupted video: " + file_path)
 
-        # split videos in chunks in smaller chunks for parallel processing.
         chunked_videos = self._split(file_path)
         frame_extractor = FrameExtractor()
 
-        # Passing all the clipped videos for  the frame extraction using map function of the
-        # multiprocessing pool
+        extracted_candidate_frames = []
         with self.pool_extractor:
-            extracted_candidate_frames = self.pool_extractor.map(
-                frame_extractor.extract_candidate_frames, chunked_videos
-            )
-        # Converting the nested list of extracted frames into 1D list
+            results = self.pool_extractor.map(frame_extractor.extract_candidate_frames, chunked_videos)
+            extracted_candidate_frames.extend(results)
+
         extracted_candidate_frames = functools.reduce(operator.iconcat, extracted_candidate_frames, [])
 
         self._remove_clips(chunked_videos)
@@ -191,8 +187,52 @@ class Video(object):
         )
 
         del extracted_candidate_frames
-
         return top_frames
+
+    def _extract_keyframes_from_video_with_time(self, no_of_frames, file_path, chunk_timing):
+        """Core method to extract keyframe for a video with timestamps
+
+        :param no_of_frames: number of keyframes to extract
+        :type no_of_frames: int
+        :param file_path: path to video file
+        :type file_path: str
+        :param chunk_timing: tuple of (start_time, clip_start, clip_end)
+        :type chunk_timing: tuple(float, float, float)
+        :return: tuple of (list of keyframes, list of timestamps)
+        :rtype: tuple(list, list)
+        """
+        self.pool_extractor = Pool(processes=self.n_processes)
+        
+        if not helper._check_if_valid_video(file_path):
+            raise Exception("Invalid or corrupted video: " + file_path)
+
+        chunked_videos, chunk_info = self._split_with_time(file_path, chunk_timing)
+        video_chunks_with_info = list(zip(chunked_videos, chunk_info))
+
+        frame_extractor = FrameExtractor()
+
+        extracted_candidate_frames = []
+        extracted_timestamps = []
+
+        with self.pool_extractor:
+            results = self.pool_extractor.map(frame_extractor.extract_candidate_frames_with_time, video_chunks_with_info)
+            extracted_candidate_frames.extend([result[0] for result in results])
+            extracted_timestamps.extend([result[1] for result in results])
+
+        extracted_candidate_frames = functools.reduce(operator.iconcat, extracted_candidate_frames, [])
+        extracted_timestamps = functools.reduce(operator.iconcat, extracted_timestamps, [])
+
+        self._remove_clips(chunked_videos)
+        image_selector = ImageSelector(self.n_processes)
+
+        top_frames, top_timestamps = image_selector.select_best_frames_with_time(
+            extracted_candidate_frames, no_of_frames, extracted_timestamps
+        )
+
+        del extracted_candidate_frames
+        del extracted_timestamps
+
+        return top_frames, top_timestamps
 
     def _extract_keyframes_for_files_iterator(self, no_of_frames, list_of_filepaths):
         """Extract desirable number of keyframes for files in the list of filepaths.
@@ -257,17 +297,70 @@ class Video(object):
         else:
             print("All the files in directory %s are invalid video files" % dir_path)
 
+    def extract_video_keyframes(self, no_of_frames, file_path, writer):
+        """Returns a list of best key images/frames from a single video.
+
+        :param no_of_frames: Number of key frames to be extracted
+        :type no_of_frames: int, required
+        :param file_path: video file location
+        :type file_path: str, required
+        :param writer: Writer object to process keyframe data
+        :type writer: Writer, required
+        :return: List of numpy.2darray Image objects
+        :rtype: list
+        """
+        # get the video duration
+        video_duration = self._get_video_duration_with_cv(file_path)
+
+        # duration is in seconds
+        if video_duration > (config.Video.video_split_threshold_in_minutes * 60):
+            print("Large Video (duration = %s min), will split into smaller videos " % round(video_duration / 60))
+            top_frames = self.extract_video_keyframes_big_video(no_of_frames, file_path)
+        else:
+            top_frames = self._extract_keyframes_from_video(no_of_frames, file_path)
+
+        writer.write(file_path, top_frames)
+        print("Completed processing for : ", file_path)
+        
+        return top_frames
+
+    def extract_video_keyframes_with_time(self, no_of_frames, file_path, writer):
+        """Returns a list of best key images/frames from a single video with their timestamps.
+
+        :param no_of_frames: Number of key frames to be extracted
+        :type no_of_frames: int, required
+        :param file_path: video file location
+        :type file_path: str, required
+        :param writer: Writer object to process keyframe data
+        :type writer: Writer, required
+        :return: Tuple of (List of numpy.2darray Image objects, List of timestamps)
+        :rtype: tuple(list, list)
+        """
+        # get the video duration
+        video_duration = self._get_video_duration_with_cv(file_path)
+
+        # duration is in seconds
+        if video_duration > (config.Video.video_split_threshold_in_minutes * 60):
+            print("Large Video (duration = %s min), will split into smaller videos " % round(video_duration / 60))
+            top_frames, top_timestamps = self.extract_video_keyframes_big_video_with_time(no_of_frames, file_path)
+        else:
+            top_frames, top_timestamps = self._extract_keyframes_from_video_with_time(no_of_frames, file_path)
+
+        writer.write(file_path, top_frames)
+        print("Completed processing for : ", file_path)
+        
+        return top_frames, top_timestamps
+
     def extract_video_keyframes_big_video(self, no_of_frames, file_path):
-        """
+        """Extract keyframes from a large video by splitting it into chunks
 
-        :param no_of_frames:
-        :type no_of_frames:
-        :param file_path:
-        :type file_path:
-        :return:
-        :rtype:
+        :param no_of_frames: number of frames to extract
+        :type no_of_frames: int
+        :param file_path: path to video file
+        :type file_path: str
+        :return: list of keyframes
+        :rtype: list
         """
-
         # split the videos with break point at 20 min
         video_splits = self._split_large_video(file_path)
         print("Video split complete.")
@@ -276,7 +369,7 @@ class Video(object):
 
         # call _extract_keyframes_from_video
         for split_video_file_path in video_splits:
-            # print("Processing split : ", split_video_file_path)
+            print("Processing split video: ", split_video_file_path)
             top_frames_split = self._extract_keyframes_from_video(no_of_frames, split_video_file_path)
             all_top_frames_split.append(top_frames_split)
 
@@ -293,6 +386,46 @@ class Video(object):
         )
 
         return top_frames
+    
+    def extract_video_keyframes_big_video_with_time(self, no_of_frames, file_path):
+        """Extract keyframes from a large video by splitting it into chunks, with timestamps
+
+        :param no_of_frames: number of frames to extract
+        :type no_of_frames: int
+        :param file_path: path to video file
+        :type file_path: str
+        :return: tuple of (list of keyframes, list of timestamps)
+        :rtype: tuple(list, list)
+        """
+        # split the videos with break point at 20 min
+        video_splits, chunk_info = self._split_large_video_with_time(file_path)
+        print("Video split complete.")
+
+        all_top_frames_split = []
+        all_timestamps_split = []
+
+        # call _extract_keyframes_from_video_with_time
+        for split_video_file_path, chunk_timing in zip(video_splits, chunk_info):
+            top_frames_split, timestamps_split = self._extract_keyframes_from_video_with_time(
+                no_of_frames, split_video_file_path, chunk_timing
+            )
+            all_top_frames_split.append(top_frames_split)
+            all_timestamps_split.append(timestamps_split)
+
+        # collect and merge keyframes to get no_of_frames
+        self._remove_clips(video_splits)
+        image_selector = ImageSelector(self.n_processes)
+
+        # list of list to 1d list
+        extracted_candidate_frames = functools.reduce(operator.iconcat, all_top_frames_split, [])
+        extracted_timestamps = functools.reduce(operator.iconcat, all_timestamps_split, [])
+
+        # top frames
+        top_frames, top_timestamps = image_selector.select_best_frames_with_time(
+            extracted_candidate_frames, no_of_frames, extracted_timestamps
+        )
+
+        return top_frames, top_timestamps
 
     @FileDecorators.validate_file_path
     def extract_video_keyframes(self, no_of_frames, file_path, writer):
@@ -320,71 +453,11 @@ class Video(object):
 
         writer.write(file_path, top_frames)
         print("Completed processing for : ", file_path)
-
-    def _split_large_video(self, file_path):
-        """
-        Splits large video file into smaller videos (based on conf) so they don't take up memory
-        :param file_path: path of video file
-        :type file_path: str, required
-        :return: List of path of splitted video clips
-        :rtype: list
-        """
-
-        break_duration_in_sec = config.Video.video_split_threshold_in_minutes * 60
-
-        # get the size of the frame
-        video_info = helper.get_video_info(file_path)
-        frame_size_in_bytes = video_info[0]
-        fps = video_info[1]
-
-        # get the available space
-        free_space_in_bytes = psutil.virtual_memory().available
-
-        # based on config calculate available memory
-        available_memory = config.Video.memory_consumption_threshold * free_space_in_bytes
-
-        # seconds to reach threshold if all frames are collected, but not all are candidate frames
-        # so we can easily multiple this number with a constant
-        no_of_sec_to_reach_threshold = (available_memory / (fps * frame_size_in_bytes)) * config.Video.assumed_no_of_frames_per_candidate_frame
-
-        if break_duration_in_sec > no_of_sec_to_reach_threshold:
-            break_duration_in_sec = math.floor(no_of_sec_to_reach_threshold)
-
-        # print("Split duration for video (in min) is : ", break_duration_in_sec / 60)
-
-        video_splits = self._split_with_ffmpeg(file_path,
-                                               break_point_duration_in_sec=break_duration_in_sec)
-
-        corruption_in_chunked_videos = False
-        for chunked_video in video_splits:
-            if not helper._check_if_valid_video(chunked_video):
-                corruption_in_chunked_videos = True
-
-        if corruption_in_chunked_videos:
-            video_splits = self._split_with_ffmpeg(file_path,
-                                                   override_video_codec=True,
-                                                   break_point_duration_in_sec=break_duration_in_sec)
-            for chunked_video in video_splits:
-                if not helper._check_if_valid_video(chunked_video):
-                    raise Exception(
-                        "Error in splitting videos in multiple chunks, corrupted video chunk: "
-                        + chunked_video
-                    )
-
-        return video_splits
+        
+        # returning top frames for processing by caller
+        return top_frames
 
     def _split(self, file_path):
-        """Split videos using ffmpeg library first by copying audio and
-        video codecs from input files, it leads to faster splitting, But if
-        resulting splitted videos are unreadable try again splitting by using
-        ffmpeg default codecs. If splitteed videos are still unreadable throw an
-        exception.
-
-        :param file_path: path of video file
-        :type file_path: str, required
-        :return: List of path of splitted video clips
-        :rtype: list
-        """
         chunked_videos = self._split_with_ffmpeg(file_path)
         corruption_in_chunked_videos = False
         for chunked_video in chunked_videos:
@@ -402,143 +475,71 @@ class Video(object):
 
         return chunked_videos
 
-    @FileDecorators.validate_file_path
-    def compress_video(
-        self,
-        file_path,
-        force_overwrite=False,
-        crf_parameter=config.Video.video_compression_crf_parameter,
-        output_video_codec=config.Video.video_compression_codec,
-        out_dir_path="",
-        out_file_name="",
-    ):
-        """Function to compress given input file
+    def _split_with_time(self, file_path, chunk_timing):
+        chunked_videos, chunk_info = self._split_with_ffmpeg_with_time(file_path, chunk_timing)
+        corruption_in_chunked_videos = False
+        for chunked_video in chunked_videos:
+            if not helper._check_if_valid_video(chunked_video):
+                corruption_in_chunked_videos = True
 
-        :param file_path: Input file path
-        :type file_path: str
-        :param force_overwrite: optional parameter if True then if there is \
-        already a file in output file location function will overwrite it, defaults to False
-        :type force_overwrite: bool, optional
-        :param crf_parameter: Constant Rate Factor Parameter for controlling \
-        amount of video compression to be applied, The range of the quantizer scale is 0-51:\
-        where 0 is lossless, 23 is default, and 51 is worst possible.\
-        It is recommend to keep this value between 20 to 30 \
-        A lower value is a higher quality, you can change default value by changing \
-        config.Video.video_compression_crf_parameter
-        :type crf_parameter: int, optional
-        :param output_video_codec: Type of video codec to choose, \
-        Currently supported options are libx264 and libx265, libx264 is default option.\
-        libx264 is more widely supported on different operating systems and platforms, \
-        libx265 uses more advanced x265 codec and results in better compression and even less \
-        output video sizes with same or better quality. Right now libx265 is not as widely compatible \
-        on older versions of MacOS and Widows by default. If wider video compatibility is your goal \
-        you should use libx264., you can change default value by changing \
-        Katna.config.Video.video_compression_codec
-        :type output_video_codec: str, optional
-        :param out_dir_path: output folder path where you want output video to be saved, defaults to ""
-        :type out_dir_path: str, optional
-        :param out_file_name: output filename, if not mentioned it will be same as input filename, defaults to ""
-        :type out_file_name: str, optional
-        :raises Exception: raises FileNotFoundError Exception if input video file not found, also exception is raised in case output video file path already exist and force_overwrite is not set to True.
-        :return: Status code Returns True if video compression was successfull else False
-        :rtype: bool
-        """
-        # TODO add docstring for exeception
-        # Add details where libx265 will make sense
+        if corruption_in_chunked_videos:
+            chunked_videos, _ = self._split_with_ffmpeg_with_time(file_path, override_video_codec=True, chunk_timing=chunk_timing)
+            for chunked_video in chunked_videos:
+                if not helper._check_if_valid_video(chunked_video):
+                    raise Exception(
+                        "Error in splitting videos in multiple chunks, corrupted video chunk: "
+                        + chunked_video
+                    )
 
-        if not helper._check_if_valid_video(file_path):
-            raise Exception("Invalid or corrupted video: " + file_path)
-        # Intialize video compression class
-        video_compressor = VideoCompressor()
-        # Run video compression
-        status = video_compressor.compress_video(
-            file_path,
-            force_overwrite,
-            crf_parameter,
-            output_video_codec,
-            out_dir_path,
-            out_file_name,
+        return chunked_videos, chunk_info
+
+    def _split_large_video(self, file_path):
+        break_duration_in_sec = self._calculate_break_duration(file_path)
+        video_splits = self._split_with_ffmpeg(file_path, break_point_duration_in_sec=break_duration_in_sec)
+        corruption_in_chunked_videos = False
+        for chunked_video in video_splits:
+            if not helper._check_if_valid_video(chunked_video):
+                corruption_in_chunked_videos = True
+
+        if corruption_in_chunked_videos:
+            video_splits = self._split_with_ffmpeg(file_path, override_video_codec=True, break_point_duration_in_sec=break_duration_in_sec)
+            for chunked_video in video_splits:
+                if not helper._check_if_valid_video(chunked_video):
+                    raise Exception(
+                        "Error in splitting videos in multiple chunks, corrupted video chunk: "
+                        + chunked_video
+                    )
+
+        return video_splits
+
+    def _split_large_video_with_time(self, file_path):
+        break_duration_in_sec = self._calculate_break_duration(file_path)
+        video_splits, chunk_info = self._split_with_ffmpeg_with_time(
+            file_path, 
+            break_point_duration_in_sec=break_duration_in_sec, 
+            chunk_timing=("", 0, 0)
         )
-        return status
+        corruption_in_chunked_videos = False
+        for chunked_video in video_splits:
+            if not helper._check_if_valid_video(chunked_video):
+                corruption_in_chunked_videos = True
 
-    @FileDecorators.validate_dir_path
-    def compress_videos_from_dir(
-        self,
-        dir_path,
-        force_overwrite=False,
-        crf_parameter=config.Video.video_compression_crf_parameter,
-        output_video_codec=config.Video.video_compression_codec,
-        out_dir_path="",
-        out_file_name="",
-    ):
-        """Function to compress input video files in a folder
-
-        :param dir_path: Input folder path
-        :type dir_path: str
-        :param force_overwrite: optional parameter if True then if there is \
-        already a file in output file location function will overwrite it, defaults to False
-        :type force_overwrite: bool, optional
-        :param crf_parameter: Constant Rate Factor Parameter for controlling \
-        amount of video compression to be applied, The range of the quantizer scale is 0-51:\
-        where 0 is lossless, 23 is default, and 51 is worst possible.\
-        It is recommend to keep this value between 20 to 30 \
-        A lower value is a higher quality, you can change default value by changing \
-        config.Video.video_compression_crf_parameter
-        :type crf_parameter: int, optional
-        :param output_video_codec: Type of video codec to choose, \
-        Currently supported options are libx264 and libx265, libx264 is default option.\
-        libx264 is more widely supported on different operating systems and platforms, \
-        libx265 uses more advanced x265 codec and results in better compression and even less \
-        output video sizes with same or better quality. Right now libx265 is not as widely compatible \
-        on older versions of MacOS and Widows by default. If wider video compatibility is your goal \
-        you should use libx264., you can change default value by changing Katna.config.Video.video_compression_codec
-        :type output_video_codec: str, optional
-        :param out_dir_path: output folder path where you want output video to be saved, defaults to ""
-        :type out_dir_path: str, optional
-        :raises Exception: raises FileNotFoundError Exception if input video file not found, also exception is raised in case output video file path already exist and force_overwrite is not set to True.
-        :return: Status code Returns True if video compression was successfull else False
-        :rtype: bool
-        """
-        status = True
-        list_of_videos_to_process = []
-        # Collect all the valid video files inside folder
-        for path, _, files in os.walk(dir_path):
-            for filename in files:
-                video_file_path = os.path.join(path, filename)
-                if helper._check_if_valid_video(video_file_path):
-                    list_of_videos_to_process.append(video_file_path)
-
-        # Need to run in two sepearte loops to prevent recursion
-        for video_file_path in list_of_videos_to_process:
-            statusI = self.compress_video(
-                video_file_path,
-                force_overwrite=force_overwrite,
-                crf_parameter=crf_parameter,
-                output_video_codec=output_video_codec,
-                out_dir_path=out_dir_path,
+        if corruption_in_chunked_videos:
+            video_splits, chunk_info = self._split_with_ffmpeg_with_time(
+                file_path, 
+                override_video_codec=True, 
+                break_point_duration_in_sec=break_duration_in_sec,
+                chunk_timing=("", 0, 0)
             )
-            status = bool(status and statusI)
-        return status
+            for chunked_video in video_splits:
+                if not helper._check_if_valid_video(chunked_video):
+                    raise Exception(
+                        "Error in splitting videos in multiple chunks, corrupted video chunk: "
+                        + chunked_video
+                    )
 
-    @FileDecorators.validate_file_path
-    def save_frame_to_disk(self, frame, file_path, file_name, file_ext):
-        """saves an in-memory numpy image array on drive.
+        return video_splits, chunk_info
 
-        :param frame: In-memory image. This would have been generated by extract_video_keyframes method
-        :type frame: numpy.ndarray, required
-        :param file_name: name of the image.
-        :type file_name: str, required
-        :param file_path: Folder location where files needs to be saved
-        :type file_path: str, required
-        :param file_ext: File extension indicating the file type for example - '.jpg'
-        :type file_ext: str, required
-        :return: None
-        """
-
-        file_full_path = os.path.join(file_path, file_name + file_ext)
-        cv2.imwrite(file_full_path, frame)
-
-    @FileDecorators.validate_file_path
     def _split_with_ffmpeg(self, file_path, override_video_codec=False, break_point_duration_in_sec=None):
         """Function to split the videos and persist the chunks
 
@@ -548,23 +549,13 @@ class Video(object):
         :type override_video_codec: bool, optional
         :param break_point_duration_in_sec: duration in sec for break point
         :type break_point_duration_in_sec: int, optional
-        :return: List of path of splitted video clips
+        :return: List of video clip paths
         :rtype: list
         """
         clipped_files = []
         duration = self._get_video_duration_with_cv(file_path)
-        # setting the start point to zero
-        # Setting the breaking point for the clip to be 25 or if video is big
-        # then relative to core available in the machine
-        # If video size is large it makes sense to split videos into chunks
-        # proportional to number of cpu cores. So each cpu core will get on
-        # video to process.
-        # if video duration is divided by cpu_count() then result should be
-        # 15 sec is thumb rule for threshold value it could be set to 25 or
-        # any other value. Logic ensures for large enough videos we don't end
-        # up dividing video in too many clips.
-        # TODO: Try max 5 minutes video
-
+        
+        # Calculate break points
         if break_point_duration_in_sec is None:
             clip_start, break_point = (
                 0,
@@ -578,7 +569,6 @@ class Video(object):
 
         # Loop over the video duration to get the clip stating point and end point to split the video
         while clip_start < duration:
-
             clip_end = clip_start + break_point
 
             # Setting the end position of the particular clip equals to the end time of original clip,
@@ -587,12 +577,56 @@ class Video(object):
             if clip_end > duration or (clip_end + self._min_video_duration) > duration:
                 clip_end = duration
 
-            clipped_files.append(
-                self._write_videofile(file_path, clip_start, clip_end, override_video_codec)
+            filepath = self._write_videofile(file_path, clip_start, clip_end, override_video_codec)
+            clipped_files.append(filepath)
+            clip_start = clip_end
+
+        return clipped_files
+
+    def _split_with_ffmpeg_with_time(self, file_path, chunk_timing, override_video_codec=False, break_point_duration_in_sec=None):
+        """Function to split the videos and persist the chunks, returning timing information
+
+        :param file_path: path of video file
+        :type file_path: str, required
+        :param override_video_codec: If true overrides input video codec to ffmpeg default codec else copy input video codec, defaults to False
+        :type override_video_codec: bool, optional
+        :param break_point_duration_in_sec: duration in sec for break point
+        :type break_point_duration_in_sec: int, optional
+        :return: Tuple of (list of video paths, list of chunk timing info)
+        :rtype: tuple(list, list)
+        """
+        clipped_files = []
+        chunk_info = []  # List to store (filepath, start_time, end_time) tuples
+        duration = self._get_video_duration_with_cv(file_path)
+        
+        # Calculate break points
+        if break_point_duration_in_sec is None:
+            clip_start, break_point = (
+                0,
+                duration // cpu_count() if duration // cpu_count() > 15 else 25,
+            )
+        else:
+            clip_start, break_point = (
+                0,
+                break_point_duration_in_sec,
             )
 
+        # Loop over the video duration to get the clip stating point and end point to split the video
+        while clip_start < duration:
+            clip_end = clip_start + break_point
+
+            # Setting the end position of the particular clip equals to the end time of original clip,
+            # if end position or end position added with the **min_video_duration** is greater than
+            # the end time of original video
+            if clip_end > duration or (clip_end + self._min_video_duration) > duration:
+                clip_end = duration
+
+            filepath = self._write_videofile(file_path, clip_start, clip_end, override_video_codec)
+            clipped_files.append(filepath)
+            chunk_info.append((filepath, chunk_timing[1] + clip_start, chunk_timing[1] + clip_end))  # Store filepath with start and end times
             clip_start = clip_end
-        return clipped_files
+
+        return clipped_files, chunk_info
 
     def _write_videofile(self, video_file_path, start, end, override_video_codec=False):
         """Function to clip the video for given start and end points and save the video
@@ -745,3 +779,163 @@ class Video(object):
                 f"Here are the file infos returned by ffmpeg:\n\n{infos}"
             )
         return video_duration
+
+    def _calculate_break_duration(self, file_path):
+        """Calculate appropriate break duration for video splitting
+        
+        :param file_path: path of video file
+        :type file_path: str, required
+        :return: Break duration in seconds
+        :rtype: float
+        """
+        break_duration_in_sec = config.Video.video_split_threshold_in_minutes * 60
+
+        video_info = helper.get_video_info(file_path)
+        frame_size_in_bytes = video_info[0]
+        fps = video_info[1]
+
+        free_space_in_bytes = psutil.virtual_memory().available
+        available_memory = config.Video.memory_consumption_threshold * free_space_in_bytes
+
+        no_of_sec_to_reach_threshold = (available_memory / (fps * frame_size_in_bytes)) * config.Video.assumed_no_of_frames_per_candidate_frame
+
+        if break_duration_in_sec > no_of_sec_to_reach_threshold:
+            break_duration_in_sec = math.floor(no_of_sec_to_reach_threshold)
+
+        return break_duration_in_sec
+
+    @FileDecorators.validate_file_path
+    def compress_video(
+        self,
+        file_path,
+        force_overwrite=False,
+        crf_parameter=config.Video.video_compression_crf_parameter,
+        output_video_codec=config.Video.video_compression_codec,
+        out_dir_path="",
+        out_file_name="",
+    ):
+        """Function to compress given input file
+
+        :param file_path: Input file path
+        :type file_path: str
+        :param force_overwrite: optional parameter if True then if there is \
+        already a file in output file location function will overwrite it, defaults to False
+        :type force_overwrite: bool, optional
+        :param crf_parameter: Constant Rate Factor Parameter for controlling \
+        amount of video compression to be applied, The range of the quantizer scale is 0-51:\
+        where 0 is lossless, 23 is default, and 51 is worst possible.\
+        It is recommend to keep this value between 20 to 30 \
+        A lower value is a higher quality, you can change default value by changing \
+        config.Video.video_compression_crf_parameter
+        :type crf_parameter: int, optional
+        :param output_video_codec: Type of video codec to choose, \
+        Currently supported options are libx264 and libx265, libx264 is default option.\
+        libx264 is more widely supported on different operating systems and platforms, \
+        libx265 uses more advanced x265 codec and results in better compression and even less \
+        output video sizes with same or better quality. Right now libx265 is not as widely compatible \
+        on older versions of MacOS and Widows by default. If wider video compatibility is your goal \
+        you should use libx264., you can change default value by changing \
+        Katna.config.Video.video_compression_codec
+        :type output_video_codec: str, optional
+        :param out_dir_path: output folder path where you want output video to be saved, defaults to ""
+        :type out_dir_path: str, optional
+        :param out_file_name: output filename, if not mentioned it will be same as input filename, defaults to ""
+        :type out_file_name: str, optional
+        :raises Exception: raises FileNotFoundError Exception if input video file not found, also exception is raised in case output video file path already exist and force_overwrite is not set to True.
+        :return: Status code Returns True if video compression was successfull else False
+        :rtype: bool
+        """
+        # TODO add docstring for exeception
+        # Add details where libx265 will make sense
+
+        if not helper._check_if_valid_video(file_path):
+            raise Exception("Invalid or corrupted video: " + file_path)
+        # Intialize video compression class
+        video_compressor = VideoCompressor()
+        # Run video compression
+        status = video_compressor.compress_video(
+            file_path,
+            force_overwrite,
+            crf_parameter,
+            output_video_codec,
+            out_dir_path,
+            out_file_name,
+        )
+        return status
+
+    @FileDecorators.validate_dir_path
+    def compress_videos_from_dir(
+        self,
+        dir_path,
+        force_overwrite=False,
+        crf_parameter=config.Video.video_compression_crf_parameter,
+        output_video_codec=config.Video.video_compression_codec,
+        out_dir_path="",
+        out_file_name="",
+    ):
+        """Function to compress input video files in a folder
+
+        :param dir_path: Input folder path
+        :type dir_path: str
+        :param force_overwrite: optional parameter if True then if there is \
+        already a file in output file location function will overwrite it, defaults to False
+        :type force_overwrite: bool, optional
+        :param crf_parameter: Constant Rate Factor Parameter for controlling \
+        amount of video compression to be applied, The range of the quantizer scale is 0-51:\
+        where 0 is lossless, 23 is default, and 51 is worst possible.\
+        It is recommend to keep this value between 20 to 30 \
+        A lower value is a higher quality, you can change default value by changing \
+        config.Video.video_compression_crf_parameter
+        :type crf_parameter: int, optional
+        :param output_video_codec: Type of video codec to choose, \
+        Currently supported options are libx264 and libx265, libx264 is default option.\
+        libx264 is more widely supported on different operating systems and platforms, \
+        libx265 uses more advanced x265 codec and results in better compression and even less \
+        output video sizes with same or better quality. Right now libx265 is not as widely compatible \
+        on older versions of MacOS and Widows by default. If wider video compatibility is your goal \
+        you should use libx264., you can change default value by changing Katna.config.Video.video_compression_codec
+        :type output_video_codec: str, optional
+        :param out_dir_path: output folder path where you want output video to be saved, defaults to ""
+        :type out_dir_path: str, optional
+        :raises Exception: raises FileNotFoundError Exception if input video file not found, also exception is raised in case output video file path already exist and force_overwrite is not set to True.
+        :return: Status code Returns True if video compression was successfull else False
+        :rtype: bool
+        """
+        status = True
+        list_of_videos_to_process = []
+        # Collect all the valid video files inside folder
+        for path, _, files in os.walk(dir_path):
+            for filename in files:
+                video_file_path = os.path.join(path, filename)
+                if helper._check_if_valid_video(video_file_path):
+                    list_of_videos_to_process.append(video_file_path)
+
+        # Need to run in two sepearte loops to prevent recursion
+        for video_file_path in list_of_videos_to_process:
+            statusI = self.compress_video(
+                video_file_path,
+                force_overwrite=force_overwrite,
+                crf_parameter=crf_parameter,
+                output_video_codec=output_video_codec,
+                out_dir_path=out_dir_path,
+            )
+            status = bool(status and statusI)
+        return status
+
+    @FileDecorators.validate_file_path
+    def save_frame_to_disk(self, frame, file_path, file_name, file_ext):
+        """saves an in-memory numpy image array on drive.
+
+        :param frame: In-memory image. This would have been generated by extract_video_keyframes method
+        :type frame: numpy.ndarray, required
+        :param file_name: name of the image.
+        :type file_name: str, required
+        :param file_path: Folder location where files needs to be saved
+        :type file_path: str, required
+        :param file_ext: File extension indicating the file type for example - '.jpg'
+        :type file_ext: str, required
+        :return: None
+        """
+
+        file_full_path = os.path.join(file_path, file_name + file_ext)
+        cv2.imwrite(file_full_path, frame)
